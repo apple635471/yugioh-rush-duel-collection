@@ -1,0 +1,14 @@
+[project]
+name = "rd-card-scraper"
+version = "0.1.0"
+description = "Scraper for Yu-Gi-Oh Rush Duel card data from ntucgm.blogspot.com"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+]
+
+[project.scripts]
+rd-scrape = "rd_card_scraper.cli:main"
