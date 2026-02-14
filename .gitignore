@@ -12,6 +12,13 @@ wheels/
 # Scraped data (large, generated)
 tools/rd-card-scraper/data/
 
+# Checklist app data (DB, user uploads)
+apps/rd-checklist/backend/data/
+
+# Frontend build output & deps
+apps/rd-checklist/frontend/node_modules/
+apps/rd-checklist/frontend/dist/
+
 # Claude Code local settings
 .claude/settings.local.json
 

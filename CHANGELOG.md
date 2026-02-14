@@ -1,5 +1,46 @@
 # Changelog
 
+## v0.2.0 (2026-02-14)
+
+### 新增
+
+#### rd-checklist 收藏管理 Web App
+
+**Backend (FastAPI + SQLite)**
+- 資料庫設計: `card_sets`, `cards`, `card_variants` (每個稀有度一筆), `card_edits` (編輯歷史)
+- 匯入服務: 從 scraper 的 `cards.json` 匯入，自動拆分多稀有度 (如 `UR/SER` → 兩筆 variant)
+- 匯入安全: 重新匯入時絕不覆蓋使用者的 `owned_count`
+- API 端點:
+  - `GET /api/card-sets` — 列出所有卡組，可依產品類型篩選
+  - `GET /api/card-sets/product-types` — 產品類型列表 (含中文顯示名)
+  - `GET /api/card-sets/{set_id}` — 卡組詳情含所有卡片
+  - `GET/PATCH /api/cards/{card_id}` — 卡片詳情與編輯
+  - `PATCH /api/ownership/{card_id}/{rarity}` — 更新持有數量
+  - `PATCH /api/ownership/batch` — 批次更新
+  - `GET /api/ownership/stats[/{set_id}]` — 收藏統計
+  - `GET /api/search` — 搜尋 (支援名稱/ID/效果/類型/屬性/等級/稀有度/持有狀態)
+  - `GET /api/images/card/{card_id}/{rarity}` — 卡圖 (直接讀取 scraper data)
+- CLI: `init-db`, `import --scraper-data PATH [--force]`
+- 匯入結果: 54 sets, 2210 cards, 2522 variants (305 多稀有度卡)
+
+**Frontend (Vue 3 + TypeScript + Tailwind CSS)**
+- 深色主題 UI
+- 首頁: 產品類型篩選 pill + 卡組列表 grid
+- 卡組頁: 收藏進度條、Card View (圖片 grid) / Table View 切換
+- 卡片 Grid: 卡圖 + 稀有度 tabs + 持有數 +/- 控制、未持有卡片灰階顯示
+- 卡片 Table: 排列 ID/名稱/類型/LV/ATK/DEF/稀有度/持有數，未持有行半透明
+- 卡片詳情側邊欄: 大圖、完整卡片資訊、效果文字、編輯表單
+- 搜尋頁: 即時搜尋 (300ms debounce) + 類型/屬性/等級/稀有度/持有狀態 filter
+- 麵包屑導航、Esc 關閉側邊欄
+- Vite proxy `/api` → backend
+
+### 更新
+
+- CLAUDE.md: 加入 Checklist App 指令與結構說明
+- .gitignore: 加入 backend/data/、frontend/node_modules/、frontend/dist/
+
+---
+
 ## v0.1.0 (2026-02-13)
 
 ### 新增
