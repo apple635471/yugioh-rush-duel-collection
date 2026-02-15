@@ -9,7 +9,7 @@ from pathlib import Path
 
 import requests
 
-from .discovery import discover_rd_posts, is_rd_card_list_url, get_sitemap_urls
+from .discovery import discover_rd_posts
 from .downloader import download_images
 from .models import CardSet, PostState, ScrapeState
 from .parser import compute_content_hash, extract_post_body, parse_post
@@ -41,12 +41,16 @@ class RushDuelScraper:
     def save_state(self) -> None:
         self.state.save(self.data_dir / STATE_FILE)
 
-    def scrape_all(self) -> dict:
+    def scrape_all(self, **discover_kwargs) -> dict:
         """Scrape all discovered Rush Duel card list posts.
+
+        Args:
+            **discover_kwargs: Forwarded to discover_rd_posts()
+                (e.g. since_year=2024).
 
         Returns summary stats.
         """
-        posts = discover_rd_posts(verify=False)
+        posts = discover_rd_posts(**discover_kwargs)
         stats = {"discovered": len(posts), "scraped": 0, "skipped": 0, "errors": 0}
 
         for post_info in posts:
@@ -129,12 +133,17 @@ class RushDuelScraper:
         """Scrape a specific URL (for manual/targeted scraping)."""
         return self.scrape_post(url)
 
-    def check_updates(self) -> list[str]:
+    def check_updates(self, **discover_kwargs) -> list[str]:
         """Check for new or updated posts without scraping.
+
+        Args:
+            **discover_kwargs: Forwarded to discover_rd_posts()
+                (e.g. since_year=2024).
 
         Returns list of URLs that need updating.
         """
-        posts = discover_rd_posts(verify=False)
+        known = set(self.state.posts.keys())
+        posts = discover_rd_posts(known_urls=known, **discover_kwargs)
         needs_update = []
 
         for post_info in posts:
@@ -158,12 +167,17 @@ class RushDuelScraper:
 
         return needs_update
 
-    def update(self) -> dict:
+    def update(self, **discover_kwargs) -> dict:
         """Only scrape new or changed posts (incremental update).
+
+        Args:
+            **discover_kwargs: Forwarded to discover_rd_posts()
+                (e.g. since_year=2024).
 
         Returns summary stats.
         """
-        posts = discover_rd_posts(verify=False)
+        known = set(self.state.posts.keys())
+        posts = discover_rd_posts(known_urls=known, **discover_kwargs)
         stats = {"discovered": len(posts), "new": 0, "updated": 0, "unchanged": 0, "errors": 0}
 
         for post_info in posts:

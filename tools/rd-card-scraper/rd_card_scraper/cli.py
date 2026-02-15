@@ -45,6 +45,13 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Force re-scrape even if content hasn't changed",
     )
+    parser.add_argument(
+        "--since",
+        type=int,
+        default=None,
+        metavar="YEAR",
+        help="Only discover posts from this year onwards (default: 2020)",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -92,6 +99,11 @@ def main(argv: list[str] | None = None) -> None:
         parser.print_help()
         sys.exit(1)
 
+    # Build optional kwargs for discovery
+    discover_kwargs: dict = {}
+    if args.since is not None:
+        discover_kwargs["since_year"] = args.since
+
     scraper = RushDuelScraper(
         data_dir=args.data_dir,
         download_images_flag=not args.no_images,
@@ -99,7 +111,7 @@ def main(argv: list[str] | None = None) -> None:
     )
 
     if args.command == "scrape-all":
-        stats = scraper.scrape_all()
+        stats = scraper.scrape_all(**discover_kwargs)
         print(f"\nScrape complete:")
         print(f"  Discovered: {stats['discovered']} posts")
         print(f"  Scraped:    {stats['scraped']} posts")
@@ -107,7 +119,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"  Errors:     {stats['errors']}")
 
     elif args.command == "update":
-        stats = scraper.update()
+        stats = scraper.update(**discover_kwargs)
         print(f"\nUpdate complete:")
         print(f"  Discovered: {stats['discovered']} posts")
         print(f"  New:        {stats['new']} posts")
@@ -121,13 +133,14 @@ def main(argv: list[str] | None = None) -> None:
 
     elif args.command == "discover":
         from .discovery import discover_rd_posts
-        posts = discover_rd_posts()
+        posts = discover_rd_posts(**discover_kwargs)
         print(f"\nDiscovered {len(posts)} Rush Duel card list posts:")
         for p in sorted(posts, key=lambda x: x["url"]):
-            print(f"  {p['url']}")
+            title = p["title"][:60] if p["title"] else "(no title)"
+            print(f"  {title:<62s} {p['url']}")
 
     elif args.command == "check":
-        updates = scraper.check_updates()
+        updates = scraper.check_updates(**discover_kwargs)
         if updates:
             print(f"\n{len(updates)} posts need updating:")
             for url in updates:

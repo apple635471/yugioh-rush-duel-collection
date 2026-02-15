@@ -41,6 +41,7 @@ uv run python -m rd_card_scraper.cli scrape-url URL # 爬取單一 URL
 uv run python -m rd_card_scraper.cli summary        # 爬取狀態摘要
 uv run python -m rd_card_scraper.cli scrape-all --no-images  # 不下載圖片
 uv run python -m rd_card_scraper.cli update --force          # 強制重新爬取
+uv run python -m rd_card_scraper.cli --since 2025 discover   # 只發現 2025 年以後的文章
 ```
 
 ## Checklist App 常用指令

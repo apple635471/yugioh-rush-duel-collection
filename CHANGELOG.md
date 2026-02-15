@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.2.1 (2026-02-15)
+
+### 修復
+
+#### Discovery 策略重寫
+
+- **問題**: 舊版 discovery 使用 sitemap + URL 模式匹配，漏掉了 ~15 篇使用非標準 URL slug 的卡表文章 (如 `rush-duel-110.html`)
+- **新策略**: 「標題優先，內容驗證兜底」
+  - Phase 1: 翻頁爬取 blog listing page，每頁 ~20 篇文章含 URL + 標題
+  - Phase 2: 標題含 `[卡表資料]` + RD 關鍵字 → 直接接受；含 `禁限卡表`/Meta/Combo → 直接排除
+  - Phase 3: URL 含 `rush-duel`/`rdgrd` 但標題無法分類 → 候選
+  - Phase 4: 候選文章 fetch 驗證內容 (RD/ 卡號 + 卡片類型關鍵字)
+- **結果**: 74 篇 RD 卡表 (比舊版多 15 篇)，0 篇需要逐篇 fetch 驗證
+- **效能**: 預設只爬 2020 年以後 (~71 頁 listing page)，增量更新自動早停
+
+### 新增
+
+- CLI `--since YEAR` 參數: 限定只發現指定年份以後的文章 (如 `--since 2025` 只翻 9 頁)
+- 增量更新早停: 傳入 known_urls，當整頁都是已知 URL 時停止翻頁
+- Pagination cursor 年份截止: 基於 `updated-max` 參數判斷是否繼續翻頁
+
+### 更新
+
+- discovery.py: 完全重寫 (移除 sitemap 方式，改用 listing page 翻頁 + 標題篩選)
+- scraper.py: 支援 `**discover_kwargs` 透傳參數 (since_year 等)
+- cli.py: 新增 `--since` 參數，discover 指令顯示標題
+- 3 個 SKILL 更新: ntucgm-blog-structure, rd-banlist-exclusion, rd-scraping-etiquette
+- tools/rd-card-scraper/README.md: 更新架構圖與 discovery 策略說明
+
+---
+
 ## v0.2.0 (2026-02-14)
 
 ### 新增
