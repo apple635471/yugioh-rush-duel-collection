@@ -40,7 +40,7 @@ const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
   <div class="flex flex-wrap gap-2">
     <select
       v-model="filters.card_type"
-      class="bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-300 focus:outline-none focus:border-yellow-500"
+      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
     >
       <option value="">All Types</option>
       <option v-for="t in cardTypes" :key="t" :value="t">{{ t }}</option>
@@ -48,7 +48,7 @@ const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
 
     <select
       v-model="filters.attribute"
-      class="bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-300 focus:outline-none focus:border-yellow-500"
+      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
     >
       <option value="">All Attributes</option>
       <option v-for="a in attributes" :key="a" :value="a">{{ a }}</option>
@@ -56,7 +56,7 @@ const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
 
     <select
       v-model="filters.level"
-      class="bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-300 focus:outline-none focus:border-yellow-500"
+      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
     >
       <option value="">All Levels</option>
       <option v-for="l in 12" :key="l" :value="String(l)">Lv.{{ l }}</option>
@@ -64,7 +64,7 @@ const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
 
     <select
       v-model="filters.rarity"
-      class="bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-300 focus:outline-none focus:border-yellow-500"
+      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
     >
       <option value="">All Rarities</option>
       <option v-for="r in rarities" :key="r" :value="r">{{ r }}</option>
@@ -72,7 +72,7 @@ const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
 
     <select
       v-model="filters.owned"
-      class="bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-300 focus:outline-none focus:border-yellow-500"
+      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
     >
       <option value="">All Cards</option>
       <option value="owned">Owned</option>

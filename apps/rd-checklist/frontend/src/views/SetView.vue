@@ -77,10 +77,10 @@ watch(setId, loadAll)
             <span>
               <span class="text-emerald-400 font-medium">{{ stats.owned_variants }}</span>
               / {{ stats.total_variants }}
-              <span class="ml-1 text-gray-500">({{ progressPercent }}%)</span>
+              <span class="ml-1 text-gray-400">({{ progressPercent }}%)</span>
             </span>
           </div>
-          <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+          <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <div
               class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
               :style="{ width: `${progressPercent}%` }"
@@ -89,8 +89,8 @@ watch(setId, loadAll)
         </div>
 
         <!-- Set meta -->
-        <div class="flex flex-wrap gap-3 text-xs text-gray-500">
-          <span class="bg-gray-800 px-2 py-0.5 rounded">{{ store.currentSet.set_id }}</span>
+        <div class="flex flex-wrap gap-3 text-xs text-gray-400">
+          <span class="bg-gray-700 px-2 py-0.5 rounded">{{ store.currentSet.set_id }}</span>
           <span v-if="store.currentSet.release_date">{{ store.currentSet.release_date }}</span>
           <span>{{ store.currentSet.cards.length }} cards</span>
         </div>

@@ -50,11 +50,11 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
 <template>
   <div
     @click="openDetail"
-    class="group relative bg-gray-900 border border-gray-800 rounded-lg overflow-hidden cursor-pointer hover:border-yellow-500/50 transition-all"
+    class="group relative bg-gray-800 border border-gray-700 rounded-lg overflow-hidden cursor-pointer hover:border-yellow-500/50 transition-all"
     :class="{ 'ring-1 ring-yellow-500/20': ui.sidebarCardId === card.card_id }"
   >
     <!-- Image -->
-    <div class="aspect-[59/86] bg-gray-800 relative overflow-hidden">
+    <div class="aspect-[59/86] bg-gray-700 relative overflow-hidden">
       <img
         v-if="imageUrl"
         :src="imageUrl"
@@ -87,17 +87,17 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
     <!-- Info -->
     <div class="p-2.5">
       <div class="flex items-center justify-between gap-1 mb-1">
-        <span class="text-[10px] font-mono text-gray-500">{{ shortId }}</span>
+        <span class="text-xs font-mono text-gray-400">{{ shortId }}</span>
         <RarityTabs
           :variants="card.variants"
           :active-rarity="activeRarity"
           @select="activeRarity = $event"
         />
       </div>
-      <h4 class="text-xs font-medium text-gray-200 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
+      <h4 class="text-sm font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
         {{ card.name_zh || card.name_jp }}
       </h4>
-      <p class="text-[10px] text-gray-500 mt-0.5">{{ card.card_type }}</p>
+      <p class="text-xs text-gray-400 mt-0.5">{{ card.card_type }}</p>
 
       <!-- Ownership control -->
       <div class="mt-2 flex justify-center">

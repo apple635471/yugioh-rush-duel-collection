@@ -52,17 +52,17 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number, 
 
 <template>
   <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+    <table class="w-full text-base">
       <thead>
-        <tr class="border-b border-gray-800 text-left text-xs text-gray-500 uppercase tracking-wider">
-          <th class="py-2 px-3 w-20">ID</th>
-          <th class="py-2 px-3">Name</th>
-          <th class="py-2 px-3 w-32">Type</th>
-          <th class="py-2 px-3 w-16 text-center">LV</th>
-          <th class="py-2 px-3 w-20 text-center">ATK</th>
-          <th class="py-2 px-3 w-20 text-center">DEF</th>
-          <th class="py-2 px-3 w-28">Rarity</th>
-          <th class="py-2 px-3 w-28 text-center">Owned</th>
+        <tr class="border-b-2 border-gray-600 text-left text-xs text-gray-300 uppercase tracking-wider font-semibold">
+          <th class="py-2.5 px-3 w-24">ID</th>
+          <th class="py-2.5 px-3">Name</th>
+          <th class="py-2.5 px-3 w-32">Type</th>
+          <th class="py-2.5 px-3 w-16 text-center">LV</th>
+          <th class="py-2.5 px-3 w-20 text-center">ATK</th>
+          <th class="py-2.5 px-3 w-20 text-center">DEF</th>
+          <th class="py-2.5 px-3 w-32">Rarity</th>
+          <th class="py-2.5 px-3 w-28 text-center">Owned</th>
         </tr>
       </thead>
       <tbody>
@@ -70,36 +70,36 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number, 
           v-for="card in cards"
           :key="card.card_id"
           @click="openDetail(card)"
-          class="border-b border-gray-800/50 hover:bg-gray-800/50 cursor-pointer transition-colors"
+          class="border-b border-gray-700/60 hover:bg-gray-700/50 cursor-pointer transition-colors even:bg-gray-800/40"
           :class="{
-            'bg-gray-800/30': ui.sidebarCardId === card.card_id,
-            'opacity-40': (getActiveVariant(card)?.owned_count ?? 0) === 0,
+            'bg-gray-700/30': ui.sidebarCardId === card.card_id,
+            'opacity-50': (getActiveVariant(card)?.owned_count ?? 0) === 0,
           }"
         >
-          <td class="py-2 px-3 font-mono text-xs text-gray-500">{{ shortId(card.card_id) }}</td>
-          <td class="py-2 px-3">
+          <td class="py-2.5 px-3 font-mono text-sm text-gray-300">{{ shortId(card.card_id) }}</td>
+          <td class="py-2.5 px-3">
             <div class="flex items-center gap-2">
               <span
                 v-if="card.is_legend"
-                class="bg-amber-500/90 text-black text-[9px] font-bold px-1 py-0 rounded"
+                class="bg-amber-500 text-black text-[10px] font-bold px-1.5 py-0 rounded"
               >
                 L
               </span>
-              <span class="text-gray-200">{{ card.name_zh || card.name_jp }}</span>
+              <span class="text-gray-100 font-medium">{{ card.name_zh || card.name_jp }}</span>
             </div>
           </td>
-          <td class="py-2 px-3 text-xs text-gray-400">{{ card.card_type }}</td>
-          <td class="py-2 px-3 text-xs text-gray-400 text-center">{{ card.level ?? '-' }}</td>
-          <td class="py-2 px-3 text-xs text-gray-400 text-center">{{ card.atk ?? '-' }}</td>
-          <td class="py-2 px-3 text-xs text-gray-400 text-center">{{ card.defense ?? '-' }}</td>
-          <td class="py-2 px-3" @click.stop>
+          <td class="py-2.5 px-3 text-sm text-gray-200">{{ card.card_type }}</td>
+          <td class="py-2.5 px-3 text-sm text-gray-200 text-center">{{ card.level ?? '-' }}</td>
+          <td class="py-2.5 px-3 text-sm text-gray-200 text-center font-medium">{{ card.atk ?? '-' }}</td>
+          <td class="py-2.5 px-3 text-sm text-gray-200 text-center font-medium">{{ card.defense ?? '-' }}</td>
+          <td class="py-2.5 px-3" @click.stop>
             <RarityTabs
               :variants="card.variants"
               :active-rarity="getActiveRarity(card)"
               @select="setActiveRarity(card.card_id, $event)"
             />
           </td>
-          <td class="py-2 px-3" @click.stop>
+          <td class="py-2.5 px-3" @click.stop>
             <div class="flex justify-center">
               <OwnershipControl
                 :card-id="card.card_id"

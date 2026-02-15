@@ -33,12 +33,12 @@ function getColor(rarity: string): string {
       v-for="v in variants"
       :key="v.rarity"
       @click="emit('select', v.rarity)"
-      class="px-2 py-0.5 text-xs font-medium rounded border transition-all"
+      class="px-2 py-0.5 text-sm font-semibold rounded border transition-all"
       :class="[
         getColor(v.rarity),
         v.rarity === activeRarity
-          ? 'bg-white/10 opacity-100'
-          : 'opacity-40 hover:opacity-70 border-transparent'
+          ? 'bg-white/15 opacity-100'
+          : 'opacity-50 hover:opacity-80 border-transparent'
       ]"
     >
       {{ v.rarity }}
@@ -46,7 +46,7 @@ function getColor(rarity: string): string {
   </div>
   <span
     v-else-if="variants.length === 1"
-    class="text-xs font-medium px-2 py-0.5 rounded"
+    class="text-sm font-semibold px-2 py-0.5 rounded"
     :class="getColor(variants[0].rarity)"
   >
     {{ variants[0].rarity }}

@@ -16,7 +16,7 @@ const isOwned = computed(() => props.ownedCount > 0)
       compact ? 'text-xs px-1.5 py-0.5 min-w-[1.25rem]' : 'text-xs px-2 py-0.5 min-w-[1.5rem]',
       isOwned
         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-        : 'bg-gray-700/50 text-gray-500 border border-gray-700',
+        : 'bg-gray-600/50 text-gray-400 border border-gray-600',
     ]"
   >
     {{ ownedCount }}

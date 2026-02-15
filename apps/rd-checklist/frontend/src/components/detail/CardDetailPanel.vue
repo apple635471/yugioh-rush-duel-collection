@@ -124,14 +124,14 @@ function toggleSection(key: string) {
   }
 }
 
-const inputClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500'
-const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500 appearance-none'
+const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500'
+const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500 appearance-none'
 </script>
 
 <template>
   <div class="p-5">
     <!-- Image -->
-    <div class="aspect-[59/86] bg-gray-800 rounded-lg overflow-hidden mb-4">
+    <div class="aspect-[59/86] bg-gray-700 rounded-lg overflow-hidden mb-4">
       <img
         v-if="imageUrl"
         :src="imageUrl"
@@ -178,16 +178,16 @@ const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 p
     </div>
 
     <!-- Detail table (inline editable) -->
-    <div class="bg-gray-800/50 rounded-lg overflow-hidden mb-4">
+    <div class="bg-gray-700/50 rounded-lg overflow-hidden mb-4">
       <!-- Card ID (always read-only) -->
-      <div class="flex items-center px-3 py-2 border-b border-gray-800">
-        <span class="w-20 text-xs text-gray-500 shrink-0">Card ID</span>
+      <div class="flex items-center px-3 py-2 border-b border-gray-700">
+        <span class="w-20 text-xs text-gray-400 shrink-0">Card ID</span>
         <span class="text-sm text-gray-200 font-mono">{{ card.card_id }}</span>
       </div>
 
       <!-- Card Type -->
-      <div class="flex items-center px-3 py-2 border-b border-gray-800">
-        <span class="w-20 text-xs text-gray-500 shrink-0">Type</span>
+      <div class="flex items-center px-3 py-2 border-b border-gray-700">
+        <span class="w-20 text-xs text-gray-400 shrink-0">Type</span>
         <select v-if="editing" v-model="form.card_type" :class="selectClass">
           <option v-for="t in allCardTypes" :key="t" :value="t">{{ t }}</option>
         </select>
@@ -197,8 +197,8 @@ const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 p
       <!-- Monster-only fields -->
       <template v-if="isMonster">
         <!-- Attribute -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-800">
-          <span class="w-20 text-xs text-gray-500 shrink-0">Attribute</span>
+        <div class="flex items-center px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0">Attribute</span>
           <select v-if="editing" v-model="form.attribute" :class="selectClass">
             <option :value="null">-</option>
             <option v-for="a in attributes" :key="a" :value="a">{{ a }}</option>
@@ -208,32 +208,32 @@ const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 p
         </div>
 
         <!-- Monster Type -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-800">
-          <span class="w-20 text-xs text-gray-500 shrink-0">Race</span>
+        <div class="flex items-center px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0">Race</span>
           <input v-if="editing" v-model="form.monster_type" :class="inputClass" placeholder="e.g. 龍族" />
           <span v-else-if="card.monster_type" class="text-sm text-gray-200 font-mono">{{ card.monster_type }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
 
         <!-- Level -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-800">
-          <span class="w-20 text-xs text-gray-500 shrink-0">Level</span>
+        <div class="flex items-center px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0">Level</span>
           <input v-if="editing" v-model.number="form.level" type="number" min="1" max="12" :class="inputClass" />
           <span v-else-if="card.level != null" class="text-sm text-gray-200 font-mono">{{ card.level }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
 
         <!-- ATK -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-800">
-          <span class="w-20 text-xs text-gray-500 shrink-0">ATK</span>
+        <div class="flex items-center px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0">ATK</span>
           <input v-if="editing" v-model="form.atk" :class="inputClass" />
           <span v-else-if="card.atk != null" class="text-sm text-gray-200 font-mono">{{ card.atk }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
 
         <!-- DEF -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-800 last:border-b-0">
-          <span class="w-20 text-xs text-gray-500 shrink-0">DEF</span>
+        <div class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
+          <span class="w-20 text-xs text-gray-400 shrink-0">DEF</span>
           <input v-if="editing" v-model="form.defense" :class="inputClass" />
           <span v-else-if="card.defense != null" class="text-sm text-gray-200 font-mono">{{ card.defense }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
@@ -295,7 +295,7 @@ const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 p
       </button>
       <button
         @click="cancelEdit"
-        class="flex-1 py-2 text-sm text-gray-400 hover:text-gray-200 border border-gray-700 rounded-lg hover:border-gray-500 transition-colors"
+        class="flex-1 py-2 text-sm text-gray-300 hover:text-gray-100 border border-gray-600 rounded-lg hover:border-gray-400 transition-colors"
       >
         Cancel
       </button>
@@ -303,7 +303,7 @@ const selectClass = 'w-full bg-gray-800 border border-gray-700 rounded-md px-2 p
     <button
       v-else
       @click="startEdit"
-      class="w-full py-2 text-sm text-gray-400 hover:text-yellow-400 border border-gray-700 rounded-lg hover:border-yellow-500/50 transition-colors"
+      class="w-full py-2 text-sm text-gray-300 hover:text-yellow-400 border border-gray-600 rounded-lg hover:border-yellow-500/50 transition-colors"
     >
       Edit Card Info
     </button>

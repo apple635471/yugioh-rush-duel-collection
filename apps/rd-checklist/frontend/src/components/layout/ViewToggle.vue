@@ -5,13 +5,13 @@ const ui = useUiStore()
 </script>
 
 <template>
-  <div class="flex items-center bg-gray-800 rounded-lg p-0.5">
+  <div class="flex items-center bg-gray-700 rounded-lg p-0.5">
     <button
       @click="ui.viewMode = 'grid'"
       class="px-3 py-1 text-sm rounded-md transition-colors"
       :class="ui.viewMode === 'grid'
-        ? 'bg-gray-700 text-yellow-400'
-        : 'text-gray-400 hover:text-gray-200'"
+        ? 'bg-gray-600 text-yellow-400'
+        : 'text-gray-300 hover:text-gray-100'"
     >
       <!-- Grid icon -->
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -22,8 +22,8 @@ const ui = useUiStore()
       @click="ui.viewMode = 'table'"
       class="px-3 py-1 text-sm rounded-md transition-colors"
       :class="ui.viewMode === 'table'
-        ? 'bg-gray-700 text-yellow-400'
-        : 'text-gray-400 hover:text-gray-200'"
+        ? 'bg-gray-600 text-yellow-400'
+        : 'text-gray-300 hover:text-gray-100'"
     >
       <!-- Table icon -->
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

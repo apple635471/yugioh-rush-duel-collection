@@ -41,12 +41,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
     <!-- Sidebar panel -->
     <aside
-      class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-900 border-l border-gray-800 z-50 overflow-y-auto shadow-2xl"
+      class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 border-l border-gray-700 z-50 overflow-y-auto shadow-2xl"
     >
       <!-- Close button -->
       <button
         @click="ui.closeSidebar()"
-        class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors z-10"
+        class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-gray-300 hover:text-white hover:bg-gray-600 transition-colors z-10"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />

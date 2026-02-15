@@ -33,22 +33,22 @@ function decrement() {
     <button
       @click="decrement"
       :disabled="localCount <= 0"
-      class="w-6 h-6 flex items-center justify-center rounded text-sm font-bold transition-colors"
+      class="w-7 h-7 flex items-center justify-center rounded text-base font-bold transition-colors"
       :class="localCount > 0
-        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-        : 'bg-gray-800 text-gray-600 cursor-not-allowed'"
+        ? 'bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white'
+        : 'bg-gray-700 text-gray-500 cursor-not-allowed'"
     >
       -
     </button>
     <span
-      class="w-7 text-center text-sm font-medium"
-      :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-500'"
+      class="w-8 text-center text-base font-semibold"
+      :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-400'"
     >
       {{ localCount }}
     </span>
     <button
       @click="increment"
-      class="w-6 h-6 flex items-center justify-center rounded bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white text-sm font-bold transition-colors"
+      class="w-7 h-7 flex items-center justify-center rounded bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white text-base font-bold transition-colors"
     >
       +
     </button>

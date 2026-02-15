@@ -12,7 +12,7 @@ defineProps<{
 <template>
   <nav class="flex items-center gap-1.5 text-sm text-gray-400 mb-4 overflow-x-auto">
     <template v-for="(item, idx) in items" :key="idx">
-      <span v-if="idx > 0" class="text-gray-600">/</span>
+      <span v-if="idx > 0" class="text-gray-500">/</span>
       <router-link
         v-if="item.to"
         :to="item.to"

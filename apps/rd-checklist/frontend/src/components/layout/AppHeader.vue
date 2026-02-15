@@ -15,7 +15,7 @@ function onSearch() {
 </script>
 
 <template>
-  <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
+  <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-40">
     <div class="container mx-auto max-w-7xl px-4 h-14 flex items-center gap-4">
       <!-- Logo / Home link -->
       <router-link
@@ -32,10 +32,10 @@ function onSearch() {
             v-model="searchQuery"
             type="text"
             placeholder="Search cards..."
-            class="w-full bg-gray-800 border border-gray-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-100 placeholder-gray-400 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
           />
           <svg
-            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -56,8 +56,8 @@ function onSearch() {
           to="/"
           class="px-3 py-1.5 rounded-md transition-colors"
           :class="route.name === 'home' || route.name === 'sets-by-type'
-            ? 'bg-gray-800 text-yellow-400'
-            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'"
+            ? 'bg-gray-700 text-yellow-400'
+            : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'"
         >
           Browse
         </router-link>
@@ -65,8 +65,8 @@ function onSearch() {
           :to="{ name: 'search' }"
           class="px-3 py-1.5 rounded-md transition-colors"
           :class="route.name === 'search'
-            ? 'bg-gray-800 text-yellow-400'
-            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'"
+            ? 'bg-gray-700 text-yellow-400'
+            : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'"
         >
           Search
         </router-link>
