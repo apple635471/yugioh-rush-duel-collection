@@ -7,6 +7,8 @@ description: Mandatory rule to keep documentation in sync with code changes. ALW
 
 **每次修改專案的邏輯架構時，必須同步更新對應的 SKILL.md 和 README.md，避免文件與程式碼衝突。**
 
+> 開始任務前可先讀 `rd-project-index` 決定要改哪些模組、對應哪些文件。
+
 ## 觸發時機
 
 以下任一變更發生時，必須檢查並更新文件：
@@ -26,8 +28,9 @@ description: Mandatory rule to keep documentation in sync with code changes. ALW
 ## 文件位置速查
 
 ```
-README.md                                          # 系統架構總覽、資料流、快速開始
-CLAUDE.md                                          # 開發指令、注意事項
+.claude/skills/rd-project-index/SKILL.md            # 任務→SKILL 導航 (邏輯/feature/bug 時先讀)
+README.md                                           # 系統架構總覽、資料流、快速開始
+CLAUDE.md                                           # 開發指令、注意事項
 tools/rd-card-scraper/README.md                    # Scraper 架構、輸出格式
 apps/rd-checklist/backend/README.md                # Backend 架構、DB schema、API 表
 apps/rd-checklist/frontend/README.md               # 元件樹、Pinia stores、視覺設計

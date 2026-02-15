@@ -1,9 +1,11 @@
 ---
 name: rd-checklist-data-import
-description: Data import flow and safety rules for importing scraper data into the checklist DB. Use when modifying import logic or debugging import issues.
+description: Import flow from scraper data into checklist DB. Use when modifying import logic, debugging owned_count being overwritten, adding multi-rarity handling, or understanding scraper→DB mapping.
 ---
 
 # Checklist App 資料匯入流程
+
+**何時讀此 SKILL**：改匯入邏輯、owned_count 被覆蓋、多稀有度拆分、scraper 欄位對應 DB。
 
 從 scraper 的 `data/` 目錄匯入到 SQLite。
 

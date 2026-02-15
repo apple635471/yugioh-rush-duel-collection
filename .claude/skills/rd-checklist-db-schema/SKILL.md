@@ -1,9 +1,11 @@
 ---
 name: rd-checklist-db-schema
-description: Database schema design for the rd-checklist app. Use when modifying DB models, adding new tables/columns, or understanding the card-variant relationship.
+description: Database schema for rd-checklist (SQLite + SQLAlchemy). Use when adding/modifying tables or columns, understanding card-variant relationship, running migrations, or debugging data structure issues.
 ---
 
 # Checklist App 資料庫設計
+
+**何時讀此 SKILL**：加/改 DB 表或欄位、理解 card-variant 關係、init-db migration、資料結構相關 bug。
 
 SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 

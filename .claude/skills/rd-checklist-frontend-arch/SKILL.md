@@ -1,9 +1,11 @@
 ---
 name: rd-checklist-frontend-arch
-description: Frontend component architecture and state management for the rd-checklist Vue app. Use when adding new components, modifying views, or debugging UI behavior.
+description: Vue 3 frontend architecture for rd-checklist (components, Pinia stores, routing). Use when adding/modifying components, debugging UI behavior, understanding data flow between views and API, or changing view structure.
 ---
 
 # Checklist App 前端架構
+
+**何時讀此 SKILL**：加/改元件、debug UI、改 store 或路由、理解元件層級與 emit 流程。
 
 Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router。
 

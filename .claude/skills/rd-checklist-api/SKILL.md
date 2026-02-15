@@ -1,9 +1,11 @@
 ---
 name: rd-checklist-api
-description: API endpoints and data flow for the rd-checklist backend. Use when adding new endpoints, modifying response schemas, or debugging API behavior.
+description: API endpoints and data flow for rd-checklist backend. Use when adding/modifying endpoints, debugging API requests or responses, understanding request/response schemas, or tracing backend data flow.
 ---
 
 # Checklist App API 端點與資料流
+
+**何時讀此 SKILL**：加/改 API endpoint、debug 後端請求、改 response schema、理解前後端資料流。
 
 Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 

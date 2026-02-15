@@ -1,9 +1,11 @@
 ---
 name: rd-checklist-image-serving
-description: Image serving strategy for the rd-checklist app. Use when modifying image endpoints, adding upload support, or debugging image loading issues.
+description: Image serving and upload for rd-checklist. Use when modifying image endpoints, adding upload/revert features, debugging 404 or cache issues, or understanding scraper vs user_upload path resolution.
 ---
 
 # Checklist App 圖片服務策略
+
+**何時讀此 SKILL**：卡圖不顯示/404、上傳或還原邏輯、改圖片路徑、快取問題。
 
 ## 設計原則
 
