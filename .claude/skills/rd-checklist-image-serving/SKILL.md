@@ -25,6 +25,7 @@ SCRAPER_DATA_DIR (預設: tools/rd-card-scraper/data/)
   └── KP01/images/RD_KP01-JP000.jpg
 
 DB card_variants.image_path = "KP01/images/RD_KP01-JP000.jpg"
+DB card_variants.scraper_image_path = "KP01/images/RD_KP01-JP000.jpg"  # 原始 scraper 路徑，永不覆蓋
 完整路徑 = SCRAPER_DATA_DIR / image_path
 ```
 
@@ -33,12 +34,19 @@ DB card_variants.image_path = "KP01/images/RD_KP01-JP000.jpg"
 ```
 POST /api/images/card/{card_id}/{rarity}/upload  (multipart/form-data)
   → 存到 data/images/user_uploads/RD_KP01-JP000_UR.jpg
-  → 更新 DB: image_source = "user_upload", image_path = ...
+  → 更新 DB: image_source = "user_upload", image_path = user_upload 路徑
+  → 若 scraper_image_path 為空，從 image_path 複製保存 (backfill)
 
 DELETE /api/images/card/{card_id}/{rarity}/upload
   → 刪除 user upload 檔案
-  → 恢復 DB: image_source = "scraper"
+  → 從 scraper_image_path 恢復 DB: image_source = "scraper", image_path = scraper_image_path
+  → scraper_image_path 在匯入與首次上傳時設定，確保還原永遠可用
 ```
+
+## 快取與 Cache Buster
+
+- **User upload 回應**: `Cache-Control: no-cache, no-store, must-revalidate` 避免瀏覽器快取舊圖
+- **前端**: user_upload 圖 URL 加 `?t=1` 或 `?t=${Date.now()}` 作為 cache buster，上傳/還原後強制重載
 
 ## 前端使用
 
@@ -47,8 +55,11 @@ DELETE /api/images/card/{card_id}/{rarity}/upload
 function getCardImageUrl(cardId: string, rarity: string): string {
   return `/api/images/card/${cardId}/${rarity}`
 }
+uploadCardImage(cardId, rarity, file)   // POST upload
+revertCardImage(cardId, rarity)         // DELETE revert
 
-// CardGridItem.vue
+// CardGridItem.vue / CardDetailPanel.vue
+// user_upload 時: base + "?t=1" 或 "?t=" + cacheBuster
 <img :src="imageUrl" loading="lazy" />
 ```
 

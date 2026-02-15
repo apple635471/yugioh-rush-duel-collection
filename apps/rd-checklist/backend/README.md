@@ -35,7 +35,7 @@ card_sets  ◄──1:N──  cards  ◄──1:N──  card_variants
   set_name_zh         name_jp/name_zh     rarity
   product_type        card_type           owned_count ★使用者資料
   release_date        attribute/level     image_source (scraper/user)
-  total_cards         atk/defense         image_path
+  total_cards         atk/defense         image_path, scraper_image_path
   rarity_distribution effect/condition    UNIQUE(card_id, rarity)
                       is_legend
 
@@ -68,6 +68,8 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 | GET | `/api/ownership/stats[/{set_id}]` | 收藏統計 |
 | GET | `/api/search?q=&...` | 多條件搜尋 |
 | GET | `/api/images/card/{card_id}/{rarity}` | 卡圖 (優先 user upload) |
+| POST | `/api/images/card/{card_id}/{rarity}/upload` | 上傳替換卡圖 |
+| DELETE | `/api/images/card/{card_id}/{rarity}/upload` | 還原為 scraper 原始圖 |
 
 ## 注意事項
 

@@ -34,7 +34,8 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - `UNIQUE(card_id, rarity)`: 每張卡每個稀有度只一筆
 - `owned_count` ★使用者持有數（匯入時永不覆蓋）
 - `image_source`: "scraper" | "user_upload" | null
-- `image_path`: 相對路徑如 "KP01/images/RD_KP01-JP000.jpg"
+- `image_path`: 相對路徑如 "KP01/images/RD_KP01-JP000.jpg" (當前顯示圖)
+- `scraper_image_path`: 原始 scraper 路徑，永不覆蓋；還原時從此欄恢復
 - `sort_order`: 同一卡內的稀有度排序
 
 ### card_edits (歷史記錄)

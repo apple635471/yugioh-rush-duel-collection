@@ -45,6 +45,7 @@ ntucgm.blogspot.com ──HTTP──▶ rd-card-scraper ──JSON+Images──�
                               FastAPI ──┘──▶ Vue Frontend ──▶ 使用者
                                                     │
                               PATCH /ownership ◀────┘ (持有數 +/-)
+                              POST/DELETE /api/images/card/.../upload (卡圖上傳/還原)
 ```
 
 ## 專案結構
@@ -67,7 +68,7 @@ apps/
           layout/               # AppHeader, BreadcrumbBar, ViewToggle
           navigation/           # ProductTypeNav, SetList
           cards/                # CardGrid, CardTable, RarityTabs, OwnershipControl
-          detail/               # AppSidebar, CardDetailPanel, CardEditForm
+          detail/               # AppSidebar, CardDetailPanel (含卡圖上傳 overlay)
           search/               # SearchFilters
         stores/                 # Pinia: cardSets, ui
         api/                    # Axios: cardSets, cards

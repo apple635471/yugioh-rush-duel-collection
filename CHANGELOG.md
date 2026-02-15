@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.1 (2026-02-15)
+
+### 新增
+
+#### 卡圖上傳與還原
+- **側邊欄卡圖上傳**: CardDetailPanel 卡圖 hover 顯示上傳 overlay，點擊選擇圖片替換
+- **還原為原始圖**: 使用者上傳的卡圖可點「Revert to original」恢復為 scraper 原始圖
+- **scraper_image_path 欄位**: 新增 `card_variants.scraper_image_path` 持久保存原始 scraper 路徑，確保即使所有 variant 皆被覆蓋仍能正確還原
+
+### 修復
+
+- **瀏覽器快取問題**: 使用者上傳圖檔回傳 `Cache-Control: no-cache`，前端對 user_upload 圖 URL 加 `?t=...` cache buster 避免顯示舊圖
+
+### 更新
+
+- API: `POST /api/images/card/{card_id}/{rarity}/upload`、`DELETE .../upload` 對應上傳與還原
+- 前端 `api/cards.ts`: 新增 `uploadCardImage()`, `revertCardImage()`
+- 匯入時寫入 `scraper_image_path`，上傳時保留原始路徑供還原使用
+
+---
+
 ## v0.3.0 (2026-02-15)
 
 ### 新增

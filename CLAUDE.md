@@ -68,4 +68,4 @@ npm run type-check  # TypeScript 檢查
 - `data/` 目錄已在 .gitignore，不會被 commit
 - 增量更新基於 post-body 的 SHA256 hash 比對
 - Checklist App 匯入不會覆蓋使用者的 owned_count
-- 卡圖直接從 scraper data 目錄讀取，不複製
+- 卡圖直接從 scraper data 目錄讀取，不複製；使用者可上傳覆蓋，存於 data/images/user_uploads/

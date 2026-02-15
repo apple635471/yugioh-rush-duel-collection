@@ -45,19 +45,25 @@ Scraper 輸出 `"rarity": "UR/SER"`，匯入時:
 existing = db.query(CardVariantModel).filter_by(card_id=card_id, rarity=rarity).first()
 if existing:
     # 只更新 image 相關欄位，NEVER touch owned_count
-    existing.image_source = ...
-    existing.image_path = ...
+    existing.sort_order = sort_order
+    if image_file:
+        existing.scraper_image_path = image_file  # 永遠保持 scraper 路徑最新
+    if existing.image_source != "user_upload":    # 使用者上傳的不覆蓋
+        existing.image_source = "scraper" if image_file else None
+        existing.image_path = image_file
 else:
-    # 新建時 owned_count 預設為 0
-    db.add(CardVariantModel(card_id=card_id, rarity=rarity, owned_count=0, ...))
+    # 新建時 owned_count 預設為 0，scraper_image_path = image_file
+    db.add(CardVariantModel(card_id=card_id, rarity=rarity, owned_count=0,
+           scraper_image_path=image_file, ...))
 ```
 
-這確保使用者辛苦標記的持有數量在重新匯入時不會被覆蓋。
+這確保使用者辛苦標記的持有數量在重新匯入時不會被覆蓋；`scraper_image_path` 供還原功能使用。
 
 ## 圖片路徑映射
 
 Scraper 的 `image_file`: `"images/RD_KP01-JP001.jpg"`
 → 匯入後 `image_path`: `"KP01/images/RD_KP01-JP001.jpg"` (加上 set_id 前綴)
+→ 匯入後 `scraper_image_path`: 同上，供還原時使用，匯入與首次上傳時寫入
 → Backend 讀取時組合: `SCRAPER_DATA_DIR / image_path`
 
 ## 匯入結果 (截至 2026-02)

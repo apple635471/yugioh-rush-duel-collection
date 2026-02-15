@@ -33,6 +33,11 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 ### 圖片 `/api/images`
 - `GET /card/{card_id:path}/{rarity}` → FileResponse
   - 優先順序: user_upload > scraper > 404
+  - user_upload 回傳 `Cache-Control: no-cache` 避免快取
+- `POST /card/{card_id:path}/{rarity}/upload` body: multipart file → `CardVariantOut`
+  - 上傳替換圖，存於 `data/images/user_uploads/`，更新 `image_source`/`image_path`，保留 `scraper_image_path`
+- `DELETE /card/{card_id:path}/{rarity}/upload` → `CardVariantOut`
+  - 刪除 user upload，從 `scraper_image_path` 恢復原始圖
 - `GET /{set_id}/{filename}` → 直接讀 scraper data 目錄
 
 ## 資料流

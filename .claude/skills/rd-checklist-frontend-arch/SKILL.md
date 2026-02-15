@@ -32,7 +32,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router。
 ```
 api/client.ts      → axios instance, baseURL: '/api', timeout: 30s
 api/cardSets.ts    → fetchProductTypes, fetchCardSets, fetchCardSet, fetchSetStats
-api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getCardImageUrl
+api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getCardImageUrl,
+                     uploadCardImage, revertCardImage
 ```
 
 ## 元件分類
@@ -47,7 +48,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)
-- `CardGrid` / `CardGridItem`: 圖片 grid，未持有灰階
+- `CardGrid` / `CardGridItem`: 圖片 grid，未持有灰階；user_upload 圖 URL 加 `?t=1` cache buster
 - `CardTable`: 表格行，未持有半透明
 - `RarityTabs`: 多稀有度 tab 切換，各稀有度有對應色碼
 - `OwnershipBadge`: 持有數 badge (綠色/灰色)
@@ -56,6 +57,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 ### Detail — 側邊欄
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉
 - `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** (取代獨立的 CardEditForm)
+  - **卡圖上傳**: 大圖 hover 顯示 overlay，點擊選擇檔案上傳替換；user_upload 時顯示「Revert to original」按鈕
+  - **Cache buster**: user_upload 圖 URL 加 `?t=...`，上傳/還原後 `imageCacheBuster = Date.now()` 強制重載
   - Card Type: 下拉選單 (所有簡單 + 複合類型)
   - 怪獸專屬欄位 (Attribute, Race, Level, ATK, DEF, Summon Condition): 僅在選擇怪獸類型時顯示
   - 文字欄位 (Summon Condition, Condition, Effect, Continuous Effect): 無值時收合為 `+` 按鈕，點擊展開
