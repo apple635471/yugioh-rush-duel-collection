@@ -157,7 +157,11 @@ def verify_post_is_card_list(url: str, session: requests.Session) -> bool:
         has_rd_ids = bool(re.search(r"RD/\w+-JPS?\d{2,3}", text))
         has_card_types = any(
             kw in text
-            for kw in ["通常怪獸", "效果怪獸", "通常魔法", "通常陷阱", "融合怪獸"]
+            for kw in [
+                "通常怪獸", "效果怪獸", "融合怪獸", "儀式怪獸",
+                "儀式/效果怪獸", "融合/效果怪獸", "巨極/效果怪獸",
+                "通常魔法", "儀式魔法", "通常陷阱",
+            ]
         )
         return has_rd_ids and has_card_types
     except Exception as e:

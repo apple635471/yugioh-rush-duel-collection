@@ -26,7 +26,7 @@ data/
      │
      ├─ 掃描所有 */cards.json
      ├─ 每個 json: _upsert_card_set() → card_sets 表
-     ├─ 每張卡: _upsert_card() → cards 表 (全欄位更新)
+     ├─ 每張卡: _upsert_card() → cards 表 (含 summon_condition, condition, effect, continuous_effect)
      └─ 每個 rarity: _upsert_variant() → card_variants 表
 ```
 

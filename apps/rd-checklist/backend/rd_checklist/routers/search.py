@@ -41,7 +41,9 @@ def search_cards(
         )
 
     if card_type:
-        query = query.filter(CardModel.card_type == card_type)
+        # Use LIKE so compound types are searchable by component,
+        # e.g. "儀式" matches both "儀式怪獸" and "儀式/效果怪獸"
+        query = query.filter(CardModel.card_type.ilike(f"%{card_type}%"))
 
     if attribute:
         query = query.filter(CardModel.attribute == attribute)

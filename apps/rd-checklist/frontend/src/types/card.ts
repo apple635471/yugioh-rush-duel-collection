@@ -19,8 +19,10 @@ export interface Card {
   level: number | null
   atk: string | null
   defense: string | null
+  summon_condition: string | null
   condition: string | null
   effect: string | null
+  continuous_effect: string | null
   is_legend: boolean
   original_rarity_string: string
   variants: CardVariant[]
@@ -35,6 +37,8 @@ export interface CardUpdate {
   level?: number | null
   atk?: string | null
   defense?: string | null
+  summon_condition?: string | null
   condition?: string | null
   effect?: string | null
+  continuous_effect?: string | null
 }

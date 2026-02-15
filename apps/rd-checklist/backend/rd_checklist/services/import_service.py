@@ -107,8 +107,10 @@ def _import_one_card(
     card.level = card_data.get("level")
     card.atk = card_data.get("atk")
     card.defense = card_data.get("defense")
+    card.summon_condition = card_data.get("summon_condition")
     card.condition = card_data.get("condition")
     card.effect = card_data.get("effect")
+    card.continuous_effect = card_data.get("continuous_effect")
     card.is_legend = card_data.get("is_legend", False)
     card.original_rarity_string = rarity_string
     db.flush()

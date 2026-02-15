@@ -50,7 +50,7 @@ data/
   └── scrape_state.json   # 增量更新狀態
 ```
 
-每張卡片的 JSON 包含：`card_id`, `rarity`, `name_jp`, `name_zh`, `card_type`, `attribute`, `monster_type`, `level`, `atk`, `defense`, `condition`, `effect`, `image_url`, `image_file`, `is_legend`。
+每張卡片的 JSON 包含：`card_id`, `rarity`, `name_jp`, `name_zh`, `card_type`, `attribute`, `monster_type`, `level`, `atk`, `defense`, `summon_condition`, `condition`, `effect`, `continuous_effect`, `image_url`, `image_file`, `is_legend`。
 
 ## 指令
 
@@ -80,3 +80,4 @@ uv run python -m rd_card_scraper.cli update --force           # 強制全部重�
 - 增量更新基於 post-body 的 SHA256 hash，內容沒變就跳過
 - 增量更新自動傳入 known_urls，listing page 翻到全部已知就停止
 - 圖片只在本地不存在時才下載
+- `--no-images` 模式下會自動偵測磁碟上已存在的圖片檔，保留 `image_file` 路徑

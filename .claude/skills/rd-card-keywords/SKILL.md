@@ -5,11 +5,16 @@ description: Rush Duel card type keywords in Traditional Chinese used for parsin
 
 # 卡片類型關鍵字 (繁體中文)
 
-## 怪獸類型
+## 怪獸類型 (簡單)
 - 通常怪獸
 - 效果怪獸
 - 融合怪獸
 - 儀式怪獸
+
+## 怪獸類型 (複合)
+- 儀式/效果怪獸
+- 融合/效果怪獸
+- 巨極/效果怪獸
 
 ## 魔法類型
 - 通常魔法
@@ -17,6 +22,7 @@ description: Rush Duel card type keywords in Traditional Chinese used for parsin
 - 永續魔法
 - 裝備魔法
 - 場地魔法
+- 儀式魔法
 
 ## 陷阱類型
 - 通常陷阱

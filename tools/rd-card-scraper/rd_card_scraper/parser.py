@@ -55,9 +55,12 @@ SET_ID_RE = re.compile(r"RD/(\w+)-JP")
 RARITY_RE = re.compile(r"\(([A-Z/]+)\)")
 
 # Stats line: (Chinese name) CardType [Level Attribute Race ATK/DEF]
+# Compound types (X/Y怪獸) MUST appear before simple types so regex matches
+# the longer form first; e.g. 儀式/效果怪獸 before 效果怪獸.
 CARD_TYPES = (
+    "儀式/效果怪獸|融合/效果怪獸|巨極/效果怪獸|"
     "通常怪獸|效果怪獸|融合怪獸|儀式怪獸|"
-    "通常魔法|速攻魔法|永續魔法|裝備魔法|場地魔法|"
+    "儀式魔法|通常魔法|速攻魔法|永續魔法|裝備魔法|場地魔法|"
     "通常陷阱|永續陷阱|反擊陷阱"
 )
 STATS_RE = re.compile(
@@ -80,7 +83,14 @@ INLINE_STATS_RE = re.compile(
 )
 
 CONDITION_RE = re.compile(r"條件[:：]\s*(.+)")
-EFFECT_RE = re.compile(r"效果[:：]\s*(.+)", re.DOTALL)
+EFFECT_RE = re.compile(r"^效果[:：]\s*(.+)", re.DOTALL)
+CONTINUOUS_EFFECT_RE = re.compile(r"永續效果[:：]\s*(.+)", re.DOTALL)
+
+# Labels that can appear in card text; used to split a single chunk that
+# contains multiple sections (e.g. "條件:…效果:…" on one line).
+# The negative lookbehind (?<!永續) prevents "效果:" from splitting inside
+# "永續效果:" — "永續效果" is matched as a whole unit instead.
+_LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：])")
 
 # Product type mapping from set ID prefix
 PRODUCT_TYPE_MAP = {
@@ -360,9 +370,11 @@ def _is_detail_entry(chunks: list[dict], idx: int) -> bool:
     header_text = chunks[idx]["text"]
 
     # Check inline stats (same line as card ID)
+    # Compound types listed first so they match before simple types
     card_type_keywords = [
+        "儀式/效果怪獸", "融合/效果怪獸", "巨極/效果怪獸",
         "通常怪獸", "效果怪獸", "融合怪獸", "儀式怪獸",
-        "通常魔法", "速攻魔法", "永續魔法", "裝備魔法", "場地魔法",
+        "儀式魔法", "通常魔法", "速攻魔法", "永續魔法", "裝備魔法", "場地魔法",
         "通常陷阱", "永續陷阱", "反擊陷阱",
     ]
     for kw in card_type_keywords:
@@ -473,26 +485,72 @@ def _parse_card_details(
             if stats_match.group(7):
                 card.defense = stats_match.group(7)
 
-    # Parse condition
+    # Parse condition, effect, continuous effect, and summon condition.
+    #
+    # Context lines after the stats line may contain:
+    #   - Summon condition text (before 條件:), e.g. "此卡只能用…特殊召喚"
+    #   - 條件:...
+    #   - 效果:...
+    #   - 永續效果:...
+    #
+    # A single chunk may contain multiple labels joined together, e.g.
+    # "條件:…可以發動效果:…". We split such chunks before classifying.
+
+    # Step 1: collect lines after the stats line, splitting multi-label chunks
+    post_stats_lines: list[str] = []
+    stats_seen = False
+    for line in context_lines:
+        if not stats_seen:
+            if STATS_RE.search(line):
+                stats_seen = True
+            continue
+        # Split a single line like "條件:…效果:…" into separate parts.
+        # _LABEL_SPLIT_RE uses lookahead so the label text is preserved.
+        parts = _LABEL_SPLIT_RE.split(line)
+        for p in parts:
+            p = p.strip()
+            if p:
+                post_stats_lines.append(p)
+
+    # Step 2: classify each part
+    summon_cond_parts: list[str] = []
     cond_parts: list[str] = []
     effect_parts: list[str] = []
-    in_effect = False
+    cont_effect_parts: list[str] = []
+    seen_condition = False
+    seen_effect = False
+    in_section: str = ""  # "cond", "effect", "cont_effect", or ""
 
-    for line in context_lines:
+    for line in post_stats_lines:
         cond_match = CONDITION_RE.match(line)
         eff_match = EFFECT_RE.match(line)
+        cont_eff_match = CONTINUOUS_EFFECT_RE.match(line)
 
         if cond_match:
             cond_parts.append(cond_match.group(1))
-            in_effect = False
+            seen_condition = True
+            in_section = "cond"
+        elif cont_eff_match:
+            cont_effect_parts.append(cont_eff_match.group(1))
+            seen_effect = True
+            in_section = "cont_effect"
         elif eff_match:
             effect_parts.append(eff_match.group(1))
-            in_effect = True
-        elif in_effect and line and not STATS_RE.search(line):
-            # Continuation of effect text
+            seen_effect = True
+            in_section = "effect"
+        elif not seen_condition and not seen_effect and line:
+            # Text between stats and 條件: → summon condition
+            summon_cond_parts.append(line)
+        elif in_section == "effect" and line and not STATS_RE.search(line):
             effect_parts.append(line)
+        elif in_section == "cont_effect" and line and not STATS_RE.search(line):
+            cont_effect_parts.append(line)
 
+    if summon_cond_parts:
+        card.summon_condition = "".join(summon_cond_parts)
     if cond_parts:
         card.condition = "".join(cond_parts)
     if effect_parts:
         card.effect = "".join(effect_parts)
+    if cont_effect_parts:
+        card.continuous_effect = "".join(cont_effect_parts)

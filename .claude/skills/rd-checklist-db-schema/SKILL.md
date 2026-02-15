@@ -22,7 +22,11 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - `card_id` (PK, str): 如 "RD/KP01-JP000"
 - `set_id` (FK → card_sets): 所屬卡組
 - `name_jp`, `name_zh`, `card_type` (indexed), `attribute`, `monster_type`
-- `level`, `atk`, `defense`, `condition`, `effect`
+- `level`, `atk`, `defense`
+- `summon_condition`: 召喚條件 (如「此卡只能用…特殊召喚」)
+- `condition`: 發動條件
+- `effect`: 效果說明
+- `continuous_effect`: 永續效果 (與一般效果分開)
 - `is_legend` (bool), `original_rarity_string`: 原始稀有度字串 "UR/SER"
 
 ### card_variants ★核心
@@ -42,3 +46,4 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - **匯入安全**: `_upsert_variant()` 只在 variant 不存在時 INSERT，已存在的只更新 image 欄位，永不碰 `owned_count`
 - **Eager loading**: `CardModel.variants` 使用 `lazy="selectin"`，查詢卡組時一次載入所有 variants 避免 N+1
 - **編輯歷史**: PATCH /api/cards/ 時自動記錄每個欄位的 old/new value 到 card_edits
+- **Auto-migration**: `init-db` 自動執行 `ALTER TABLE ADD COLUMN` 補新欄位，用 try/except 跳過已存在的欄位 (safe to run repeatedly)

@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.3.0 (2026-02-15)
+
+### 新增
+
+#### 複合卡片類型支援
+- Parser 新增複合怪獸類型: `儀式/效果怪獸`, `融合/效果怪獸`, `巨極/效果怪獸`
+- Parser 新增魔法子類型: `儀式魔法`
+- Regex 排序: 複合類型在簡單類型前匹配，避免 `儀式/效果怪獸` 被截斷為 `效果怪獸`
+
+#### 永續效果 & 召喚條件欄位
+- 新增 `continuous_effect` 欄位: 解析 `永續效果:` 標籤，與一般 `效果:` 分開儲存
+- 新增 `summon_condition` 欄位: 解析 stats 行與 `條件:` 之間的描述文字 (如「此卡只能用…特殊召喚」)
+- 同行多標籤拆分: 處理 `條件:…可以發動效果:…` 連在同一個 HTML element 的情況
+- `_LABEL_SPLIT_RE` 使用 negative lookbehind `(?<!永續)` 避免拆斷 `永續效果:`
+
+#### 前端 inline 編輯
+- CardDetailPanel 重寫為 inline 編輯模式 (取代獨立的 CardEditForm)
+- Card Type 改為下拉選單 (包含所有簡單 + 複合類型)
+- 怪獸專屬欄位 (Attribute, Race, Level, ATK, DEF, Summon Condition) 僅在選擇怪獸類型時顯示
+- 文字欄位 (Summon Condition, Condition, Effect, Continuous Effect) 無值時收合為 `+` 按鈕，點擊展開
+
+### 修復
+
+- **`--no-images` 遺失圖片路徑**: 新增 `_link_existing_images()` 在不下載時偵測磁碟上已存在的圖片檔，保留 `image_file` 路徑
+- **搜尋複合類型**: `card_type` 篩選改用 `ILIKE` 部分比對，搜尋「儀式」可同時匹配 `儀式怪獸` 和 `儀式/效果怪獸`
+
+### 更新
+
+- DB migration: `init-db` 自動 `ALTER TABLE ADD COLUMN` 補新欄位 (safe to run repeatedly)
+- 前端 SearchFilters: 補齊所有卡片類型選項
+- 刪除 `CardEditForm.vue` (功能已整合至 CardDetailPanel)
+
+---
+
 ## v0.2.1 (2026-02-15)
 
 ### 修復

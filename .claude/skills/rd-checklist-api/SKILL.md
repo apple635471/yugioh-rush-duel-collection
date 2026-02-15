@@ -27,6 +27,7 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 ### 搜尋 `/api/search`
 - `GET /?q=青眼&card_type=通常怪獸&attribute=光&level=8&rarity=UR&owned=missing&limit=200&offset=0`
 - `q` 搜尋: ILIKE on name_jp, name_zh, card_id
+- `card_type` 篩選: 使用 `ILIKE %value%` 部分比對，搜尋「儀式」可同時匹配 `儀式怪獸` 和 `儀式/效果怪獸`
 - `owned`: "owned" = owned_count > 0, "missing" = NOT IN (owned > 0)
 
 ### 圖片 `/api/images`

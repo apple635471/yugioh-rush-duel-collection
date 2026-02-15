@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker, Session
 
 from .config import DATABASE_URL
@@ -31,6 +31,27 @@ def get_db():
 
 
 def init_db():
-    """Create all tables."""
+    """Create all tables and add any missing columns."""
     from .models import Base
     Base.metadata.create_all(bind=engine)
+
+    # Migrate: add columns that may not exist in older databases.
+    # ALTER TABLE ADD COLUMN is a no-op if the column already exists
+    # (SQLite raises "duplicate column name" which we catch and ignore).
+    _migrate_add_columns()
+
+
+def _migrate_add_columns():
+    """Add new columns to existing tables (safe to run repeatedly)."""
+    migrations = [
+        "ALTER TABLE cards ADD COLUMN summon_condition TEXT",
+        "ALTER TABLE cards ADD COLUMN continuous_effect TEXT",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception:
+                # Column already exists — ignore
+                conn.rollback()

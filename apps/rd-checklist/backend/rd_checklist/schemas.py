@@ -36,8 +36,10 @@ class CardOut(BaseModel):
     level: Optional[int] = None
     atk: Optional[str] = None
     defense: Optional[str] = None
+    summon_condition: Optional[str] = None
     condition: Optional[str] = None
     effect: Optional[str] = None
+    continuous_effect: Optional[str] = None
     is_legend: bool = False
     original_rarity_string: str = ""
     variants: list[CardVariantOut] = []
@@ -55,8 +57,10 @@ class CardUpdate(BaseModel):
     level: Optional[int] = None
     atk: Optional[str] = None
     defense: Optional[str] = None
+    summon_condition: Optional[str] = None
     condition: Optional[str] = None
     effect: Optional[str] = None
+    continuous_effect: Optional[str] = None
 
 
 # ── Card Set ──

@@ -55,8 +55,11 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 
 ### Detail — 側邊欄
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉
-- `CardDetailPanel`: 大圖 + info table + effect text + edit button
-- `CardEditForm`: 10 欄位表單，PATCH /api/cards/
+- `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** (取代獨立的 CardEditForm)
+  - Card Type: 下拉選單 (所有簡單 + 複合類型)
+  - 怪獸專屬欄位 (Attribute, Race, Level, ATK, DEF, Summon Condition): 僅在選擇怪獸類型時顯示
+  - 文字欄位 (Summon Condition, Condition, Effect, Continuous Effect): 無值時收合為 `+` 按鈕，點擊展開
+  - 編輯直接在原本的顯示欄位上操作，不再跳轉到獨立表單
 
 ### Search
 - `SearchFilters`: 5 個 select 下拉，emit change event
@@ -69,6 +72,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 3. → `emit('ownershipChanged')` → SetView 重新 `fetchSetStats()` 更新進度條
 
 **卡片編輯**:
-1. `CardEditForm` → `PATCH /api/cards/...` → `emit('saved')`
-2. → `CardDetailPanel` 關閉表單 + `emit('cardUpdated')`
-3. → `AppSidebar` 重新 `fetchCard()` 更新顯示
+1. `CardDetailPanel` inline 編輯模式 → `PATCH /api/cards/...`
+2. → `emit('cardUpdated')` → `AppSidebar` 重新 `fetchCard()` 更新顯示
+3. 編輯時 `isMonster` computed 動態顯示/隱藏怪獸專屬欄位
+4. `expandedSections` reactive 控制空白文字欄位的展開/收合

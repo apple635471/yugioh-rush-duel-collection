@@ -10,7 +10,7 @@ from pathlib import Path
 import requests
 
 from .discovery import discover_rd_posts
-from .downloader import download_images
+from .downloader import download_images, sanitize_filename
 from .models import CardSet, PostState, ScrapeState
 from .parser import compute_content_hash, extract_post_body, parse_post
 
@@ -100,7 +100,7 @@ class RushDuelScraper:
             logger.warning(f"No cards parsed from {url}")
             return "skipped"
 
-        # Download images
+        # Download images (or detect existing ones when --no-images)
         if self.download_images_flag:
             download_images(
                 card_set.cards,
@@ -109,6 +109,10 @@ class RushDuelScraper:
                 self.session,
                 force=self.force,
             )
+        else:
+            # Even without downloading, link existing image files so
+            # cards.json retains the image_file paths.
+            self._link_existing_images(card_set.cards, card_set.set_id)
 
         # Save card data
         card_set.save(self.data_dir)
@@ -128,6 +132,15 @@ class RushDuelScraper:
             f"Scraped {len(card_set.cards)} cards from {card_set.set_id}"
         )
         return "scraped"
+
+    def _link_existing_images(self, cards: list, set_id: str) -> None:
+        """Set image_file on cards that already have downloaded images on disk."""
+        img_dir = self.data_dir / set_id / "images"
+        for card in cards:
+            filename = sanitize_filename(card.card_id)
+            filepath = img_dir / filename
+            if filepath.exists():
+                card.image_file = f"{set_id}/images/{filename}"
 
     def scrape_url(self, url: str) -> str:
         """Scrape a specific URL (for manual/targeted scraping)."""

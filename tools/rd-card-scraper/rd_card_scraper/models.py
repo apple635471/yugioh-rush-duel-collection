@@ -20,8 +20,10 @@ class Card:
     level: Optional[int] = None
     atk: Optional[str] = None  # str because some may be "?"
     defense: Optional[str] = None
+    summon_condition: Optional[str] = None  # e.g. 此卡只能用...特殊召喚
     condition: Optional[str] = None
     effect: Optional[str] = None
+    continuous_effect: Optional[str] = None  # 永續效果
     image_url: Optional[str] = None
     image_file: Optional[str] = None  # relative path to downloaded image
     is_legend: bool = False

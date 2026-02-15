@@ -29,6 +29,24 @@ description: Parsing Rush Duel card data from ntucgm blog post HTML. Use when mo
 - 魔法/陷阱卡沒有等級、屬性、種族、ATK/DEF
 - 通常怪獸沒有條件和效果文本
 
+## 卡片文字欄位解析
+
+Stats 行之後的文字區塊會被解析為多個欄位:
+
+1. **summon_condition** (召喚條件): 位於 stats 行和 `條件:` 標籤之間的描述文字 (如「此卡只能用…特殊召喚」)
+2. **condition** (發動條件): `條件:` 或 `條件：` 標籤後的文字
+3. **effect** (效果): `效果:` 或 `可以發動效果:` 標籤後的文字
+4. **continuous_effect** (永續效果): `永續效果:` 標籤後的文字，與一般 `效果:` 分開儲存
+
+### 同行多標籤問題
+
+有些文章中 `條件:…效果:…` 連在同一個 HTML element 裡。Parser 使用 `_LABEL_SPLIT_RE` 拆分:
+```python
+_LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：])")
+```
+- 使用 lookahead 在標籤前切割
+- `(?<!永續)` negative lookbehind 避免 `永續效果:` 被拆斷為 `永續` + `效果:`
+
 ## 稀有度標記
 
 在卡片 ID 後的括號中，如 `(UR)`, `(SR/SER)`, `(ORRPBV)`
