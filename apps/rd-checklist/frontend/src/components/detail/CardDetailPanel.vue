@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
 import type { Card, CardUpdate } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard } from '@/api/cards'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage } from '@/api/cards'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 
@@ -99,9 +99,74 @@ const activeVariant = computed(() =>
   props.card.variants.find(v => v.rarity === currentRarity.value) ?? props.card.variants[0]
 )
 
-const imageUrl = computed(() =>
-  activeVariant.value ? getCardImageUrl(props.card.card_id, activeVariant.value.rarity) : ''
-)
+// Image cache buster — set after upload/revert to force browser reload
+const imageCacheBuster = ref(0)
+
+const imageUrl = computed(() => {
+  if (!activeVariant.value) return ''
+  const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
+  // Always bust cache for user uploads (image can change at same URL)
+  if (imageCacheBuster.value) return `${base}?t=${imageCacheBuster.value}`
+  if (activeVariant.value.image_source === 'user_upload') return `${base}?t=1`
+  return base
+})
+
+const isUserUpload = computed(() => activeVariant.value?.image_source === 'user_upload')
+
+// Image upload
+const fileInput = ref<HTMLInputElement | null>(null)
+const uploading = ref(false)
+const reverting = ref(false)
+const imageError = ref('')
+
+function triggerFileSelect() {
+  fileInput.value?.click()
+}
+
+async function onFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  uploading.value = true
+  imageError.value = ''
+  try {
+    const updated = await uploadCardImage(props.card.card_id, currentRarity.value, file)
+    // Update local variant data
+    const v = props.card.variants.find(v => v.rarity === currentRarity.value)
+    if (v) {
+      v.image_source = updated.image_source
+      v.image_path = updated.image_path
+    }
+    imageCacheBuster.value = Date.now()
+    emit('cardUpdated')
+  } catch (e: any) {
+    imageError.value = e?.response?.data?.detail ?? 'Upload failed'
+  } finally {
+    uploading.value = false
+    // Reset input so same file can be re-selected
+    input.value = ''
+  }
+}
+
+async function onRevertImage() {
+  reverting.value = true
+  imageError.value = ''
+  try {
+    const updated = await revertCardImage(props.card.card_id, currentRarity.value)
+    const v = props.card.variants.find(v => v.rarity === currentRarity.value)
+    if (v) {
+      v.image_source = updated.image_source
+      v.image_path = updated.image_path
+    }
+    imageCacheBuster.value = Date.now()
+    emit('cardUpdated')
+  } catch (e: any) {
+    imageError.value = e?.response?.data?.detail ?? 'Revert failed'
+  } finally {
+    reverting.value = false
+  }
+}
 
 async function onOwnershipUpdate(cardId: string, rarity: string, count: number) {
   await updateOwnership(cardId, rarity, count)
@@ -130,17 +195,60 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
 
 <template>
   <div class="p-5">
-    <!-- Image -->
-    <div class="aspect-[59/86] bg-gray-700 rounded-lg overflow-hidden mb-4">
+    <!-- Image with upload overlay -->
+    <div class="relative group aspect-[59/86] bg-gray-700 rounded-lg overflow-hidden mb-2">
       <img
         v-if="imageUrl"
         :src="imageUrl"
         :alt="card.name_zh || card.name_jp"
         class="w-full h-full object-cover"
       />
-      <div v-else class="w-full h-full flex items-center justify-center text-gray-600">
+      <div v-else class="w-full h-full flex items-center justify-center text-gray-500">
         No Image
       </div>
+
+      <!-- Upload overlay (hover) -->
+      <div
+        @click="triggerFileSelect"
+        class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+        :class="{ '!opacity-100': uploading }"
+      >
+        <!-- Spinner while uploading -->
+        <div v-if="uploading" class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+        <template v-else>
+          <!-- Camera icon -->
+          <svg class="w-8 h-8 text-white/80 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+          </svg>
+          <span class="text-white/80 text-xs font-medium">Upload Image</span>
+        </template>
+      </div>
+
+      <!-- Hidden file input -->
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        class="hidden"
+        @change="onFileSelected"
+      />
+    </div>
+
+    <!-- Revert button (only for user uploads) -->
+    <div class="mb-2 flex items-center justify-between min-h-[1.5rem]">
+      <button
+        v-if="isUserUpload"
+        @click="onRevertImage"
+        :disabled="reverting"
+        class="text-xs text-gray-400 hover:text-yellow-400 transition-colors flex items-center gap-1"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+        </svg>
+        {{ reverting ? 'Reverting...' : 'Revert to original' }}
+      </button>
+      <span v-if="imageError" class="text-xs text-red-400">{{ imageError }}</span>
     </div>
 
     <!-- Rarity tabs -->

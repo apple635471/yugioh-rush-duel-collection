@@ -70,7 +70,8 @@ class CardVariantModel(Base):
     rarity = Column(String, nullable=False)
     sort_order = Column(Integer, nullable=False, default=0)
     image_source = Column(String)  # "scraper" or "user_upload"
-    image_path = Column(String)  # relative path to image file
+    image_path = Column(String)  # relative path to current image file
+    scraper_image_path = Column(String)  # original scraper path (never overwritten by upload)
     owned_count = Column(Integer, nullable=False, default=0)
     created_at = Column(String, nullable=False, server_default=func.datetime("now"))
     updated_at = Column(String, nullable=False, server_default=func.datetime("now"))

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -50,7 +50,7 @@ def serve_card_image(
     if variant.image_source == "user_upload":
         user_path = get_user_image_path(card_id, rarity)
         if user_path:
-            return FileResponse(user_path, media_type="image/jpeg")
+            return _no_cache_file_response(user_path)
 
     # Fall back to scraper image
     if variant.image_path:
@@ -64,6 +64,16 @@ def serve_card_image(
                 return FileResponse(path, media_type="image/jpeg")
 
     raise HTTPException(status_code=404, detail="Image not found")
+
+
+def _no_cache_file_response(path) -> Response:
+    """Return an image file with no-cache headers to prevent stale browser cache."""
+    content = path.read_bytes()
+    return Response(
+        content=content,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 
 @router.post("/card/{card_id:path}/{rarity}/upload", response_model=CardVariantOut)
@@ -84,6 +94,10 @@ async def upload_image(
 
     content = await file.read()
     rel_path = save_user_image(card_id, rarity, content)
+
+    # Preserve scraper path before overwriting (one-time backfill for old data)
+    if not variant.scraper_image_path and variant.image_source == "scraper" and variant.image_path:
+        variant.scraper_image_path = variant.image_path
 
     variant.image_source = "user_upload"
     variant.image_path = rel_path
@@ -109,17 +123,8 @@ def revert_image(
 
     delete_user_image(card_id, rarity)
 
-    # Restore original scraper image path from the card
-    from ..models import CardModel
-    card = db.query(CardModel).filter_by(card_id=card_id).first()
-    # Find the original image_file from any sibling variant that still uses scraper
-    original_path = None
-    if card:
-        for v in card.variants:
-            if v.image_source == "scraper" and v.image_path:
-                original_path = v.image_path
-                break
-
+    # Restore from the preserved scraper_image_path (always reliable)
+    original_path = variant.scraper_image_path
     variant.image_source = "scraper" if original_path else None
     variant.image_path = original_path
     db.commit()

@@ -41,3 +41,27 @@ export async function searchCards(params: {
 export function getCardImageUrl(cardId: string, rarity: string): string {
   return `/api/images/card/${cardId}/${rarity}`
 }
+
+export async function uploadCardImage(
+  cardId: string,
+  rarity: string,
+  file: File,
+): Promise<CardVariant> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post<CardVariant>(
+    `/images/card/${cardId}/${rarity}/upload`,
+    form,
+  )
+  return data
+}
+
+export async function revertCardImage(
+  cardId: string,
+  rarity: string,
+): Promise<CardVariant> {
+  const { data } = await api.delete<CardVariant>(
+    `/images/card/${cardId}/${rarity}/upload`,
+  )
+  return data
+}

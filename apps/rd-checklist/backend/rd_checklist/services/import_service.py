@@ -146,12 +146,16 @@ def _upsert_variant(
             sort_order=sort_order,
             image_source="scraper" if image_file else None,
             image_path=image_file,
+            scraper_image_path=image_file,
             owned_count=0,
         )
         db.add(variant)
     else:
         # Update sort order and image (if from scraper), but NEVER touch owned_count
         variant.sort_order = sort_order
+        # Always keep scraper_image_path up to date with latest scraper data
+        if image_file:
+            variant.scraper_image_path = image_file
         if variant.image_source != "user_upload":
             variant.image_source = "scraper" if image_file else None
             variant.image_path = image_file

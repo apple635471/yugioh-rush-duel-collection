@@ -46,6 +46,7 @@ def _migrate_add_columns():
     migrations = [
         "ALTER TABLE cards ADD COLUMN summon_condition TEXT",
         "ALTER TABLE cards ADD COLUMN continuous_effect TEXT",
+        "ALTER TABLE card_variants ADD COLUMN scraper_image_path TEXT",
     ]
     with engine.connect() as conn:
         for sql in migrations:
@@ -55,3 +56,13 @@ def _migrate_add_columns():
             except Exception:
                 # Column already exists — ignore
                 conn.rollback()
+
+        # Backfill: copy image_path → scraper_image_path where not yet set
+        try:
+            conn.execute(text(
+                "UPDATE card_variants SET scraper_image_path = image_path "
+                "WHERE scraper_image_path IS NULL AND image_source = 'scraper' AND image_path IS NOT NULL"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()

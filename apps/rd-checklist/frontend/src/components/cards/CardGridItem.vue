@@ -22,9 +22,12 @@ const activeVariant = computed(() =>
   props.card.variants.find(v => v.rarity === activeRarity.value) ?? props.card.variants[0]
 )
 
-const imageUrl = computed(() =>
-  activeVariant.value ? getCardImageUrl(props.card.card_id, activeVariant.value.rarity) : ''
-)
+const imageUrl = computed(() => {
+  if (!activeVariant.value) return ''
+  const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
+  // Bust cache for user-uploaded images (URL stays the same but file changes)
+  return activeVariant.value.image_source === 'user_upload' ? `${base}?t=1` : base
+})
 
 const isOwned = computed(() => activeVariant.value?.owned_count ?? 0 > 0)
 
