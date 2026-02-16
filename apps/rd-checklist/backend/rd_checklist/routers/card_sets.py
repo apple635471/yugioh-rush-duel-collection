@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import CardModel, CardSetModel, CardVariantModel
-from ..schemas import CardOut, CardSetOut, CardSetWithCardsOut, ProductTypeOut
+from ..models import CardModel, CardSetModel, CardSetOverrideModel, CardVariantModel
+from ..schemas import (
+    CardOut,
+    CardSetOut,
+    CardSetOverrideOut,
+    CardSetUpdate,
+    CardSetWithCardsOut,
+    ProductTypeOut,
+)
 
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
@@ -87,3 +96,110 @@ def get_card_set(set_id: str, db: Session = Depends(get_db)):
         rarity_distribution=card_set.rarity_distribution,
         cards=[CardOut.model_validate(c) for c in cards],
     )
+
+
+# ── Overridable fields ──
+_OVERRIDABLE_FIELDS = {
+    "set_name_jp",
+    "set_name_zh",
+    "product_type",
+    "release_date",
+    "total_cards",
+    "rarity_distribution",
+}
+
+
+@router.patch("/{set_id}", response_model=CardSetOut)
+def update_card_set(
+    set_id: str,
+    body: CardSetUpdate,
+    db: Session = Depends(get_db),
+):
+    """Partially update a card set and persist overrides.
+
+    Each provided field is:
+    1. Written to card_sets immediately.
+    2. Saved as a card_set_override so future imports won't overwrite it.
+    """
+    card_set = db.query(CardSetModel).filter_by(set_id=set_id).first()
+    if not card_set:
+        raise HTTPException(status_code=404, detail=f"Set {set_id} not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    updates = body.model_dump(exclude_unset=True)
+
+    for field, new_value in updates.items():
+        if field not in _OVERRIDABLE_FIELDS:
+            continue
+
+        # Convert to string for storage in override table
+        str_value = str(new_value) if new_value is not None else None
+
+        # 1) Apply to card_set row
+        setattr(card_set, field, new_value)
+
+        # 2) Upsert override
+        override = (
+            db.query(CardSetOverrideModel)
+            .filter_by(set_id=set_id, field_name=field)
+            .first()
+        )
+        if override is None:
+            override = CardSetOverrideModel(
+                set_id=set_id, field_name=field, value=str_value
+            )
+            db.add(override)
+        else:
+            override.value = str_value
+            override.updated_at = now
+
+    card_set.updated_at = now
+    db.commit()
+    db.refresh(card_set)
+    return card_set
+
+
+@router.get("/{set_id}/overrides", response_model=list[CardSetOverrideOut])
+def list_overrides(set_id: str, db: Session = Depends(get_db)):
+    """List all user overrides for a card set."""
+    card_set = db.query(CardSetModel).filter_by(set_id=set_id).first()
+    if not card_set:
+        raise HTTPException(status_code=404, detail=f"Set {set_id} not found")
+
+    overrides = (
+        db.query(CardSetOverrideModel)
+        .filter_by(set_id=set_id)
+        .order_by(CardSetOverrideModel.field_name)
+        .all()
+    )
+    return [
+        CardSetOverrideOut(
+            set_id=o.set_id,
+            field_name=o.field_name,
+            value=o.value,
+            updated_at=o.updated_at,
+        )
+        for o in overrides
+    ]
+
+
+@router.delete("/{set_id}/overrides/{field_name}")
+def delete_override(
+    set_id: str,
+    field_name: str,
+    db: Session = Depends(get_db),
+):
+    """Delete a single override, reverting the field to scraper value on next import."""
+    override = (
+        db.query(CardSetOverrideModel)
+        .filter_by(set_id=set_id, field_name=field_name)
+        .first()
+    )
+    if not override:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No override for {set_id}.{field_name}",
+        )
+    db.delete(override)
+    db.commit()
+    return {"detail": f"Override {set_id}.{field_name} deleted. Will revert on next import."}

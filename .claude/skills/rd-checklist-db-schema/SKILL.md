@@ -40,13 +40,22 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - `scraper_image_path`: 原始 scraper 路徑，永不覆蓋；還原時從此欄恢復
 - `sort_order`: 同一卡內的稀有度排序
 
+### card_set_overrides ★使用者手動覆寫
+- `id` (PK, auto), `set_id` (FK → card_sets, indexed)
+- `field_name`: 被覆寫的欄位名 (set_name_jp, set_name_zh, product_type, release_date, total_cards, rarity_distribution)
+- `UNIQUE(set_id, field_name)`: 每組每欄位只一筆 override
+- `value` (Text): 使用者手動設定的值 (字串；rarity_distribution 為 JSON 字串)
+- 匯入時檢查: 若有 override，跳過該欄位不用 scraper 值
+- 刪除 override 後，下次匯入將恢復 scraper 原始值
+
 ### card_edits (歷史記錄)
 - `card_id`, `field_name`, `old_value`, `new_value`, `edited_at`
 
 ## 關鍵設計
 
 - **一卡多版**: scraper 輸出 `"UR/SER"` → 匯入時拆為 2 筆 variant，各自獨立追蹤 `owned_count`
-- **匯入安全**: `_upsert_variant()` 只在 variant 不存在時 INSERT，已存在的只更新 image 欄位，永不碰 `owned_count`
+- **匯入安全 (variant)**: `_upsert_variant()` 只在 variant 不存在時 INSERT，已存在的只更新 image 欄位，永不碰 `owned_count`
+- **匯入安全 (card_set)**: `_import_one_set()` 會先查詢 card_set_overrides，有 override 的欄位使用 override 值，跳過 scraper 資料
 - **Eager loading**: `CardModel.variants` 使用 `lazy="selectin"`，查詢卡組時一次載入所有 variants 避免 N+1
 - **編輯歷史**: PATCH /api/cards/ 時自動記錄每個欄位的 old/new value 到 card_edits
 - **Auto-migration**: `init-db` 自動執行 `ALTER TABLE ADD COLUMN` 補新欄位，用 try/except 跳過已存在的欄位 (safe to run repeatedly)

@@ -41,6 +41,23 @@ Scraper 輸出 `"rarity": "UR/SER"`，匯入時:
 
 ## ★ 安全規則
 
+### Card Set Override 保護
+
+`_import_one_set()` 匯入卡組時會先查詢 `card_set_overrides` 表:
+
+```python
+overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filter_by(set_id=set_id)}
+# 有 override 的欄位 → 使用 override 值
+# 無 override 的欄位 → 使用 scraper 值
+```
+
+可被 override 的欄位: `set_name_jp`, `set_name_zh`, `product_type`, `release_date`, `total_cards`, `rarity_distribution`
+不可被 override 的欄位: `post_url` (永遠用 scraper 值)
+
+Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。
+
+### Variant owned_count 保護
+
 `_upsert_variant()` 的核心保護:
 
 ```python

@@ -81,6 +81,28 @@ class CardVariantModel(Base):
     card = relationship("CardModel", back_populates="variants")
 
 
+class CardSetOverrideModel(Base):
+    """User overrides for card set metadata fields.
+
+    When a user manually edits a card set field, the override is stored here.
+    During import, fields with overrides are NOT overwritten by scraper data.
+    Deleting an override reverts the field to the scraper value on next import.
+    """
+
+    __tablename__ = "card_set_overrides"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    set_id = Column(String, ForeignKey("card_sets.set_id"), nullable=False, index=True)
+    field_name = Column(String, nullable=False)
+    value = Column(Text)  # stored as string; JSON for rarity_distribution
+    created_at = Column(String, nullable=False, server_default=func.datetime("now"))
+    updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
+
+    __table_args__ = (UniqueConstraint("set_id", "field_name"),)
+
+    card_set = relationship("CardSetModel")
+
+
 class CardEditModel(Base):
     __tablename__ = "card_edits"
 

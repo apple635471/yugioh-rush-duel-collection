@@ -33,7 +33,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router。
 
 ```
 api/client.ts      → axios instance, baseURL: '/api', timeout: 30s
-api/cardSets.ts    → fetchProductTypes, fetchCardSets, fetchCardSet, fetchSetStats
+api/cardSets.ts    → fetchProductTypes, fetchCardSets, fetchCardSet, fetchSetStats,
+                     updateCardSet, fetchCardSetOverrides, deleteCardSetOverride
 api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getCardImageUrl,
                      uploadCardImage, revertCardImage
 ```
@@ -56,9 +57,15 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `OwnershipBadge`: 持有數 badge (綠色/灰色)
 - `OwnershipControl`: `[-] 0 [+]` 按鈕，樂觀更新 + emit event
 
-### Detail — 側邊欄
+### Detail — 側邊欄 & 卡組編輯
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉
 - `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** (取代獨立的 CardEditForm)
+- `SetMetadataEditor`: 卡組 metadata inline 編輯，嵌入 SetView header
+  - View mode: 顯示中文/日文名 + meta tags (set_id, release_date, card count)
+  - Edit mode: 表單可修改 set_name_zh, set_name_jp, product_type, release_date, total_cards, rarity_distribution
+  - 儲存時自動建立 override (防止匯入覆蓋)，已有 override 的欄位顯示黃色圖示
+  - 可展開查看/刪除 override (恢復 scraper 值)
+  - `@updated` → SetView 重新 `loadAll()` 刷新資料
   - **卡圖上傳**: 大圖 hover 顯示 overlay，點擊選擇檔案上傳替換；user_upload 時顯示「Revert to original」按鈕
   - **Cache buster**: user_upload 圖 URL 加 `?t=...`，上傳/還原後 `imageCacheBuster = Date.now()` 強制重載
   - Card Type: 下拉選單 (所有簡單 + 複合類型)
@@ -81,3 +88,9 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 2. → `emit('cardUpdated')` → `AppSidebar` 重新 `fetchCard()` 更新顯示
 3. 編輯時 `isMonster` computed 動態顯示/隱藏怪獸專屬欄位
 4. `expandedSections` reactive 控制空白文字欄位的展開/收合
+
+**卡組 metadata 編輯**:
+1. `SetMetadataEditor` 的 Edit 按鈕 → 展開 inline 表單
+2. Save → `PATCH /api/card-sets/{set_id}` (自動建立 override)
+3. → `emit('updated')` → `SetView` 重新 `loadAll()` 刷新全部資料
+4. Override 管理: 展開可見 active overrides，可逐一刪除恢復 scraper 值

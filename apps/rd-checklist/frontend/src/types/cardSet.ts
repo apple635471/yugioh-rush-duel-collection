@@ -26,3 +26,19 @@ export interface OwnershipStats {
   owned_variants: number
   total_owned_copies: number
 }
+
+export interface CardSetUpdate {
+  set_name_jp?: string
+  set_name_zh?: string
+  product_type?: string
+  release_date?: string
+  total_cards?: number
+  rarity_distribution?: string
+}
+
+export interface CardSetOverride {
+  set_id: string
+  field_name: string
+  value: string | null
+  updated_at: string
+}

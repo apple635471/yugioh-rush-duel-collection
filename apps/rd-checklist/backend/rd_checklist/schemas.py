@@ -80,6 +80,30 @@ class CardSetOut(BaseModel):
         from_attributes = True
 
 
+class CardSetUpdate(BaseModel):
+    """Partial update for card set metadata.
+
+    Only provided fields will be updated and stored as overrides.
+    """
+
+    set_name_jp: Optional[str] = None
+    set_name_zh: Optional[str] = None
+    product_type: Optional[str] = None
+    release_date: Optional[str] = None
+    total_cards: Optional[int] = None
+    rarity_distribution: Optional[str] = None  # JSON string
+
+
+class CardSetOverrideOut(BaseModel):
+    set_id: str
+    field_name: str
+    value: Optional[str] = None
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
 class CardSetWithCardsOut(CardSetOut):
     cards: list[CardOut] = []
 

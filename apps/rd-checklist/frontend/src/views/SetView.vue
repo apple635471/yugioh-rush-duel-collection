@@ -10,6 +10,7 @@ import type { BreadcrumbItem } from '@/components/layout/BreadcrumbBar.vue'
 import ViewToggle from '@/components/layout/ViewToggle.vue'
 import CardGrid from '@/components/cards/CardGrid.vue'
 import CardTable from '@/components/cards/CardTable.vue'
+import SetMetadataEditor from '@/components/detail/SetMetadataEditor.vue'
 
 const route = useRoute()
 const store = useCardSetsStore()
@@ -56,22 +57,19 @@ watch(setId, loadAll)
     </div>
 
     <template v-else-if="store.currentSet">
-      <!-- Set header -->
+      <!-- Set header (editable) -->
       <div class="mb-6">
-        <div class="flex items-start justify-between gap-4 mb-3">
-          <div>
-            <h1 class="text-xl font-bold text-gray-100">
-              {{ store.currentSet.set_name_zh || store.currentSet.set_name_jp }}
-            </h1>
-            <p v-if="store.currentSet.set_name_zh && store.currentSet.set_name_jp" class="text-sm text-gray-400 mt-0.5">
-              {{ store.currentSet.set_name_jp }}
-            </p>
-          </div>
-          <ViewToggle />
-        </div>
+        <SetMetadataEditor
+          :card-set="store.currentSet"
+          @updated="loadAll"
+        >
+          <template #view-toggle>
+            <ViewToggle />
+          </template>
+        </SetMetadataEditor>
 
         <!-- Progress bar -->
-        <div v-if="stats" class="mb-2">
+        <div v-if="stats" class="mt-3 mb-2">
           <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
             <span>Collection Progress</span>
             <span>
@@ -86,13 +84,6 @@ watch(setId, loadAll)
               :style="{ width: `${progressPercent}%` }"
             />
           </div>
-        </div>
-
-        <!-- Set meta -->
-        <div class="flex flex-wrap gap-3 text-xs text-gray-400">
-          <span class="bg-gray-700 px-2 py-0.5 rounded">{{ store.currentSet.set_id }}</span>
-          <span v-if="store.currentSet.release_date">{{ store.currentSet.release_date }}</span>
-          <span>{{ store.currentSet.cards.length }} cards</span>
         </div>
       </div>
 

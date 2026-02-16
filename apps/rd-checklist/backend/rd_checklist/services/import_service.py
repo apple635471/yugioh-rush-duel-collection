@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from ..models import CardModel, CardSetModel, CardVariantModel
+from ..models import CardModel, CardSetModel, CardSetOverrideModel, CardVariantModel
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,11 @@ def import_scraper_data(
 
 
 def _import_one_set(db: Session, data: dict, force: bool) -> None:
-    """Import a single card set from parsed JSON data."""
+    """Import a single card set from parsed JSON data.
+
+    Fields that have user overrides (in card_set_overrides) will NOT be
+    overwritten by scraper data — the override value is applied instead.
+    """
     set_id = data["set_id"]
 
     # Upsert card_set
@@ -68,15 +72,36 @@ def _import_one_set(db: Session, data: dict, force: bool) -> None:
         card_set = CardSetModel(set_id=set_id)
         db.add(card_set)
 
-    card_set.set_name_jp = data.get("set_name_jp", "")
-    card_set.set_name_zh = data.get("set_name_zh", "")
-    card_set.product_type = data.get("product_type", "unknown")
-    card_set.release_date = data.get("release_date")
-    card_set.post_url = data.get("post_url", "")
-    card_set.total_cards = data.get("total_cards", 0)
-    rarity_dist = data.get("rarity_distribution")
-    if rarity_dist:
-        card_set.rarity_distribution = json.dumps(rarity_dist, ensure_ascii=False)
+    # Load user overrides for this set
+    overrides: dict[str, str | None] = {}
+    for ov in (
+        db.query(CardSetOverrideModel)
+        .filter_by(set_id=set_id)
+        .all()
+    ):
+        overrides[ov.field_name] = ov.value
+
+    # Helper: use override value if present, otherwise use scraper value
+    def _val(field: str, scraper_val):  # noqa: ANN001
+        if field in overrides:
+            return overrides[field]
+        return scraper_val
+
+    card_set.set_name_jp = _val("set_name_jp", data.get("set_name_jp", ""))
+    card_set.set_name_zh = _val("set_name_zh", data.get("set_name_zh", ""))
+    card_set.product_type = _val("product_type", data.get("product_type", "unknown"))
+    card_set.release_date = _val("release_date", data.get("release_date"))
+    card_set.post_url = data.get("post_url", "")  # post_url 不需要 override
+    if "total_cards" in overrides:
+        card_set.total_cards = int(overrides["total_cards"]) if overrides["total_cards"] else 0
+    else:
+        card_set.total_cards = data.get("total_cards", 0)
+    if "rarity_distribution" in overrides:
+        card_set.rarity_distribution = overrides["rarity_distribution"]
+    else:
+        rarity_dist = data.get("rarity_distribution")
+        if rarity_dist:
+            card_set.rarity_distribution = json.dumps(rarity_dist, ensure_ascii=False)
     db.flush()
 
     # Import cards
