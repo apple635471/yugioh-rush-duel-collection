@@ -34,3 +34,4 @@ description: Navigation hub for Yu-Gi-Oh Rush Duel Collection. Read this first w
 | 任務 | 讀此 SKILL |
 |-----|-----------|
 | 架構/schema/API/元件變更後需同步文件 | `rd-docs-sync` |
+| feature/fix/refactor 後需更新 CHANGELOG | `rd-changelog-reminder` |

@@ -24,11 +24,13 @@ description: Mandatory rule to keep documentation in sync with code changes. ALW
 | 產品類型 (新前綴) | `rd-product-types/SKILL.md` |
 | 專案結構 (搬目錄/改 config) | 根目錄 `README.md`, `CLAUDE.md` |
 | 新增子系統/工具 | 根目錄 `README.md`, 對應 `README.md`, 考慮建新 SKILL |
+| 任何 feature/fix/refactor | `CHANGELOG.md` — 見 `rd-changelog-reminder` |
 
 ## 文件位置速查
 
 ```
 .claude/skills/rd-project-index/SKILL.md            # 任務→SKILL 導航 (邏輯/feature/bug 時先讀)
+.claude/skills/rd-changelog-reminder/SKILL.md       # feature/fix/refactor 時更新 CHANGELOG
 README.md                                           # 系統架構總覽、資料流、快速開始
 CLAUDE.md                                           # 開發指令、注意事項
 tools/rd-card-scraper/README.md                    # Scraper 架構、輸出格式

@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.3.2 (2026-02-15)
+
+### 新增
+
+#### 卡組 metadata 編輯與 override 持久化
+- **SetMetadataEditor**: 卡組頁可編輯 set_name_jp/zh、product_type、release_date、total_cards、rarity_distribution
+- **card_set_overrides 表**: 使用者編輯的欄位存於此表，匯入時不覆蓋有 override 的欄位
+- **還原單一欄位**: 刪除 override 後，下次匯入會恢復 scraper 原始值
+
+### 更新
+
+- API: `PATCH /api/card-sets/{set_id}` 編輯卡組、`GET /overrides` 列出 override、`DELETE /overrides/{field}` 還原
+- 匯入服務: `_upsert_card_set()` 跳過有 override 的欄位
+- 前端 `api/cardSets.ts`: `updateCardSet()`, `fetchCardSetOverrides()`, `deleteCardSetOverride()`
+
+---
+
 ## v0.3.1 (2026-02-15)
 
 ### 新增
