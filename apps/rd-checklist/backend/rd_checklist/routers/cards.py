@@ -51,28 +51,24 @@ def get_next_card_id(set_id: str, db: Session = Depends(get_db)):
 
     max_num = -1
     pad_width = 3  # default
+    prefix = ""
 
     # Detect card_id pattern: find the last group of digits
     # e.g. "RD/KP01-JP000" → suffix "000"
+    # Derive prefix and pad_width from the card with the highest numeric suffix
     for (cid,) in existing:
         match = re.search(r"(\d+)$", cid)
         if match:
-            num_str = match.group(1)
-            pad_width = max(pad_width, len(num_str))
-            max_num = max(max_num, int(num_str))
+            num = int(match.group(1))
+            if num > max_num:
+                max_num = num
+                pad_width = len(match.group(1))
+                prefix = cid[: match.start()]
 
     if max_num < 0:
         next_num = 0
     else:
         next_num = max_num + 1
-
-    # Reconstruct prefix from first card_id
-    prefix = ""
-    for (cid,) in existing:
-        match = re.search(r"(\d+)$", cid)
-        if match:
-            prefix = cid[: match.start()]
-            break
 
     if not prefix:
         prefix = f"RD/{set_id}-JP"

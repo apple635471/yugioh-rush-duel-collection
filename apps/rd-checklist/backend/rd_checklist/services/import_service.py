@@ -123,8 +123,8 @@ def _import_one_card(
     # Upsert card
     card = db.query(CardModel).filter_by(card_id=card_id).first()
 
-    if card is not None and card.is_manual:
-        # Never overwrite manually created cards
+    if card is not None and card.is_manual and not force:
+        # Never overwrite manually created cards (unless --force)
         logger.debug(f"Skipping manual card {card_id}")
         return
 
@@ -132,10 +132,11 @@ def _import_one_card(
         card = CardModel(card_id=card_id, set_id=set_id)
         db.add(card)
 
-    # Load per-field overrides
+    # Load per-field overrides (skipped when force=True)
     overrides: dict[str, str | None] = {}
-    for ov in db.query(CardOverrideModel).filter_by(card_id=card_id).all():
-        overrides[ov.field_name] = ov.value
+    if not force:
+        for ov in db.query(CardOverrideModel).filter_by(card_id=card_id).all():
+            overrides[ov.field_name] = ov.value
 
     def _val(field: str, scraper_val):  # noqa: ANN001
         if field in overrides:
@@ -168,8 +169,9 @@ def _import_one_card(
     card.original_rarity_string = _val("original_rarity_string", rarity_string)
     db.flush()
 
-    # Split rarity string into individual variants
-    rarities = [r.strip() for r in rarity_string.split("/") if r.strip()]
+    # Split rarity string into individual variants (use resolved value with override)
+    resolved_rarity = card.original_rarity_string or rarity_string
+    rarities = [r.strip() for r in resolved_rarity.split("/") if r.strip()]
     if not rarities:
         rarities = ["N"]
 

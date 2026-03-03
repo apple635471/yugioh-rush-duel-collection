@@ -19,7 +19,7 @@
 - PATCH /api/cards: 非 manual 卡片的編輯會自動建立 override
 - 匯入服務: `_import_one_card()` 跳過 `is_manual`、套用 `card_overrides`
 - 前端: `sidebarMode` 區分 create/detail、`CardCreatePanel`、`createCard()` / `getNextCardId()`
-- ui store: `sidebarCreateSetId`、`openSidebarForCreate(setId)`
+- ui store: `sidebarCreateSetId`、`openCreateSidebar(setId)`
 
 ---
 
