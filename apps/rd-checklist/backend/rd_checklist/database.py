@@ -47,6 +47,7 @@ def _migrate_add_columns():
         "ALTER TABLE cards ADD COLUMN summon_condition TEXT",
         "ALTER TABLE cards ADD COLUMN continuous_effect TEXT",
         "ALTER TABLE card_variants ADD COLUMN scraper_image_path TEXT",
+        "ALTER TABLE cards ADD COLUMN is_manual BOOLEAN NOT NULL DEFAULT 0",
     ]
     with engine.connect() as conn:
         for sql in migrations:

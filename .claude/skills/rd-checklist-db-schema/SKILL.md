@@ -30,6 +30,7 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - `effect`: 效果說明
 - `continuous_effect`: 永續效果 (與一般效果分開)
 - `is_legend` (bool), `original_rarity_string`: 原始稀有度字串 "UR/SER"
+- `is_manual` (bool, default False): 手動建立的卡片，import 時整張跳過
 
 ### card_variants ★核心
 - `id` (PK, auto), `card_id` (FK → cards), `rarity`
@@ -48,6 +49,15 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - 匯入時檢查: 若有 override，跳過該欄位不用 scraper 值
 - 刪除 override 後，下次匯入將恢復 scraper 原始值
 
+### card_overrides ★使用者手動覆寫 (卡片層級)
+- `id` (PK, auto), `card_id` (FK → cards, indexed)
+- `field_name`: 被覆寫的欄位名 (name_jp, name_zh, card_type, attribute, monster_type, level, atk, defense, summon_condition, condition, effect, continuous_effect, is_legend, original_rarity_string)
+- `UNIQUE(card_id, field_name)`: 每卡每欄位只一筆 override
+- `value` (Text): 使用者手動設定的值
+- 匯入時檢查: 若有 override，跳過該欄位不用 scraper 值
+- 刪除 override 後，下次匯入將恢復 scraper 原始值
+- 注意: `is_manual=True` 的卡片整張跳過，不需要 per-field override
+
 ### card_edits (歷史記錄)
 - `card_id`, `field_name`, `old_value`, `new_value`, `edited_at`
 
@@ -56,6 +66,8 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - **一卡多版**: scraper 輸出 `"UR/SER"` → 匯入時拆為 2 筆 variant，各自獨立追蹤 `owned_count`
 - **匯入安全 (variant)**: `_upsert_variant()` 只在 variant 不存在時 INSERT，已存在的只更新 image 欄位，永不碰 `owned_count`
 - **匯入安全 (card_set)**: `_import_one_set()` 會先查詢 card_set_overrides，有 override 的欄位使用 override 值，跳過 scraper 資料
+- **匯入安全 (card)**: `is_manual=True` 的卡片整張跳過；非 manual 卡片透過 card_overrides 保護已編輯欄位
+- **手動建立卡片**: `POST /api/cards` 建立的卡片 `is_manual=True`，匯入永不覆蓋
 - **Eager loading**: `CardModel.variants` 使用 `lazy="selectin"`，查詢卡組時一次載入所有 variants 避免 N+1
 - **編輯歷史**: PATCH /api/cards/ 時自動記錄每個欄位的 old/new value 到 card_edits
 - **Auto-migration**: `init-db` 自動執行 `ALTER TABLE ADD COLUMN` 補新欄位，用 try/except 跳過已存在的欄位 (safe to run repeatedly)

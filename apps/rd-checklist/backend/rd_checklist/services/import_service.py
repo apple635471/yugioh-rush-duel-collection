@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from ..models import CardModel, CardSetModel, CardSetOverrideModel, CardVariantModel
+from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel
 
 logger = logging.getLogger(__name__)
 
@@ -112,32 +112,60 @@ def _import_one_set(db: Session, data: dict, force: bool) -> None:
 def _import_one_card(
     db: Session, card_data: dict, set_id: str, force: bool
 ) -> None:
-    """Import a single card and its rarity variants."""
+    """Import a single card and its rarity variants.
+
+    - Cards with is_manual=True are skipped entirely.
+    - For other cards, per-field overrides from card_overrides are respected.
+    """
     card_id = card_data["card_id"]
     rarity_string = card_data.get("rarity", "N")
 
     # Upsert card
     card = db.query(CardModel).filter_by(card_id=card_id).first()
+
+    if card is not None and card.is_manual:
+        # Never overwrite manually created cards
+        logger.debug(f"Skipping manual card {card_id}")
+        return
+
     if card is None:
         card = CardModel(card_id=card_id, set_id=set_id)
         db.add(card)
 
-    # Always update card fields from scraper (these are source-of-truth)
+    # Load per-field overrides
+    overrides: dict[str, str | None] = {}
+    for ov in db.query(CardOverrideModel).filter_by(card_id=card_id).all():
+        overrides[ov.field_name] = ov.value
+
+    def _val(field: str, scraper_val):  # noqa: ANN001
+        if field in overrides:
+            return overrides[field]
+        return scraper_val
+
     card.set_id = set_id
-    card.name_jp = card_data.get("name_jp", "")
-    card.name_zh = card_data.get("name_zh", "")
-    card.card_type = card_data.get("card_type", "")
-    card.attribute = card_data.get("attribute")
-    card.monster_type = card_data.get("monster_type")
-    card.level = card_data.get("level")
-    card.atk = card_data.get("atk")
-    card.defense = card_data.get("defense")
-    card.summon_condition = card_data.get("summon_condition")
-    card.condition = card_data.get("condition")
-    card.effect = card_data.get("effect")
-    card.continuous_effect = card_data.get("continuous_effect")
-    card.is_legend = card_data.get("is_legend", False)
-    card.original_rarity_string = rarity_string
+    card.name_jp = _val("name_jp", card_data.get("name_jp", ""))
+    card.name_zh = _val("name_zh", card_data.get("name_zh", ""))
+    card.card_type = _val("card_type", card_data.get("card_type", ""))
+    card.attribute = _val("attribute", card_data.get("attribute"))
+    card.monster_type = _val("monster_type", card_data.get("monster_type"))
+
+    level_val = _val("level", card_data.get("level"))
+    card.level = int(level_val) if level_val is not None else None
+
+    card.atk = _val("atk", card_data.get("atk"))
+    card.defense = _val("defense", card_data.get("defense"))
+    card.summon_condition = _val("summon_condition", card_data.get("summon_condition"))
+    card.condition = _val("condition", card_data.get("condition"))
+    card.effect = _val("effect", card_data.get("effect"))
+    card.continuous_effect = _val("continuous_effect", card_data.get("continuous_effect"))
+
+    is_legend_val = _val("is_legend", card_data.get("is_legend", False))
+    if isinstance(is_legend_val, str):
+        card.is_legend = is_legend_val.lower() == "true"
+    else:
+        card.is_legend = bool(is_legend_val)
+
+    card.original_rarity_string = _val("original_rarity_string", rarity_string)
     db.flush()
 
     # Split rarity string into individual variants

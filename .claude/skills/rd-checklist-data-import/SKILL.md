@@ -56,6 +56,24 @@ overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filte
 
 Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。
 
+### Card Override 保護 (卡片層級)
+
+`_import_one_card()` 匯入卡片時有兩層保護:
+
+1. **is_manual 整張跳過**: 手動建立的卡片 (`is_manual=True`) 完全跳過匯入
+2. **per-field override**: 非 manual 卡片，查詢 `card_overrides` 表，有 override 的欄位使用 override 值
+
+```python
+if card is not None and card.is_manual:
+    return  # 完全跳過
+
+overrides = {o.field_name: o.value for o in db.query(CardOverrideModel).filter_by(card_id=card_id)}
+def _val(field, scraper_val):
+    return overrides[field] if field in overrides else scraper_val
+```
+
+Override 透過 `PATCH /api/cards/{card_id}` 自動建立 (非 manual 卡片)；手動建立的卡片不需要 override 因為整張跳過。
+
 ### Variant owned_count 保護
 
 `_upsert_variant()` 的核心保護:

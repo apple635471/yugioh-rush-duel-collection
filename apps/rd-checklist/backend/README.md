@@ -9,7 +9,7 @@ main.py                     # FastAPI app, CORS, 註冊 routers
   │
   ├── routers/
   │   ├── card_sets.py      # GET /api/card-sets, /product-types, /{set_id}
-  │   ├── cards.py          # GET/PATCH /api/cards/{card_id}
+  │   ├── cards.py          # GET/POST /api/cards, GET/PATCH /{card_id}, POST variants, GET next-id
   │   ├── ownership.py      # PATCH /api/ownership/{card_id}/{rarity}, /batch, GET /stats
   │   ├── search.py         # GET /api/search?q=&card_type=&attribute=&level=&rarity=&owned=
   │   └── images.py         # GET /api/images/card/{card_id}/{rarity}, POST upload, DELETE revert
@@ -18,7 +18,7 @@ main.py                     # FastAPI app, CORS, 註冊 routers
   │   ├── import_service.py # 從 scraper data 匯入 DB (拆分多稀有度)
   │   └── image_service.py  # 圖片路徑解析 (scraper data vs user uploads)
   │
-  ├── models.py             # SQLAlchemy ORM (card_sets, cards, card_variants, card_set_overrides, card_edits)
+  ├── models.py             # SQLAlchemy ORM (card_sets, cards, card_variants, card_set_overrides, card_overrides, card_edits)
   ├── schemas.py            # Pydantic request/response models
   ├── database.py           # Engine setup (WAL mode), get_db dependency
   ├── config.py             # 路徑設定 (DB, scraper data, user uploads)
@@ -38,10 +38,15 @@ card_sets  ◄──1:N──  cards  ◄──1:N──  card_variants
   total_cards         atk/defense         image_path, scraper_image_path
   rarity_distribution effect/condition    UNIQUE(card_id, rarity)
                       is_legend
+                      is_manual (手動建立)
 
-card_set_overrides (使用者手動覆寫)
+card_set_overrides (使用者手動覆寫 - 卡組)
   set_id (FK), field_name, value
   UNIQUE(set_id, field_name)
+
+card_overrides (使用者手動覆寫 - 卡片)
+  card_id (FK), field_name, value
+  UNIQUE(card_id, field_name)
 
 card_edits (歷史記錄)
   card_id, field_name, old_value, new_value, edited_at
@@ -49,6 +54,7 @@ card_edits (歷史記錄)
 
 **關鍵設計**：同一張卡的不同稀有度 (如 UR/SER) 拆為獨立 `card_variants`，各自追蹤 `owned_count`。
 匯入時 card set 的手動覆寫欄位不會被 scraper 資料蓋掉 (由 `card_set_overrides` 表保護)。
+手動建立的卡片 (`is_manual=True`) 匯入時整張跳過；非 manual 卡片的手動編輯由 `card_overrides` 表保護。
 
 ## 指令
 
@@ -69,8 +75,11 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 | PATCH | `/api/card-sets/{set_id}` | 編輯卡組 metadata (自動建立 override) |
 | GET | `/api/card-sets/{set_id}/overrides` | 查看該卡組所有手動覆寫 |
 | DELETE | `/api/card-sets/{set_id}/overrides/{field}` | 刪除覆寫 (下次匯入恢復 scraper 值) |
+| GET | `/api/cards/next-id/{set_id}` | 自動生成下一個可用 card_id |
+| POST | `/api/cards` | 建立新卡 (is_manual=True) + 初始 variant |
 | GET | `/api/cards/{card_id}` | 單卡詳情 |
-| PATCH | `/api/cards/{card_id}` | 編輯卡片 (記錄 card_edits) |
+| PATCH | `/api/cards/{card_id}` | 編輯卡片 (記錄 card_edits, 非 manual 自動建 override) |
+| POST | `/api/cards/{card_id}/variants` | 為現有卡新增稀有度 variant |
 | PATCH | `/api/ownership/{card_id}/{rarity}` | 更新持有數 |
 | PATCH | `/api/ownership/batch` | 批次更新 |
 | GET | `/api/ownership/stats[/{set_id}]` | 收藏統計 |
@@ -81,6 +90,6 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 
 ## 注意事項
 
-- 匯入永不覆蓋 `owned_count` 和有 override 的卡組欄位，可安全重新匯入
+- 匯入永不覆蓋 `owned_count`、有 override 的卡組/卡片欄位、手動建立的卡片 (is_manual)，可安全重新匯入
 - SQLAlchemy `lazy="selectin"` 避免 N+1 查詢
 - CORS 允許 localhost:5173 (前端 dev server)

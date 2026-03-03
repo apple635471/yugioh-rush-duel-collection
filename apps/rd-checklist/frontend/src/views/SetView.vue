@@ -45,6 +45,13 @@ async function loadStats() {
 
 onMounted(loadAll)
 watch(setId, loadAll)
+
+// Reload data when sidebar closes (card may have been created or edited)
+watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
+  if (!isOpen && wasOpen) {
+    loadAll()
+  }
+})
 </script>
 
 <template>
@@ -64,6 +71,16 @@ watch(setId, loadAll)
           @updated="loadAll"
         >
           <template #view-toggle>
+            <button
+              @click="ui.openCreateSidebar(setId)"
+              class="text-xs text-gray-400 hover:text-yellow-400 border border-gray-600 hover:border-yellow-500/50 rounded px-2 py-1 transition-colors"
+              title="Add new card"
+            >
+              <svg class="w-3.5 h-3.5 inline-block mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add Card
+            </button>
             <ViewToggle />
           </template>
         </SetMetadataEditor>

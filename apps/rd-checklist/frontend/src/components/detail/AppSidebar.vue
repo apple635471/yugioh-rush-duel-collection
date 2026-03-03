@@ -4,6 +4,7 @@ import { useUiStore } from '@/stores/ui'
 import { fetchCard } from '@/api/cards'
 import type { Card } from '@/types/card'
 import CardDetailPanel from './CardDetailPanel.vue'
+import CardCreatePanel from './CardCreatePanel.vue'
 
 const ui = useUiStore()
 const card = ref<Card | null>(null)
@@ -29,6 +30,10 @@ function onKeydown(e: KeyboardEvent) {
 }
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
+
+function onCardCreated() {
+  ui.closeSidebar()
+}
 </script>
 
 <template>
@@ -53,23 +58,35 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
         </svg>
       </button>
 
-      <!-- Loading -->
-      <div v-if="loading" class="flex items-center justify-center h-64">
-        <div class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <!-- Create mode -->
+      <template v-if="ui.sidebarMode === 'create'">
+        <CardCreatePanel
+          v-if="ui.sidebarCreateSetId"
+          :set-id="ui.sidebarCreateSetId"
+          @card-created="onCardCreated"
+        />
+      </template>
 
-      <!-- Card detail -->
-      <CardDetailPanel
-        v-else-if="card"
-        :card="card"
-        :active-rarity="ui.sidebarRarity ?? card.variants[0]?.rarity ?? ''"
-        @card-updated="loadCard"
-      />
+      <!-- Detail mode -->
+      <template v-else>
+        <!-- Loading -->
+        <div v-if="loading" class="flex items-center justify-center h-64">
+          <div class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+        </div>
 
-      <!-- Error -->
-      <div v-else class="p-6 text-center text-gray-500">
-        Card not found.
-      </div>
+        <!-- Card detail -->
+        <CardDetailPanel
+          v-else-if="card"
+          :card="card"
+          :active-rarity="ui.sidebarRarity ?? card.variants[0]?.rarity ?? ''"
+          @card-updated="loadCard"
+        />
+
+        <!-- Error -->
+        <div v-else class="p-6 text-center text-gray-500">
+          Card not found.
+        </div>
+      </template>
     </aside>
   </Teleport>
 </template>
