@@ -30,25 +30,27 @@ App.vue
 │       └── CardGrid / CardTable
 │
 └── AppSidebar (Teleport)  # 條件: ui.sidebarOpen
-    └── CardDetailPanel    # 大圖 + 完整資訊 + 效果
-        └── CardEditForm   # 條件: showEditForm
+    ├── CardDetailPanel    # ui.sidebarMode='detail': 大圖 + 完整資訊 + 效果 + Add Variant
+    └── CardCreatePanel    # ui.sidebarMode='create': 新卡建立表單
 ```
 
 ## 狀態管理
 
 ```
-┌──────────────────────────────────┐    ┌─────────────────────────┐
-│ useCardSetsStore                 │    │ useUiStore              │
-│                                  │    │                         │
-│ productTypes: ProductType[]      │    │ viewMode: 'grid'|'table'│
-│ sets: CardSet[]                  │    │ sidebarOpen: boolean    │
-│ currentSet: CardSetWithCards     │    │ sidebarCardId: string   │
-│ loading: boolean                 │    │ sidebarRarity: string   │
-│                                  │    │                         │
-│ loadProductTypes()               │    │ openSidebar(id, rarity) │
-│ loadSets(productType?)           │    │ closeSidebar()          │
-│ loadSet(setId)                   │    │ toggleView()            │
-└──────────────────────────────────┘    └─────────────────────────┘
+┌──────────────────────────────────┐    ┌──────────────────────────────┐
+│ useCardSetsStore                 │    │ useUiStore                   │
+│                                  │    │                              │
+│ productTypes: ProductType[]      │    │ viewMode: 'grid'|'table'     │
+│ sets: CardSet[]                  │    │ sidebarOpen: boolean         │
+│ currentSet: CardSetWithCards     │    │ sidebarCardId: string        │
+│ loading: boolean                 │    │ sidebarRarity: string        │
+│                                  │    │ sidebarMode: 'detail'|'create│
+│ loadProductTypes()               │    │ sidebarCreateSetId: string   │
+│ loadSets(productType?)           │    │                              │
+│ loadSet(setId)                   │    │ openSidebar(id, rarity)      │
+└──────────────────────────────────┘    │ openCreateSidebar(setId)     │
+                                        │ closeSidebar() / toggleView()│
+                                        └──────────────────────────────┘
 ```
 
 ## 資料流

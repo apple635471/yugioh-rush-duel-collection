@@ -27,7 +27,10 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router。
 **useUiStore** — UI 狀態
 - `viewMode: 'grid' | 'table'` — Grid/Table 切換
 - `sidebarOpen`, `sidebarCardId`, `sidebarRarity` — 側邊欄
+- `sidebarMode: 'detail' | 'create'` — 側邊欄模式 (檢視/建立)
+- `sidebarCreateSetId: string | null` — 建立模式的目標 set_id
 - `openSidebar(cardId, rarity?)`, `closeSidebar()` — 任何元件都能呼叫
+- `openCreateSidebar(setId)` — 開啟建立模式
 
 ## API 層
 
@@ -36,7 +39,7 @@ api/client.ts      → axios instance, baseURL: '/api', timeout: 30s
 api/cardSets.ts    → fetchProductTypes, fetchCardSets, fetchCardSet, fetchSetStats,
                      updateCardSet, fetchCardSetOverrides, deleteCardSetOverride
 api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getCardImageUrl,
-                     uploadCardImage, revertCardImage
+                     uploadCardImage, revertCardImage, getNextCardId, createCard, addVariant
 ```
 
 ## 元件分類
@@ -58,8 +61,9 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `OwnershipControl`: `[-] 0 [+]` 按鈕，樂觀更新 + emit event
 
 ### Detail — 側邊欄 & 卡組編輯
-- `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉
-- `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** (取代獨立的 CardEditForm)
+- `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉；根據 `ui.sidebarMode` 切換 detail/create 模式
+- `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** + **Add Variant** 按鈕 (inline dropdown)
+- `CardCreatePanel`: 建立新卡片表單 (card_id 自動生成 + 可編輯, rarity dropdown, card_type dropdown, 怪獸欄位條件顯示)
 - `SetMetadataEditor`: 卡組 metadata inline 編輯，嵌入 SetView header
   - View mode: 顯示中文/日文名 + meta tags (set_id, release_date, card count)
   - Edit mode: 表單可修改 set_name_zh, set_name_jp, product_type, release_date, total_cards, rarity_distribution
@@ -94,3 +98,16 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 2. Save → `PATCH /api/card-sets/{set_id}` (自動建立 override)
 3. → `emit('updated')` → `SetView` 重新 `loadAll()` 刷新全部資料
 4. Override 管理: 展開可見 active overrides，可逐一刪除恢復 scraper 值
+
+**卡片建立**:
+1. `SetView` header 的 **Add Card** 按鈕 → `ui.openCreateSidebar(setId)`
+2. `AppSidebar` 根據 `ui.sidebarMode === 'create'` 顯示 `CardCreatePanel`
+3. 表單: card_id (自動生成 via `getNextCardId()` + 可編輯), rarity (dropdown), card_type (dropdown)
+4. Submit → `POST /api/cards` → `emit('cardCreated')` → `AppSidebar` 關閉 sidebar
+5. `SetView` watch `ui.sidebarOpen` → 關閉時重新 `loadAll()` 刷新卡片列表
+6. 建立的卡片 `is_manual=True`，匯入時不會被覆蓋
+
+**新增稀有度 variant**:
+1. `CardDetailPanel` rarity tabs 下方有 **+ Add Variant** 按鈕 (非 editing 模式時顯示)
+2. 點擊展開 inline dropdown: 僅顯示尚未存在的稀有度
+3. Add → `POST /api/cards/{card_id}/variants` → 切換到新 rarity tab → `emit('cardUpdated')`

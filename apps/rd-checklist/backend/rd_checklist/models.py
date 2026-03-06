@@ -54,6 +54,7 @@ class CardModel(Base):
     effect = Column(Text)
     continuous_effect = Column(Text)
     is_legend = Column(Boolean, nullable=False, default=False)
+    is_manual = Column(Boolean, nullable=False, default=False)
     original_rarity_string = Column(String, nullable=False, default="")
     created_at = Column(String, nullable=False, server_default=func.datetime("now"))
     updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
@@ -101,6 +102,28 @@ class CardSetOverrideModel(Base):
     __table_args__ = (UniqueConstraint("set_id", "field_name"),)
 
     card_set = relationship("CardSetModel")
+
+
+class CardOverrideModel(Base):
+    """User overrides for individual card fields.
+
+    When a user manually edits a card field, the override is stored here.
+    During import, fields with overrides are NOT overwritten by scraper data.
+    For cards with is_manual=True, the entire card is skipped during import.
+    """
+
+    __tablename__ = "card_overrides"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    card_id = Column(String, ForeignKey("cards.card_id"), nullable=False, index=True)
+    field_name = Column(String, nullable=False)
+    value = Column(Text)  # stored as string
+    created_at = Column(String, nullable=False, server_default=func.datetime("now"))
+    updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
+
+    __table_args__ = (UniqueConstraint("card_id", "field_name"),)
+
+    card = relationship("CardModel")
 
 
 class CardEditModel(Base):

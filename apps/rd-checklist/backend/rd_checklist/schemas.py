@@ -41,11 +41,43 @@ class CardOut(BaseModel):
     effect: Optional[str] = None
     continuous_effect: Optional[str] = None
     is_legend: bool = False
+    is_manual: bool = False
     original_rarity_string: str = ""
     variants: list[CardVariantOut] = []
 
     class Config:
         from_attributes = True
+
+
+class CardCreate(BaseModel):
+    """Create a new card with one initial variant."""
+
+    card_id: str
+    set_id: str
+    name_jp: str = ""
+    name_zh: str = ""
+    card_type: str = ""
+    attribute: Optional[str] = None
+    monster_type: Optional[str] = None
+    level: Optional[int] = None
+    atk: Optional[str] = None
+    defense: Optional[str] = None
+    summon_condition: Optional[str] = None
+    condition: Optional[str] = None
+    effect: Optional[str] = None
+    continuous_effect: Optional[str] = None
+    is_legend: bool = False
+    rarity: str = "N"
+
+
+class VariantCreate(BaseModel):
+    """Add a new rarity variant to an existing card."""
+
+    rarity: str
+
+
+class NextCardIdOut(BaseModel):
+    next_card_id: str
 
 
 class CardUpdate(BaseModel):

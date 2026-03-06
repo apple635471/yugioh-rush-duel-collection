@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.3.3 (2026-02-16)
+
+### 新增
+
+#### 手動建立卡片
+- **CardCreatePanel**: 卡組頁側邊欄可建立新卡片，支援完整欄位 (名稱、類型、屬性、效果等)
+- **下一張卡號**: `GET /api/cards/next-id/{set_id}` 自動推斷下一個可用 card_id
+- **is_manual 標記**: 手動建立的卡片標記 `is_manual=True`，匯入時整張跳過
+
+#### 卡片欄位 override 持久化
+- **card_overrides 表**: 使用者編輯 scraper 匯入的卡片時，欄位存於此表
+- **匯入不覆蓋**: 有 override 的欄位在匯入時保留使用者編輯值；`is_manual` 卡片完全不匯入
+
+### 更新
+
+- API: `POST /api/cards` 建立卡片、`GET /api/cards/next-id/{set_id}` 取得下一卡號
+- PATCH /api/cards: 非 manual 卡片的編輯會自動建立 override
+- 匯入服務: `_import_one_card()` 跳過 `is_manual`、套用 `card_overrides`
+- 前端: `sidebarMode` 區分 create/detail、`CardCreatePanel`、`createCard()` / `getNextCardId()`
+- ui store: `sidebarCreateSetId`、`openCreateSidebar(setId)`
+
+---
+
 ## v0.3.2 (2026-02-15)
 
 ### 新增

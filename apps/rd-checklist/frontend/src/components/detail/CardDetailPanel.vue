@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
 import type { Card, CardUpdate } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage } from '@/api/cards'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant } from '@/api/cards'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 
@@ -189,6 +189,44 @@ function toggleSection(key: string) {
   }
 }
 
+// ---- Add Variant ----
+const allRarities = ['UR', 'SER', 'SR', 'R', 'N', 'OVER-RUSH', 'OR', 'RUSH', 'L']
+const addingVariant = ref(false)
+const newVariantRarity = ref('')
+const savingVariant = ref(false)
+const variantError = ref('')
+
+const availableRarities = computed(() =>
+  allRarities.filter(r => !props.card.variants.some(v => v.rarity === r))
+)
+
+function startAddVariant() {
+  newVariantRarity.value = availableRarities.value[0] ?? ''
+  variantError.value = ''
+  addingVariant.value = true
+}
+
+function cancelAddVariant() {
+  addingVariant.value = false
+  variantError.value = ''
+}
+
+async function submitAddVariant() {
+  if (!newVariantRarity.value) return
+  savingVariant.value = true
+  variantError.value = ''
+  try {
+    await addVariant(props.card.card_id, { rarity: newVariantRarity.value })
+    addingVariant.value = false
+    currentRarity.value = newVariantRarity.value
+    emit('cardUpdated')
+  } catch (e: any) {
+    variantError.value = e?.response?.data?.detail ?? 'Failed to add variant'
+  } finally {
+    savingVariant.value = false
+  }
+}
+
 const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500'
 const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500 appearance-none'
 </script>
@@ -252,7 +290,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
     </div>
 
     <!-- Rarity tabs -->
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-1">
       <RarityTabs
         :variants="card.variants"
         :active-rarity="currentRarity"
@@ -264,6 +302,39 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         :owned-count="activeVariant?.owned_count ?? 0"
         @update="onOwnershipUpdate"
       />
+    </div>
+
+    <!-- Add Variant -->
+    <div class="mb-3">
+      <template v-if="addingVariant">
+        <div class="flex items-center gap-1.5">
+          <select v-model="newVariantRarity" :class="selectClass" class="!w-auto flex-1">
+            <option v-for="r in availableRarities" :key="r" :value="r">{{ r }}</option>
+          </select>
+          <button
+            @click="submitAddVariant"
+            :disabled="savingVariant || !newVariantRarity"
+            class="text-xs px-2 py-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium rounded transition-colors disabled:opacity-50"
+          >
+            {{ savingVariant ? '...' : 'Add' }}
+          </button>
+          <button
+            @click="cancelAddVariant"
+            class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+        <div v-if="variantError" class="text-red-400 text-xs mt-1">{{ variantError }}</div>
+      </template>
+      <button
+        v-else-if="availableRarities.length > 0 && !editing"
+        @click="startAddVariant"
+        class="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors"
+      >
+        <span class="text-base leading-none">+</span>
+        <span>Add Variant</span>
+      </button>
     </div>
 
     <!-- Card names -->

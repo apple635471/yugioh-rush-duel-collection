@@ -20,8 +20,11 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 - `DELETE /{set_id}/overrides/{field_name}` — 刪除單一覆寫，下次匯入恢復 scraper 值
 
 ### 卡片 `/api/cards`
+- `GET /next-id/{set_id}` → `NextCardIdOut` — 自動生成下一個可用 card_id (掃描現有卡，找最大數字後綴 +1)
+- `POST /` body: `CardCreate` → `CardOut` (201) — 建立新卡 + 初始 variant，`is_manual=True`
 - `GET /{card_id:path}` → `CardOut` — 單卡 (card_id 含斜線，用 path converter)
-- `PATCH /{card_id:path}` body: `CardUpdate` → `CardOut` — 編輯，自動記錄 card_edits
+- `PATCH /{card_id:path}` body: `CardUpdate` → `CardOut` — 編輯，自動記錄 card_edits；非 manual 卡自動建立 card_overrides
+- `POST /{card_id:path}/variants` body: `VariantCreate` → `CardVariantOut` (201) — 為現有卡新增稀有度 variant
 
 ### 持有數 `/api/ownership`
 - `PATCH /{card_id:path}/{rarity}` body: `{owned_count: int}` → `CardVariantOut`
