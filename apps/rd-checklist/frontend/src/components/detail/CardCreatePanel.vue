@@ -2,6 +2,7 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import type { CardCreate } from '@/types/card'
 import { createCard, getNextCardId } from '@/api/cards'
+import { RARITIES } from '@/constants/rarities'
 
 const props = defineProps<{
   setId: string
@@ -15,7 +16,7 @@ const saving = ref(false)
 const error = ref('')
 const loadingId = ref(true)
 
-const allRarities = ['UR', 'SER', 'SR', 'R', 'N', 'OVER-RUSH', 'OR', 'RUSH', 'L']
+const allRarities = RARITIES
 
 const allCardTypes = [
   '通常怪獸', '效果怪獸', '融合怪獸', '儀式怪獸',
@@ -124,7 +125,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <div class="flex items-center px-3 py-2 border-b border-gray-700">
         <span class="w-20 text-xs text-gray-400 shrink-0">Rarity</span>
         <select v-model="form.rarity" :class="selectClass">
-          <option v-for="r in allRarities" :key="r" :value="r">{{ r }}</option>
+          <option v-for="r in allRarities" :key="r.value" :value="r.value">{{ r.label }}</option>
         </select>
       </div>
 

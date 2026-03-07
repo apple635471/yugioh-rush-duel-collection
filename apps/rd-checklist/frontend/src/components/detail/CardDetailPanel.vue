@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
 import type { Card, CardUpdate } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant } from '@/api/cards'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant } from '@/api/cards'
+import { RARITIES } from '@/constants/rarities'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 
@@ -189,19 +190,20 @@ function toggleSection(key: string) {
   }
 }
 
+// ---- Variant management ----
+// availableRarities: rarities not yet assigned to this card
+const availableRarities = computed(() =>
+  RARITIES.filter(r => !props.card.variants.some(v => v.rarity === r.value))
+)
+
 // ---- Add Variant ----
-const allRarities = ['UR', 'SER', 'SR', 'R', 'N', 'OVER-RUSH', 'OR', 'RUSH', 'L']
 const addingVariant = ref(false)
 const newVariantRarity = ref('')
 const savingVariant = ref(false)
 const variantError = ref('')
 
-const availableRarities = computed(() =>
-  allRarities.filter(r => !props.card.variants.some(v => v.rarity === r))
-)
-
 function startAddVariant() {
-  newVariantRarity.value = availableRarities.value[0] ?? ''
+  newVariantRarity.value = availableRarities.value[0]?.value ?? ''
   variantError.value = ''
   addingVariant.value = true
 }
@@ -224,6 +226,77 @@ async function submitAddVariant() {
     variantError.value = e?.response?.data?.detail ?? 'Failed to add variant'
   } finally {
     savingVariant.value = false
+  }
+}
+
+// ---- Edit Variant Rarity ----
+const editingRarity = ref(false)
+const editRarityTarget = ref('')
+const savingRarityEdit = ref(false)
+const rarityEditError = ref('')
+
+// rarities available to remap current rarity to (excludes the current rarity itself)
+const editableRarities = computed(() =>
+  RARITIES.filter(r => !props.card.variants.some(v => v.rarity === r.value) || r.value === currentRarity.value)
+    .filter(r => r.value !== currentRarity.value)
+)
+
+function startEditRarity() {
+  editRarityTarget.value = editableRarities.value[0]?.value ?? ''
+  rarityEditError.value = ''
+  editingRarity.value = true
+}
+
+function cancelEditRarity() {
+  editingRarity.value = false
+  rarityEditError.value = ''
+}
+
+async function submitEditRarity() {
+  if (!editRarityTarget.value || editRarityTarget.value === currentRarity.value) return
+  savingRarityEdit.value = true
+  rarityEditError.value = ''
+  try {
+    await editVariantRarity(props.card.card_id, currentRarity.value, editRarityTarget.value)
+    currentRarity.value = editRarityTarget.value
+    editingRarity.value = false
+    emit('cardUpdated')
+  } catch (e: any) {
+    rarityEditError.value = e?.response?.data?.detail ?? 'Failed to edit rarity'
+  } finally {
+    savingRarityEdit.value = false
+  }
+}
+
+// ---- Delete Variant ----
+const confirmingDelete = ref(false)
+const deletingVariant = ref(false)
+const deleteError = ref('')
+
+function startDeleteVariant() {
+  deleteError.value = ''
+  confirmingDelete.value = true
+}
+
+function cancelDeleteVariant() {
+  confirmingDelete.value = false
+  deleteError.value = ''
+}
+
+async function submitDeleteVariant() {
+  deletingVariant.value = true
+  deleteError.value = ''
+  try {
+    await deleteVariant(props.card.card_id, currentRarity.value)
+    confirmingDelete.value = false
+    // Switch to first remaining rarity
+    emit('cardUpdated')
+    const remaining = props.card.variants.filter(v => v.rarity !== currentRarity.value)
+    if (remaining.length > 0 && remaining[0]) currentRarity.value = remaining[0].rarity
+  } catch (e: any) {
+    deleteError.value = e?.response?.data?.detail ?? 'Failed to delete variant'
+  } finally {
+    deletingVariant.value = false
   }
 }
 
@@ -304,12 +377,13 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       />
     </div>
 
-    <!-- Add Variant -->
-    <div class="mb-3">
+    <!-- Variant management (Add / Edit Rarity / Delete) -->
+    <div class="mb-3 space-y-1.5">
+      <!-- Add Variant form -->
       <template v-if="addingVariant">
         <div class="flex items-center gap-1.5">
           <select v-model="newVariantRarity" :class="selectClass" class="!w-auto flex-1">
-            <option v-for="r in availableRarities" :key="r" :value="r">{{ r }}</option>
+            <option v-for="r in availableRarities" :key="r.value" :value="r.value">{{ r.label }}</option>
           </select>
           <button
             @click="submitAddVariant"
@@ -318,23 +392,77 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
           >
             {{ savingVariant ? '...' : 'Add' }}
           </button>
-          <button
-            @click="cancelAddVariant"
-            class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
+          <button @click="cancelAddVariant" class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
         </div>
-        <div v-if="variantError" class="text-red-400 text-xs mt-1">{{ variantError }}</div>
+        <div v-if="variantError" class="text-red-400 text-xs">{{ variantError }}</div>
       </template>
-      <button
-        v-else-if="availableRarities.length > 0 && !editing"
-        @click="startAddVariant"
-        class="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors"
-      >
-        <span class="text-base leading-none">+</span>
-        <span>Add Variant</span>
-      </button>
+
+      <!-- Edit Rarity form -->
+      <template v-else-if="editingRarity">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-gray-400 shrink-0">改為</span>
+          <select v-model="editRarityTarget" :class="selectClass" class="!w-auto flex-1">
+            <option v-for="r in editableRarities" :key="r.value" :value="r.value">{{ r.label }}</option>
+          </select>
+          <button
+            @click="submitEditRarity"
+            :disabled="savingRarityEdit || !editRarityTarget"
+            class="text-xs px-2 py-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium rounded transition-colors disabled:opacity-50"
+          >
+            {{ savingRarityEdit ? '...' : 'Save' }}
+          </button>
+          <button @click="cancelEditRarity" class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
+        </div>
+        <div v-if="rarityEditError" class="text-red-400 text-xs">{{ rarityEditError }}</div>
+      </template>
+
+      <!-- Delete confirm -->
+      <template v-else-if="confirmingDelete">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-gray-300">刪除 <strong>{{ currentRarity }}</strong>？</span>
+          <button
+            @click="submitDeleteVariant"
+            :disabled="deletingVariant"
+            class="text-xs px-2 py-1 bg-red-600 hover:bg-red-500 text-white font-medium rounded transition-colors disabled:opacity-50"
+          >
+            {{ deletingVariant ? '...' : '確認刪除' }}
+          </button>
+          <button @click="cancelDeleteVariant" class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
+        </div>
+        <div v-if="deleteError" class="text-red-400 text-xs">{{ deleteError }}</div>
+      </template>
+
+      <!-- Default: action buttons row -->
+      <div v-else-if="!editing" class="flex items-center gap-3">
+        <button
+          v-if="availableRarities.length > 0"
+          @click="startAddVariant"
+          class="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors"
+        >
+          <span class="text-base leading-none">+</span>
+          <span>Add Variant</span>
+        </button>
+        <button
+          v-if="editableRarities.length > 0"
+          @click="startEditRarity"
+          class="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors"
+        >
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" />
+          </svg>
+          <span>Edit Rarity</span>
+        </button>
+        <button
+          v-if="card.variants.length > 1"
+          @click="startDeleteVariant"
+          class="flex items-center gap-1 text-xs text-gray-500 hover:text-red-400 transition-colors"
+        >
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+          <span>Delete</span>
+        </button>
+      </div>
     </div>
 
     <!-- Card names -->

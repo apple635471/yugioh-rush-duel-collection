@@ -39,7 +39,8 @@ api/client.ts      → axios instance, baseURL: '/api', timeout: 30s
 api/cardSets.ts    → fetchProductTypes, fetchCardSets, fetchCardSet, fetchSetStats,
                      updateCardSet, fetchCardSetOverrides, deleteCardSetOverride
 api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getCardImageUrl,
-                     uploadCardImage, revertCardImage, getNextCardId, createCard, addVariant
+                     uploadCardImage, revertCardImage, getNextCardId, createCard, addVariant,
+                     editVariantRarity, deleteVariant
 ```
 
 ## 元件分類
@@ -62,7 +63,11 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 
 ### Detail — 側邊欄 & 卡組編輯
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉；根據 `ui.sidebarMode` 切換 detail/create 模式
-- `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** + **Add Variant** 按鈕 (inline dropdown)
+- `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** + variant 管理列 (非編輯模式下顯示)
+  - **Add Variant**: 展開 inline dropdown，選擇尚未存在的貴罕度
+  - **Edit Rarity**: 展開 inline dropdown，修改當前 rarity；呼叫 `PATCH /api/cards/{id}/variants/{rarity}`
+  - **Delete** (只有 >1 variant 時顯示): 確認後刪除；呼叫 `DELETE /api/cards/{id}/variants/{rarity}`
+  - 貴罕度選項從 `src/constants/rarities.ts` 讀取，顯示中文標籤
 - `CardCreatePanel`: 建立新卡片表單 (card_id 自動生成 + 可編輯, rarity dropdown, card_type dropdown, 怪獸欄位條件顯示)
 - `SetMetadataEditor`: 卡組 metadata inline 編輯，嵌入 SetView header
   - View mode: 顯示中文/日文名 + meta tags (set_id, release_date, card count)
@@ -109,5 +114,10 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 
 **新增稀有度 variant**:
 1. `CardDetailPanel` rarity tabs 下方有 **+ Add Variant** 按鈕 (非 editing 模式時顯示)
-2. 點擊展開 inline dropdown: 僅顯示尚未存在的稀有度
+2. 點擊展開 inline dropdown: 僅顯示尚未存在的稀有度（從 `constants/rarities.ts` 過濾）
 3. Add → `POST /api/cards/{card_id}/variants` → 切換到新 rarity tab → `emit('cardUpdated')`
+
+**編輯 / 刪除 variant 貴罕度**:
+1. `CardDetailPanel` 同一行顯示 **Edit Rarity** 和 **Delete** 按鈕（只有 >1 variant 時顯示 Delete）
+2. Edit Rarity → 展開 inline dropdown 選新 rarity → `PATCH /api/cards/{id}/variants/{old}` → 更新 currentRarity → `emit('cardUpdated')`
+3. Delete → 顯示確認提示 → `DELETE /api/cards/{id}/variants/{rarity}` → 切換到其他 rarity → `emit('cardUpdated')`

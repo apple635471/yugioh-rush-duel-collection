@@ -1,5 +1,61 @@
 # Changelog
 
+## v0.4.0 (2026-03-07)
+
+### 新增
+
+#### 貴罕度校正與 variant 刪除
+
+- **card_variant_overrides 表**: 新增 DB 表儲存 variant 層級的貴罕度覆寫規則
+  - `action="remap"`: 將 scraper 的錯誤貴罕度對應到正確的，reimport 不覆蓋
+  - `action="delete"`: 標記已刪除的 variant，reimport 不重建
+  - 支援鏈式 remap（A→B 再改 B→C 時，正確追蹤原始 scraper_rarity A→C）
+- **Edit Rarity**: `PATCH /api/cards/{card_id}/variants/{rarity}` 修改 variant 貴罕度，自動建立 remap override
+- **Delete Variant**: `DELETE /api/cards/{card_id}/variants/{rarity}` 刪除 variant（最後一個不可刪），自動建立 delete override
+- **Import 保護**: `_import_one_card()` 在處理每個 rarity 前查詢 `card_variant_overrides`，套用 remap/delete 規則
+- **前端 Edit Rarity**: CardDetailPanel 新增「Edit Rarity」按鈕（非編輯模式），展開 inline 下拉選單修改當前貴罕度
+- **前端 Delete Variant**: CardDetailPanel 新增「Delete」按鈕，顯示確認提示後刪除（只有一個 variant 時不顯示）
+- **貴罕度完整清單**: 新增 `src/constants/rarities.ts`，統一管理 13 種貴罕度（含中文說明）
+  - N / NPR / R / SR / SPR / UR / PUR / RUR / SER / RR / ORR / ORRPBV / FORR
+- **貴罕度選單中文標籤**: 搜尋、新增 variant、建立卡片的下拉選項改顯示中文標籤（如 `UR (金亮)`）
+
+### 更新
+
+- `api/cards.ts`: 新增 `editVariantRarity()`, `deleteVariant()`
+- CardCreatePanel、SearchFilters 改用共用貴罕度常數
+
+---
+
+## v0.3.6 (2026-03-07)
+
+### 更新
+
+#### Scraper：SD01–SD05 連結新增至 MULTI_DECK_URL
+
+- `parser.py` `MULTI_DECK_URL`: 加入 SD01–SD05 文章 URL，使這些多卡組文章在爬取時正確拆分
+
+---
+
+## v0.3.5 (2026-03-07)
+
+### 修復
+
+#### Scraper：預組類型統一、多卡組拆分、x{數字} 解析
+
+- **產品類型統一**: ST、GRD 改歸類為 `structure_deck`（與 SD/SBD 一致），移除 `starter`、`go_rush_deck`
+- **多卡組拆分** (`parse_post_multi`): 新增例外 URL 清單，SD0C+SD0D、GRD1+GRD2、ST01+ST02 等文章依 set_id 拆分為各自 CardSet
+- **孤立圖片清除**: `_cleanup_orphaned_images()` 在成功儲存 CardSet 後刪除不屬於當前卡組的殘留圖片
+- **緊湊格式 x{數字} 支援**: `COMPACT_STATS_RE` 加入 `(?:x\d+)?` 接受數量標記（如「x2 光 5星」）
+- **Discovery 驗證改善**: `verify_post_is_card_list` 增加緊湊格式偵測，無完整類型關鍵字的文章也能通過驗證
+- **SBD 前綴新增**: `PRODUCT_TYPE_MAP` 加入 `SBD → structure_deck`
+- **前端 product_type 下拉**: 移除廢棄的 `starter`、`go_rush_deck`，選項加上中文括號提示
+
+#### Import：自動修正 legacy unknown product_type
+
+- 新增 `_derive_product_type()`：當 JSON 的 `product_type` 為 `"unknown"` 時，從 `set_id` 前綴自動推導正確類型
+
+---
+
 ## v0.3.4 (2026-03-07)
 
 ### 修復
