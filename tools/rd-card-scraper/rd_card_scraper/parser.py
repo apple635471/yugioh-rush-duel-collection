@@ -82,6 +82,7 @@ STATS_RE = re.compile(
 #   - /\s*  allows an optional space between "/" and the race name
 COMPACT_STATS_RE = re.compile(
     r"[（(]([^)）]+?)[）)]\s*"              # group 1: Chinese name
+    r"(?:x\d+)?\s*"                         # optional quantity marker (e.g. x2, x3)
     r"(光|暗|炎|水|風|地)\s*"               # group 2: Attribute (0+ spaces — may be adjacent)
     r"(\d+)[星☆]\s*"                       # group 3: Level
     r"([^\d/\s(（]+)(?:/\s*([^\s(（]+))?\s*"  # group 4: type abbrev, group 5: race (opt)
@@ -110,21 +111,38 @@ _LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：
 # Product type mapping from set ID prefix
 PRODUCT_TYPE_MAP = {
     "KP": "booster",
-    "ST": "starter",
+    # Structure decks: SD, SD0x, ST, SBD, GRD all map to structure_deck
+    "SD": "structure_deck",
+    "SBD": "structure_deck",
+    "ST": "structure_deck",
+    "GRD": "structure_deck",
     "CP": "character_pack",
     "GRC": "go_rush_character",
-    "GRD": "go_rush_deck",
     "B0": "battle_pack",
     "B2": "battle_pack",
     "MAX": "maximum_pack",
     "EXT": "extra_pack",
     "LGP": "legend_pack",
-    "SD": "structure_deck",
     "VSP": "vs_pack",
     "TB": "tournament_pack",
     "AP": "advanced_pack",
     "ORP": "over_rush_pack",
 }
+
+
+# Posts that contain multiple card sets in a single HTML page.
+# These are handled as exceptions: cards are split by set ID instead of
+# all being assigned to the first detected set ID.
+MULTI_DECK_URLS: frozenset[str] = frozenset({
+    # SD0C + SD0D
+    "https://ntucgm.blogspot.com/2024/12/rush-duel-sd-38.html",
+    # 5 structure decks (ST01~ST05 or similar)
+    "https://ntucgm.blogspot.com/2021/07/rush-duel-7-821.html",
+    # ST01 + ST02
+    "https://ntucgm.blogspot.com/2020/03/rush-duel-st01-st02.html",
+    # GRD1 + GRD2
+    "https://ntucgm.blogspot.com/2022/03/rdgrd1-rush-duel-go-rush-429.html",
+})
 
 
 def compute_content_hash(html: str) -> str:
@@ -152,12 +170,18 @@ def guess_product_type(set_id: str) -> str:
     return "unknown"
 
 
-def parse_post(html: str, url: str = "") -> Optional[CardSet]:
-    """Parse a blog post HTML into a CardSet with cards."""
+def parse_post_multi(html: str, url: str = "") -> list[CardSet]:
+    """Parse a blog post HTML into one or more CardSets.
+
+    Most posts contain a single card set and return a one-element list.
+    Posts listed in MULTI_DECK_URLS contain multiple card sets: cards are
+    grouped by set ID (inferred from each card's card_id) and a separate
+    CardSet is returned for each group.
+    """
     post_body = extract_post_body(html)
     if not post_body:
         logger.warning(f"No post-body found in {url}")
-        return None
+        return []
 
     title = extract_post_title(html)
     body_text = post_body.get_text()
@@ -165,16 +189,50 @@ def parse_post(html: str, url: str = "") -> Optional[CardSet]:
     all_card_ids = CARD_ID_RE.findall(body_text)
     if not all_card_ids:
         logger.warning(f"No card IDs found in {url}")
-        return None
+        return []
 
-    set_match = SET_ID_RE.search(all_card_ids[0])
-    if not set_match:
-        return None
-    set_id = set_match.group(1)
+    cards = _extract_cards_from_body(post_body)
+    if not cards:
+        logger.warning(f"No cards extracted from {url}")
+        return []
 
     set_name_jp, set_name_zh, release_date, rarity_dist = _parse_set_metadata(
         post_body, title
     )
+
+    # Exception: multi-deck posts — split cards by set ID
+    if url in MULTI_DECK_URLS:
+        from collections import defaultdict
+        cards_by_set: dict[str, list[Card]] = defaultdict(list)
+        for card in cards:
+            m = SET_ID_RE.search(card.card_id)
+            if m:
+                cards_by_set[m.group(1)].append(card)
+
+        result: list[CardSet] = []
+        for set_id, set_cards in cards_by_set.items():
+            card_set = CardSet(
+                set_id=set_id,
+                set_name_jp=set_name_jp,
+                set_name_zh=set_name_zh or title,
+                product_type=guess_product_type(set_id),
+                release_date=release_date,
+                post_url=url,
+                rarity_distribution=rarity_dist,
+            )
+            card_set.cards = set_cards
+            card_set.total_cards = len(set_cards)
+            logger.info(
+                f"Multi-deck split: {set_id} with {len(set_cards)} cards ({url})"
+            )
+            result.append(card_set)
+        return result
+
+    # Normal single-deck post
+    set_match = SET_ID_RE.search(all_card_ids[0])
+    if not set_match:
+        return []
+    set_id = set_match.group(1)
 
     card_set = CardSet(
         set_id=set_id,
@@ -185,13 +243,21 @@ def parse_post(html: str, url: str = "") -> Optional[CardSet]:
         post_url=url,
         rarity_distribution=rarity_dist,
     )
-
-    cards = _extract_cards_from_body(post_body)
     card_set.cards = cards
     card_set.total_cards = len(cards)
 
     logger.info(f"Parsed {len(cards)} cards from set {set_id} ({url})")
-    return card_set
+    return [card_set]
+
+
+def parse_post(html: str, url: str = "") -> Optional[CardSet]:
+    """Parse a blog post HTML into a CardSet with cards.
+
+    For multi-deck posts (see MULTI_DECK_URLS) only the first CardSet is
+    returned.  Use parse_post_multi() to handle all sets in such posts.
+    """
+    sets = parse_post_multi(html, url)
+    return sets[0] if sets else None
 
 
 def _parse_set_metadata(

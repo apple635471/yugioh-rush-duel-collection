@@ -12,7 +12,7 @@ import requests
 from .discovery import discover_rd_posts
 from .downloader import download_images, sanitize_filename
 from .models import CardSet, PostState, ScrapeState
-from .parser import compute_content_hash, extract_post_body, parse_post
+from .parser import compute_content_hash, extract_post_body, parse_post, parse_post_multi
 
 logger = logging.getLogger(__name__)
 
@@ -94,44 +94,77 @@ class RushDuelScraper:
             logger.info(f"No changes detected, skipping: {url}")
             return "skipped"
 
-        # Parse the post
-        card_set = parse_post(html, url)
-        if not card_set or not card_set.cards:
+        # Parse the post (may return multiple CardSets for multi-deck posts)
+        card_sets = parse_post_multi(html, url)
+        if not card_sets:
             logger.warning(f"No cards parsed from {url}")
             return "skipped"
 
-        # Download images (or detect existing ones when --no-images)
-        if self.download_images_flag:
-            download_images(
-                card_set.cards,
-                card_set.set_id,
-                self.data_dir,
-                self.session,
-                force=self.force,
-            )
-        else:
-            # Even without downloading, link existing image files so
-            # cards.json retains the image_file paths.
-            self._link_existing_images(card_set.cards, card_set.set_id)
+        for card_set in card_sets:
+            # Download images (or detect existing ones when --no-images)
+            if self.download_images_flag:
+                download_images(
+                    card_set.cards,
+                    card_set.set_id,
+                    self.data_dir,
+                    self.session,
+                    force=self.force,
+                )
+            else:
+                # Even without downloading, link existing image files so
+                # cards.json retains the image_file paths.
+                self._link_existing_images(card_set.cards, card_set.set_id)
 
-        # Save card data
-        card_set.save(self.data_dir)
+            # Save card data
+            card_set.save(self.data_dir)
 
-        # Update state
+            # Remove images that no longer belong to this set
+            # (e.g. after a multi-deck split, SD0C/ may still contain SD0D images)
+            self._cleanup_orphaned_images(card_set)
+
+        # Update state: for multi-deck posts store comma-separated set IDs
+        state_set_id = (
+            card_sets[0].set_id
+            if len(card_sets) == 1
+            else ",".join(cs.set_id for cs in card_sets)
+        )
+        total_cards = sum(len(cs.cards) for cs in card_sets)
         self.state.posts[url] = PostState(
             url=url,
-            title=card_set.set_name_zh,
-            set_id=card_set.set_id,
+            title=card_sets[0].set_name_zh,
+            set_id=state_set_id,
             last_scraped=datetime.now(timezone.utc).isoformat(),
             content_hash=content_hash,
-            card_count=len(card_set.cards),
+            card_count=total_cards,
         )
         self.save_state()
 
-        logger.info(
-            f"Scraped {len(card_set.cards)} cards from {card_set.set_id}"
-        )
+        logger.info(f"Scraped {total_cards} cards from {state_set_id}")
         return "scraped"
+
+    def _cleanup_orphaned_images(self, card_set: CardSet) -> None:
+        """Delete image files in set_id/images/ that no longer belong to any card.
+
+        Handles cases like multi-deck splits where one set directory previously
+        contained images for another set (e.g. SD0C/images/ had RD_SD0D-*.jpg).
+        """
+        img_dir = self.data_dir / card_set.set_id / "images"
+        if not img_dir.exists():
+            return
+
+        valid_filenames = {sanitize_filename(c.card_id) for c in card_set.cards}
+        removed = 0
+        for img_file in img_dir.iterdir():
+            if img_file.is_file() and img_file.name not in valid_filenames:
+                img_file.unlink()
+                removed += 1
+                logger.info(
+                    f"Removed orphaned image: {card_set.set_id}/images/{img_file.name}"
+                )
+        if removed:
+            logger.info(
+                f"Cleaned up {removed} orphaned image(s) from {card_set.set_id}/images/"
+            )
 
     def _link_existing_images(self, cards: list, set_id: str) -> None:
         """Set image_file on cards that already have downloaded images on disk."""

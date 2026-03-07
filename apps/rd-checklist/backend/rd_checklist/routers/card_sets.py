@@ -23,11 +23,9 @@ router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
 PRODUCT_TYPE_LABELS = {
     "booster": "補充包 Booster Pack",
-    "starter": "預組 Starter Deck",
-    "structure_deck": "構築包 Structure Deck",
+    "structure_deck": "預組",
     "character_pack": "角色包 Character Pack",
     "go_rush_character": "Go Rush 角色包",
-    "go_rush_deck": "Go Rush 預組",
     "battle_pack": "戰鬥包 Battle Pack",
     "maximum_pack": "Maximum 包",
     "extra_pack": "Extra 包",

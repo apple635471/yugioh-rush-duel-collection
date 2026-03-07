@@ -163,7 +163,13 @@ def verify_post_is_card_list(url: str, session: requests.Session) -> bool:
                 "通常魔法", "儀式魔法", "通常陷阱",
             ]
         )
-        return has_rd_ids and has_card_types
+        # Also accept compact inline format: (中文名)[x數量] 屬性 N星
+        # Used in some SD/GRD posts where full card type keywords don't appear.
+        has_compact_format = bool(re.search(
+            r"[（(][^\)）]+[）)]\s*(?:x\d+)?\s*(?:光|暗|炎|水|風|地)\s*\d+[星☆]",
+            text,
+        ))
+        return has_rd_ids and (has_card_types or has_compact_format)
     except Exception as e:
         logger.warning(f"Could not verify {url}: {e}")
         return False
