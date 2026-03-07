@@ -72,20 +72,9 @@ STATS_RE = re.compile(
     r"(?:\s+(\d+|\?)/(\d+|\?))?"  # ATK/DEF
 )
 
-# For inline entries where stats are on the same line as the card ID (KP01 JP023 style)
-# e.g. "RD/KP01-JP023 (RR)セブンスロード・マジシャン(七王道魔術師) 暗 7星魔法使 21001500"
-INLINE_STATS_RE = re.compile(
-    r"[（(]([^)）]+?)[）)]\s*"  # Chinese name
-    r"(光|暗|炎|水|風|地)\s+"
-    r"(\d+)[星☆]\s*"       # Level + star character
-    r"(\S+)\s+"            # Race (without 族 suffix sometimes)
-    r"(\d+)(\d{3,4})$"    # ATK+DEF concatenated (e.g. 21001500)
-)
-
 # Compact inline format used in some posts (author-dependent, not version-specific):
 # JPname(ChName) Attr Level星 TypeAbbrev[/RaceAbbrev] ATK DEF  (space-separated ATK DEF)
 # e.g. "マジシャン・オブ・ブラックカオス(黑混沌之魔術師) 暗 8星 儀式/魔法使 2800 2600"
-# Unlike INLINE_STATS_RE, ATK and DEF are space-separated (not concatenated).
 #
 # Regex design notes:
 #   - \s* (not \s+) after attribute/level/race: chunks may be joined without spaces
