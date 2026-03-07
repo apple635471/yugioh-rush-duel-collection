@@ -16,7 +16,7 @@ description: Parsing Rush Duel card data from ntucgm blog post HTML. Use when mo
 - **2020 (KP01 時期)**: 卡名和 stats 都在 `<b><span style="color:...">` 裡，無圖片
 - **2022 (KP09 時期)**: 卡名在 `<b><span>` 裡，stats 在普通 `<div>` 裡，有 `<img>` 圖片
 - **2025 (KP23 時期)**: 類似 KP09，圖片在 `<a><img>` wrapper 裡
-- **SD 緊湊格式 (2025 SD 時期)**: 重印卡使用單行格式，stats 可跨多個相鄰 chunk
+- **緊湊格式 (部分文章)**: 某些卡片使用單行格式，stats 可跨多個相鄰 chunk（取決於作者編輯方式，非版本限定）
 
 ## 卡片 ID 格式
 
@@ -31,7 +31,7 @@ description: Parsing Rush Duel card data from ntucgm blog post HTML. Use when mo
 - 魔法/陷阱卡沒有等級、屬性、種族、ATK/DEF
 - 通常怪獸沒有條件和效果文本
 
-### 緊湊格式 (SD 系列重印卡)
+### 緊湊格式 (部分文章，依作者編輯習慣)
 `JP名(中文名) 屬性 N星 類型縮寫[/種族縮寫] ATK DEF`
 - ATK 和 DEF 以空格分隔（非 `/`）
 - 類型縮寫: `儀式` → 儀式怪獸、`效果` → 效果怪獸、`融合` → 融合怪獸 等
