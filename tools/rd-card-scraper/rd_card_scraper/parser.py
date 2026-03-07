@@ -111,17 +111,18 @@ _LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：
 # Product type mapping from set ID prefix
 PRODUCT_TYPE_MAP = {
     "KP": "booster",
+    # Structure decks: SD, SD0x, ST, SBD, GRD all map to structure_deck
+    "SD": "structure_deck",
+    "SBD": "structure_deck",
     "ST": "structure_deck",
+    "GRD": "structure_deck",
     "CP": "character_pack",
     "GRC": "go_rush_character",
-    "GRD": "structure_deck",
-    "SBD": "structure_deck",
     "B0": "battle_pack",
     "B2": "battle_pack",
     "MAX": "maximum_pack",
     "EXT": "extra_pack",
     "LGP": "legend_pack",
-    "SD": "structure_deck",
     "VSP": "vs_pack",
     "TB": "tournament_pack",
     "AP": "advanced_pack",
