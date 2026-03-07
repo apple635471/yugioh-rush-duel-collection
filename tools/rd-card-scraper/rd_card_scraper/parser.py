@@ -115,6 +115,7 @@ PRODUCT_TYPE_MAP = {
     "CP": "character_pack",
     "GRC": "go_rush_character",
     "GRD": "structure_deck",
+    "SBD": "structure_deck",
     "B0": "battle_pack",
     "B2": "battle_pack",
     "MAX": "maximum_pack",
