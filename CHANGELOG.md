@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.4 (2026-03-07)
+
+### 修復
+
+#### Scraper parser：SD 系列緊湊格式與多行 chunk 解析
+- **修復 JP001-JP028 遺漏**: SD 系列重印卡使用緊湊單行格式 `JP名(中文名) 屬性 N星 類型/種族 ATK DEF`，不含標準類型關鍵字，導致 `_is_detail_entry()` 誤判為摘要而跳過。現在會對 header 和後續相鄰 chunks 合併後用 `COMPACT_STATS_RE` 偵測
+- **修復多行 chunk 條件/效果遺漏**: 部分文章的卡種、條件、效果被包在單一 leaf element 的多行文字中（如 `white-space-collapse: preserve` span）。舊邏輯在找到 stats 後 `continue` 導致同一 chunk 後半的條件/效果被跳過。現在 `_parse_card_details()` 會先將所有 context 按 `\n` 拆分展開
+- **修復 JPS01-JPS06、JP029-JP030 等效果未解析**: 同上（多行 chunk 問題）
+- **修復緊湊格式類型誤判**: 若緊湊格式只有一個字段且不在類型映射表中（如 `魔法使`、`戰士`），正確解讀為種族、卡種設為通常怪獸；而非錯誤拼接為「魔法使怪獸」
+- **新增 JP 名提取**: 緊湊格式的 JP 名從合併後的文字中提取（card_id 尾端到 (中文名) 之間）
+
+**受影響範圍**: `tools/rd-card-scraper/rd_card_scraper/parser.py`
+
+---
+
 ## v0.3.3 (2026-02-16)
 
 ### 新增

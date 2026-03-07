@@ -9,13 +9,14 @@ description: Parsing Rush Duel card data from ntucgm blog post HTML. Use when mo
 1. **摘要索引** (文章上半部): 只有卡片編號和名稱，按稀有度分組，用於目錄瀏覽
 2. **詳細區塊** (文章下半部): 完整的卡片資訊，包含名稱、類型、屬性、效果、圖片
 
-**判斷摘要 vs 詳細**: 摘要區的卡片 ID 後面緊接下一張卡 ID；詳細區的卡片 ID 後面接的是 stats 行（含有「通常怪獸」「效果怪獸」等關鍵字）。
+**判斷摘要 vs 詳細**: 摘要區的卡片 ID 後面緊接下一張卡 ID；詳細區的卡片 ID 後面接的是 stats 行（含有「通常怪獸」「效果怪獸」等關鍵字，或符合緊湊格式）。
 
 ## HTML 結構隨時間演進
 
 - **2020 (KP01 時期)**: 卡名和 stats 都在 `<b><span style="color:...">` 裡，無圖片
 - **2022 (KP09 時期)**: 卡名在 `<b><span>` 裡，stats 在普通 `<div>` 裡，有 `<img>` 圖片
 - **2025 (KP23 時期)**: 類似 KP09，圖片在 `<a><img>` wrapper 裡
+- **緊湊格式 (部分文章)**: 某些卡片使用單行格式，stats 可跨多個相鄰 chunk（取決於作者編輯方式，非版本限定）
 
 ## 卡片 ID 格式
 
@@ -25,9 +26,18 @@ description: Parsing Rush Duel card data from ntucgm blog post HTML. Use when mo
 
 ## Stats 行格式
 
+### 標準格式 (KP/ST/CP 系列)
 `(中文名)  卡片類型  等級  屬性  種族  攻擊力/守備力`
 - 魔法/陷阱卡沒有等級、屬性、種族、ATK/DEF
 - 通常怪獸沒有條件和效果文本
+
+### 緊湊格式 (部分文章，依作者編輯習慣)
+`JP名(中文名) 屬性 N星 類型縮寫[/種族縮寫] ATK DEF`
+- ATK 和 DEF 以空格分隔（非 `/`）
+- 類型縮寫: `儀式` → 儀式怪獸、`效果` → 效果怪獸、`融合` → 融合怪獸 等
+- 若只有一個字段且不在類型表中（如 `魔法使`、`戰士`），視為種族、卡種預設為通常怪獸
+- Stats 可能分散在多個相鄰 chunk；Parser 將 header + 後續 chunks 合併後再用 regex 匹配
+- 多行文字塊（同一 leaf element 含 `\n`）會在解析前先按 `\n` 拆分
 
 ## 卡片文字欄位解析
 

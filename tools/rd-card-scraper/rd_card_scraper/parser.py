@@ -72,15 +72,30 @@ STATS_RE = re.compile(
     r"(?:\s+(\d+|\?)/(\d+|\?))?"  # ATK/DEF
 )
 
-# For inline entries where stats are on the same line as the card ID (KP01 JP023 style)
-# e.g. "RD/KP01-JP023 (RR)セブンスロード・マジシャン(七王道魔術師) 暗 7星魔法使 21001500"
-INLINE_STATS_RE = re.compile(
-    r"[（(]([^)）]+?)[）)]\s*"  # Chinese name
-    r"(光|暗|炎|水|風|地)\s+"
-    r"(\d+)[星☆]\s*"       # Level + star character
-    r"(\S+)\s+"            # Race (without 族 suffix sometimes)
-    r"(\d+)(\d{3,4})$"    # ATK+DEF concatenated (e.g. 21001500)
+# Compact inline format used in some posts (author-dependent, not version-specific):
+# JPname(ChName) Attr Level星 TypeAbbrev[/RaceAbbrev] ATK DEF  (space-separated ATK DEF)
+# e.g. "マジシャン・オブ・ブラックカオス(黑混沌之魔術師) 暗 8星 儀式/魔法使 2800 2600"
+#
+# Regex design notes:
+#   - \s* (not \s+) after attribute/level/race: chunks may be joined without spaces
+#   - [^\d/\s(（]+ for type/race token: excludes digits so "魔法使2000" stops at "魔法使"
+#   - /\s*  allows an optional space between "/" and the race name
+COMPACT_STATS_RE = re.compile(
+    r"[（(]([^)）]+?)[）)]\s*"              # group 1: Chinese name
+    r"(光|暗|炎|水|風|地)\s*"               # group 2: Attribute (0+ spaces — may be adjacent)
+    r"(\d+)[星☆]\s*"                       # group 3: Level
+    r"([^\d/\s(（]+)(?:/\s*([^\s(（]+))?\s*"  # group 4: type abbrev, group 5: race (opt)
+    r"(\d+|\?)\s+(\d+|\?)"                  # group 6: ATK, group 7: DEF
 )
+
+# Abbreviated card type → full type keyword
+_COMPACT_TYPE_MAP = {
+    "通常": "通常怪獸",
+    "效果": "效果怪獸",
+    "融合": "融合怪獸",
+    "儀式": "儀式怪獸",
+    "巨極": "巨極/效果怪獸",
+}
 
 CONDITION_RE = re.compile(r"條件[:：]\s*(.+)")
 EFFECT_RE = re.compile(r"^效果[:：]\s*(.+)", re.DOTALL)
@@ -381,6 +396,22 @@ def _is_detail_entry(chunks: list[dict], idx: int) -> bool:
         if kw in header_text:
             return True
 
+    # Check compact inline stats format (e.g. SD reprints):
+    # "(ChName) Attr N星 TypeAbbrev/RaceAbbrev ATK DEF"
+    # Stats may all be on the header line, or spread across the next few chunks
+    # (e.g. card ID + JP name in one chunk, then Chinese name + stats in next chunks).
+    # Build a combined string from the header and following text chunks for matching.
+    combined = header_text
+    for j in range(idx + 1, min(idx + 8, len(chunks))):
+        if chunks[j]["type"] != "text":
+            continue
+        ntext = chunks[j]["text"]
+        if CARD_ID_RE.search(ntext):
+            break
+        combined += ntext
+    if COMPACT_STATS_RE.search(combined):
+        return True
+
     # Check next few text chunks
     checked = 0
     for j in range(idx + 1, min(idx + 6, len(chunks))):
@@ -451,11 +482,18 @@ def _parse_card_details(
     card: Card, header_text: str, context_lines: list[str]
 ) -> None:
     """Parse stats, condition, effect from context lines and possibly header."""
-    # Combine header + context for full text search
-    all_text = header_text + "\n" + "\n".join(context_lines)
-
-    # Try standard stats pattern from context lines
+    # Pre-expand: some blog posts emit an entire card block (stats + condition +
+    # effect) as a single multi-line NavigableString inside one leaf element.
+    # Split each chunk on newlines so every logical line is processed individually.
+    expanded_context: list[str] = []
     for line in context_lines:
+        for subline in line.split("\n"):
+            subline = subline.strip()
+            if subline:
+                expanded_context.append(subline)
+
+    # Try standard stats pattern from (expanded) context lines
+    for line in expanded_context:
         stats_match = STATS_RE.search(line)
         if stats_match:
             card.name_zh = stats_match.group(1)
@@ -470,7 +508,7 @@ def _parse_card_details(
                 card.defense = stats_match.group(7)
             break
 
-    # If no stats found in context, check header for inline stats
+    # If no stats found in context, check header for inline stats (standard form)
     if not card.card_type:
         stats_match = STATS_RE.search(header_text)
         if stats_match:
@@ -485,6 +523,50 @@ def _parse_card_details(
             if stats_match.group(7):
                 card.defense = stats_match.group(7)
 
+    # If still no card type, try compact inline format (SD/reprint posts):
+    # "(ChName) Attr N星 TypeAbbrev[/RaceAbbrev] ATK DEF"
+    # Stats may be split across header + context chunks; join them for matching.
+    if not card.card_type:
+        combined = header_text + "".join(expanded_context)
+        m = COMPACT_STATS_RE.search(combined)
+        if m:
+            card.name_zh = m.group(1)
+            card.attribute = m.group(2)
+            card.level = int(m.group(3))
+            type_abbrev = m.group(4)
+            race_abbrev = m.group(5)
+            if type_abbrev in _COMPACT_TYPE_MAP:
+                # e.g. "儀式/魔法使" → 儀式怪獸 + 魔法使族
+                card.card_type = _COMPACT_TYPE_MAP[type_abbrev]
+                if race_abbrev:
+                    card.monster_type = (
+                        race_abbrev if race_abbrev.endswith("族") else race_abbrev + "族"
+                    )
+            else:
+                # type_abbrev is actually a race name (e.g. "魔法使", "戰士", "天使")
+                # implying the card type is 通常怪獸
+                card.card_type = "通常怪獸"
+                card.monster_type = (
+                    type_abbrev if type_abbrev.endswith("族") else type_abbrev + "族"
+                )
+            card.atk = m.group(6)
+            card.defense = m.group(7)
+
+            # Extract JP name from combined text when not already set.
+            # JP name = text between end of card_id and the opening of (ChName).
+            if not card.name_jp:
+                id_end = combined.find(card.card_id)
+                if id_end >= 0:
+                    after_id = combined[id_end + len(card.card_id):]
+                    cn_paren_pos = after_id.find("(" + m.group(1))
+                    if cn_paren_pos < 0:
+                        cn_paren_pos = after_id.find("（" + m.group(1))
+                    if cn_paren_pos >= 0:
+                        jp_name = after_id[:cn_paren_pos].strip()
+                        jp_name = RARITY_RE.sub("", jp_name).strip()
+                        if jp_name:
+                            card.name_jp = jp_name
+
     # Parse condition, effect, continuous effect, and summon condition.
     #
     # Context lines after the stats line may contain:
@@ -496,10 +578,12 @@ def _parse_card_details(
     # A single chunk may contain multiple labels joined together, e.g.
     # "條件:…可以發動效果:…". We split such chunks before classifying.
 
-    # Step 1: collect lines after the stats line, splitting multi-label chunks
+    # Step 1: collect lines after the stats line, splitting multi-label chunks.
+    # Use expanded_context (already split by \n) so multi-line leaf nodes are
+    # processed line-by-line instead of as one opaque blob.
     post_stats_lines: list[str] = []
     stats_seen = False
-    for line in context_lines:
+    for line in expanded_context:
         if not stats_seen:
             if STATS_RE.search(line):
                 stats_seen = True
