@@ -118,6 +118,10 @@ class RushDuelScraper:
             # Save card data
             card_set.save(self.data_dir)
 
+            # Remove images that no longer belong to this set
+            # (e.g. after a multi-deck split, SD0C/ may still contain SD0D images)
+            self._cleanup_orphaned_images(card_set)
+
         # Update state: for multi-deck posts store comma-separated set IDs
         state_set_id = (
             card_sets[0].set_id
@@ -137,6 +141,30 @@ class RushDuelScraper:
 
         logger.info(f"Scraped {total_cards} cards from {state_set_id}")
         return "scraped"
+
+    def _cleanup_orphaned_images(self, card_set: CardSet) -> None:
+        """Delete image files in set_id/images/ that no longer belong to any card.
+
+        Handles cases like multi-deck splits where one set directory previously
+        contained images for another set (e.g. SD0C/images/ had RD_SD0D-*.jpg).
+        """
+        img_dir = self.data_dir / card_set.set_id / "images"
+        if not img_dir.exists():
+            return
+
+        valid_filenames = {sanitize_filename(c.card_id) for c in card_set.cards}
+        removed = 0
+        for img_file in img_dir.iterdir():
+            if img_file.is_file() and img_file.name not in valid_filenames:
+                img_file.unlink()
+                removed += 1
+                logger.info(
+                    f"Removed orphaned image: {card_set.set_id}/images/{img_file.name}"
+                )
+        if removed:
+            logger.info(
+                f"Cleaned up {removed} orphaned image(s) from {card_set.set_id}/images/"
+            )
 
     def _link_existing_images(self, cards: list, set_id: str) -> None:
         """Set image_file on cards that already have downloaded images on disk."""
