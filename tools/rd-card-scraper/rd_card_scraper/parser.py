@@ -142,6 +142,8 @@ MULTI_DECK_URLS: frozenset[str] = frozenset({
     "https://ntucgm.blogspot.com/2020/03/rush-duel-st01-st02.html",
     # GRD1 + GRD2
     "https://ntucgm.blogspot.com/2022/03/rdgrd1-rush-duel-go-rush-429.html",
+    # SD01~SD05
+    "https://ntucgm.blogspot.com/2022/06/rush-duel-sd5-86.html"
 })
 
 
