@@ -16,6 +16,7 @@ from ..models import (
     CardOverrideModel,
     CardSetModel,
     CardVariantModel,
+    CardVariantOverrideModel,
 )
 from ..schemas import (
     CardCreate,
@@ -24,6 +25,7 @@ from ..schemas import (
     CardVariantOut,
     NextCardIdOut,
     VariantCreate,
+    VariantRarityUpdate,
 )
 
 router = APIRouter(prefix="/api/cards", tags=["cards"])
@@ -134,6 +136,135 @@ def get_card(card_id: str, db: Session = Depends(get_db)):
     if not card:
         raise HTTPException(status_code=404, detail=f"Card {card_id} not found")
     return card
+
+
+@router.patch("/{card_id:path}/variants/{rarity}", response_model=CardOut)
+def edit_variant_rarity(card_id: str, rarity: str, body: VariantRarityUpdate, db: Session = Depends(get_db)):
+    """Change the rarity of an existing variant.
+
+    Creates/updates a card_variant_override so that reimport maps the old
+    scraper rarity to the new rarity and never reverts the change.
+    """
+    card = db.query(CardModel).filter_by(card_id=card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail=f"Card {card_id} not found")
+
+    variant = db.query(CardVariantModel).filter_by(card_id=card_id, rarity=rarity).first()
+    if not variant:
+        raise HTTPException(status_code=404, detail=f"Variant {card_id} ({rarity}) not found")
+
+    if rarity == body.new_rarity:
+        db.refresh(card)
+        return card
+
+    if db.query(CardVariantModel).filter_by(card_id=card_id, rarity=body.new_rarity).first():
+        raise HTTPException(status_code=409, detail=f"Variant {card_id} ({body.new_rarity}) already exists")
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Find the scraper_rarity that ultimately maps to the current rarity.
+    # If a previous remap (A→rarity) exists, update it to (A→new_rarity).
+    chained = (
+        db.query(CardVariantOverrideModel)
+        .filter_by(card_id=card_id, action="remap")
+        .filter(CardVariantOverrideModel.target_rarity == rarity)
+        .first()
+    )
+    if chained:
+        chained.target_rarity = body.new_rarity
+        chained.updated_at = now
+    else:
+        # Check for an existing override keyed on the current rarity (e.g. a
+        # previous delete that we're overriding again).
+        existing = (
+            db.query(CardVariantOverrideModel)
+            .filter_by(card_id=card_id, scraper_rarity=rarity)
+            .first()
+        )
+        if existing:
+            existing.action = "remap"
+            existing.target_rarity = body.new_rarity
+            existing.updated_at = now
+        else:
+            db.add(CardVariantOverrideModel(
+                card_id=card_id,
+                scraper_rarity=rarity,
+                action="remap",
+                target_rarity=body.new_rarity,
+            ))
+
+    # Rename the variant in the DB
+    variant.rarity = body.new_rarity
+
+    # Keep original_rarity_string in sync
+    rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip()]
+    if rarity in rarities:
+        rarities[rarities.index(rarity)] = body.new_rarity
+    card.original_rarity_string = "/".join(rarities)
+
+    db.commit()
+    db.refresh(card)
+    return card
+
+
+@router.delete("/{card_id:path}/variants/{rarity}", status_code=204)
+def delete_variant(card_id: str, rarity: str, db: Session = Depends(get_db)):
+    """Delete a rarity variant.
+
+    Creates a deletion override so reimport does not recreate the variant from
+    scraper data. Cannot delete the last remaining variant.
+    """
+    card = db.query(CardModel).filter_by(card_id=card_id).first()
+    if not card:
+        raise HTTPException(status_code=404, detail=f"Card {card_id} not found")
+
+    variant = db.query(CardVariantModel).filter_by(card_id=card_id, rarity=rarity).first()
+    if not variant:
+        raise HTTPException(status_code=404, detail=f"Variant {card_id} ({rarity}) not found")
+
+    if db.query(CardVariantModel).filter_by(card_id=card_id).count() <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the only variant of a card")
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Determine the scraper_rarity for the override (handle remap chains).
+    # If this rarity was previously remapped from a scraper rarity, mark that
+    # original scraper rarity as "delete" instead.
+    chained = (
+        db.query(CardVariantOverrideModel)
+        .filter_by(card_id=card_id, action="remap")
+        .filter(CardVariantOverrideModel.target_rarity == rarity)
+        .first()
+    )
+    if chained:
+        chained.action = "delete"
+        chained.target_rarity = None
+        chained.updated_at = now
+    else:
+        existing = (
+            db.query(CardVariantOverrideModel)
+            .filter_by(card_id=card_id, scraper_rarity=rarity)
+            .first()
+        )
+        if existing:
+            existing.action = "delete"
+            existing.target_rarity = None
+            existing.updated_at = now
+        else:
+            db.add(CardVariantOverrideModel(
+                card_id=card_id,
+                scraper_rarity=rarity,
+                action="delete",
+                target_rarity=None,
+            ))
+
+    db.delete(variant)
+
+    # Keep original_rarity_string in sync
+    rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip() and r.strip() != rarity]
+    card.original_rarity_string = "/".join(rarities)
+
+    db.commit()
 
 
 @router.patch("/{card_id:path}", response_model=CardOut)

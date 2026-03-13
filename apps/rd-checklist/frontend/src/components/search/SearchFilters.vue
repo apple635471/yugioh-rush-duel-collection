@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import { RARITIES } from '@/constants/rarities'
 
 const emit = defineEmits<{
   change: [filters: FilterState]
@@ -33,7 +34,7 @@ const cardTypes = [
 ]
 
 const attributes = ['光', '暗', '炎', '水', '風', '地']
-const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
+const rarities = RARITIES
 </script>
 
 <template>
@@ -67,7 +68,7 @@ const rarities = ['N', 'R', 'SR', 'UR', 'SER', 'OVER-RUSH', 'RUSH', 'L']
       class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
     >
       <option value="">All Rarities</option>
-      <option v-for="r in rarities" :key="r" :value="r">{{ r }}</option>
+      <option v-for="r in rarities" :key="r.value" :value="r.value">{{ r.label }}</option>
     </select>
 
     <select

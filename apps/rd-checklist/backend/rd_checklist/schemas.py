@@ -76,6 +76,12 @@ class VariantCreate(BaseModel):
     rarity: str
 
 
+class VariantRarityUpdate(BaseModel):
+    """Change the rarity of an existing variant."""
+
+    new_rarity: str
+
+
 class NextCardIdOut(BaseModel):
     next_card_id: str
 

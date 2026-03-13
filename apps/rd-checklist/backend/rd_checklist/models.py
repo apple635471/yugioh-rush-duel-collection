@@ -126,6 +126,31 @@ class CardOverrideModel(Base):
     card = relationship("CardModel")
 
 
+class CardVariantOverrideModel(Base):
+    """Rarity correction overrides for card variants.
+
+    Protects user edits from being overwritten during reimport:
+    - action="remap": when scraper creates a variant with scraper_rarity,
+      use target_rarity instead (e.g. wrong "A" → correct "B")
+    - action="delete": when scraper would create a variant with scraper_rarity,
+      skip it entirely
+    """
+
+    __tablename__ = "card_variant_overrides"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    card_id = Column(String, ForeignKey("cards.card_id"), nullable=False, index=True)
+    scraper_rarity = Column(String, nullable=False)  # rarity as seen in scraper data
+    action = Column(String, nullable=False)  # "remap" | "delete"
+    target_rarity = Column(String, nullable=True)  # used when action="remap"
+    created_at = Column(String, nullable=False, server_default=func.datetime("now"))
+    updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
+
+    __table_args__ = (UniqueConstraint("card_id", "scraper_rarity"),)
+
+    card = relationship("CardModel")
+
+
 class CardEditModel(Base):
     __tablename__ = "card_edits"
 

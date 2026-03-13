@@ -80,3 +80,12 @@ export async function addVariant(cardId: string, variantData: VariantCreate): Pr
   const { data } = await api.post<CardVariant>(`/cards/${cardId}/variants`, variantData)
   return data
 }
+
+export async function editVariantRarity(cardId: string, oldRarity: string, newRarity: string): Promise<Card> {
+  const { data } = await api.patch<Card>(`/cards/${cardId}/variants/${oldRarity}`, { new_rarity: newRarity })
+  return data
+}
+
+export async function deleteVariant(cardId: string, rarity: string): Promise<void> {
+  await api.delete(`/cards/${cardId}/variants/${rarity}`)
+}

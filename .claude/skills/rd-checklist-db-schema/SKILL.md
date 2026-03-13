@@ -58,6 +58,15 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 - 刪除 override 後，下次匯入將恢復 scraper 原始值
 - 注意: `is_manual=True` 的卡片整張跳過，不需要 per-field override
 
+### card_variant_overrides ★貴罕度校正覆寫
+- `id` (PK, auto), `card_id` (FK → cards, indexed)
+- `scraper_rarity` (str): 在 scraper 資料中的貴罕度字串（override 的 key）
+- `action` (str): `"remap"` | `"delete"`
+- `target_rarity` (str, nullable): `action="remap"` 時的目標貴罕度
+- `UNIQUE(card_id, scraper_rarity)`: 每卡每個 scraper 貴罕度只一筆
+- 匯入時：`action="remap"` → 改用 `target_rarity` 建立 variant；`action="delete"` → 跳過
+- 支援鏈式 remap：編輯時查找 `target_rarity == old_rarity` 的現有 override 並更新，保留 scraper_rarity 不變
+
 ### card_edits (歷史記錄)
 - `card_id`, `field_name`, `old_value`, `new_value`, `edited_at`
 
@@ -65,6 +74,7 @@ SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 
 - **一卡多版**: scraper 輸出 `"UR/SER"` → 匯入時拆為 2 筆 variant，各自獨立追蹤 `owned_count`
 - **匯入安全 (variant)**: `_upsert_variant()` 只在 variant 不存在時 INSERT，已存在的只更新 image 欄位，永不碰 `owned_count`
+- **匯入安全 (variant rarity)**: `_import_one_card()` 在 upsert 前查詢 `card_variant_overrides`，套用 remap/delete
 - **匯入安全 (card_set)**: `_import_one_set()` 會先查詢 card_set_overrides，有 override 的欄位使用 override 值，跳過 scraper 資料
 - **匯入安全 (card)**: `is_manual=True` 的卡片整張跳過；非 manual 卡片透過 card_overrides 保護已編輯欄位
 - **手動建立卡片**: `POST /api/cards` 建立的卡片 `is_manual=True`，匯入永不覆蓋

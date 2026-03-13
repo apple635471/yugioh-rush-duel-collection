@@ -74,6 +74,25 @@ def _val(field, scraper_val):
 
 Override 透過 `PATCH /api/cards/{card_id}` 自動建立 (非 manual 卡片)；手動建立的卡片不需要 override 因為整張跳過。
 
+### Variant Rarity Override 保護
+
+`_import_one_card()` 在 upsert variants 之前，先查詢 `card_variant_overrides` 表：
+
+```python
+variant_overrides = {ov.scraper_rarity: ov for ov in db.query(CardVariantOverrideModel).filter_by(card_id=card_id)}
+
+for sort_order, rarity in enumerate(rarities):
+    ov = variant_overrides.get(rarity)
+    if ov is None:
+        _upsert_variant(db, card_id, rarity, ...)
+    elif ov.action == "remap" and ov.target_rarity:
+        _upsert_variant(db, card_id, ov.target_rarity, ...)  # 用正確的 rarity
+    # elif ov.action == "delete": 跳過不建立
+```
+
+- `force=True` 時跳過 variant override 查詢（強制覆蓋模式）
+- Override 透過 `PATCH /api/cards/{id}/variants/{rarity}` 建立 (remap) 或 `DELETE` 建立 (delete)
+
 ### Variant owned_count 保護
 
 `_upsert_variant()` 的核心保護:

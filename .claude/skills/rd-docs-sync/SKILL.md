@@ -53,3 +53,21 @@ apps/rd-checklist/frontend/README.md               # 元件樹、Pinia stores、
 2. 對照上表確認所有受影響的文件都已更新
 3. 如果不確定是否需要更新，寧可更新也不要漏掉
 4. 新增全新子系統時，評估是否需要建立新的 SKILL.md
+
+## ★ 完整交付流程 (每次 feature/fix 都必須執行)
+
+> 缺少以下任一步驟都是不完整的交付。
+
+```
+1. git checkout -b feat/xxx  或  fix/xxx        ← 開新 branch，不要在 main 直接 commit
+2. 寫程式碼
+3. 更新 CHANGELOG.md (見 rd-changelog-reminder)
+4. 更新受影響的 SKILL.md (見上方觸發時機表)
+5. git add + git commit
+6. git push -u origin <branch>
+7. gh pr create  (用 GH_TOKEN from .env，見 MEMORY.md)
+```
+
+**branch 命名**: `feat/<簡短功能>` 或 `fix/<簡短問題>`
+**PR title**: 英文，≤70 字元
+**PR body**: 中文（見溝通偏好），技術名詞保留英文

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel
+from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel, CardVariantOverrideModel
 
 logger = logging.getLogger(__name__)
 
@@ -219,8 +219,19 @@ def _import_one_card(
 
     image_file = card_data.get("image_file")
 
+    # Load variant overrides (remap / delete) for this card
+    variant_overrides: dict[str, CardVariantOverrideModel] = {}
+    if not force:
+        for ov in db.query(CardVariantOverrideModel).filter_by(card_id=card_id).all():
+            variant_overrides[ov.scraper_rarity] = ov
+
     for sort_order, rarity in enumerate(rarities):
-        _upsert_variant(db, card_id, rarity, sort_order, image_file)
+        ov = variant_overrides.get(rarity)
+        if ov is None:
+            _upsert_variant(db, card_id, rarity, sort_order, image_file)
+        elif ov.action == "remap" and ov.target_rarity:
+            _upsert_variant(db, card_id, ov.target_rarity, sort_order, image_file)
+        # elif ov.action == "delete": skip — do not create/update this variant
 
 
 def _upsert_variant(
