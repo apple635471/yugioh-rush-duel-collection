@@ -4,6 +4,7 @@ import { ref } from 'vue'
 export const useUiStore = defineStore('ui', () => {
   const viewMode = ref<'grid' | 'table'>('grid')
   const sidebarOpen = ref(false)
+  const sidebarMinimized = ref(false)
   const sidebarCardId = ref<string | null>(null)
   const sidebarRarity = ref<string | null>(null)
   const sidebarMode = ref<'detail' | 'create'>('detail')
@@ -19,6 +20,7 @@ export const useUiStore = defineStore('ui', () => {
     sidebarRarity.value = rarity ?? null
     sidebarCreateSetId.value = null
     sidebarOpen.value = true
+    sidebarMinimized.value = false
   }
 
   function openCreateSidebar(setId: string) {
@@ -27,19 +29,30 @@ export const useUiStore = defineStore('ui', () => {
     sidebarRarity.value = null
     sidebarCreateSetId.value = setId
     sidebarOpen.value = true
+    sidebarMinimized.value = false
   }
 
   function closeSidebar() {
     sidebarOpen.value = false
+    sidebarMinimized.value = false
     sidebarCardId.value = null
     sidebarRarity.value = null
     sidebarMode.value = 'detail'
     sidebarCreateSetId.value = null
   }
 
+  function minimizeSidebar() {
+    sidebarMinimized.value = true
+  }
+
+  function expandSidebar() {
+    sidebarMinimized.value = false
+  }
+
   return {
-    viewMode, sidebarOpen, sidebarCardId, sidebarRarity,
+    viewMode, sidebarOpen, sidebarMinimized, sidebarCardId, sidebarRarity,
     sidebarMode, sidebarCreateSetId,
     toggleView, openSidebar, openCreateSidebar, closeSidebar,
+    minimizeSidebar, expandSidebar,
   }
 })

@@ -55,14 +55,21 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)
-- `CardGrid` / `CardGridItem`: 圖片 grid，未持有灰階；user_upload 圖 URL 加 `?t=1` cache buster
+- `CardGrid`: `auto-fill minmax(190px,1fr)` grid，container 為 `max-w-screen-2xl`
+- `CardGridItem`: 圖片 grid item
+  - **佈局（上→下）**: 完整卡牌編號 + 複製按鈕（卡圖上方）→ 卡圖 → 卡名 → card_type → RarityTabs（靠右獨立行，`@click.stop`）→ OwnershipControl
+  - **fullCardId**: `card_id` 含 `/` 時直接用（如 `RD/23PR-JP001`）；否則補 `RD/{set_id}-{card_id}`
+  - 未持有灰階；user_upload 圖 URL 加 `?t=1` cache buster
+  - 選中時 yellow-400 ring；scrollIntoView 延遲 520ms（等 layout transition）
 - `CardTable`: 表格行，未持有半透明
 - `RarityTabs`: 多稀有度 tab 切換，各稀有度有對應色碼
 - `OwnershipBadge`: 持有數 badge (綠色/灰色)
-- `OwnershipControl`: `[-] 0 [+]` 按鈕，樂觀更新 + emit event
+- `OwnershipControl`: `[−] 0 [+]` 按鈕（縮小版 w-5 h-5），樂觀更新 + emit event
 
 ### Detail — 側邊欄 & 卡組編輯
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉；根據 `ui.sidebarMode` 切換 detail/create 模式
+  - **收起/展開 tab**: 兩個狀態皆固定在 `fixed top-1/2 right-0 z-[60]`（不在 aside 內部），位置不跳動
+  - **Layout transition**: `main` 加 `sm:pr-[28rem]` transition 500ms ease-in-out
 - `CardDetailPanel`: 大圖 + info table + effect text + **inline 編輯模式** + variant 管理列 (非編輯模式下顯示)
   - **Add Variant**: 展開 inline dropdown，選擇尚未存在的貴罕度
   - **Edit Rarity**: 展開 inline dropdown，修改當前 rarity；呼叫 `PATCH /api/cards/{id}/variants/{rarity}`
