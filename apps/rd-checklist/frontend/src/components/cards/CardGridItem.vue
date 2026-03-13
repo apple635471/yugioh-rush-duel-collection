@@ -79,7 +79,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
   >
     <!-- Card number row (above image) -->
     <div class="flex items-center gap-1 px-2 pt-1.5 pb-1">
-      <span class="font-mono text-[11px] text-gray-200 truncate flex-1 leading-none">{{ fullCardId }}</span>
+      <span class="font-mono text-xs text-gray-200 truncate flex-1 leading-none">{{ fullCardId }}</span>
       <button
         @click="copyCardNumber"
         class="shrink-0 text-gray-600 hover:text-gray-300 transition-colors"
@@ -129,12 +129,12 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
     <!-- Info (below image) -->
     <div class="px-2 pt-1.5 pb-2">
       <!-- Card name -->
-      <h4 class="text-sm font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
+      <h4 class="text-base font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
         {{ card.name_zh || card.name_jp }}
       </h4>
 
       <!-- Card type -->
-      <p class="text-[9px] text-gray-500 mt-0.5 leading-none">{{ card.card_type }}</p>
+      <p class="text-xs text-gray-400 mt-0.5 leading-none">{{ card.card_type }}</p>
 
       <!-- Rarity — own line, right-aligned, click.stop so it doesn't open sidebar -->
       <div class="flex justify-end mt-1" @click.stop>
