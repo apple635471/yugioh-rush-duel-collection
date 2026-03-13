@@ -40,6 +40,7 @@ const isMonster = computed(() => (form.card_type ?? '').includes('怪獸'))
 
 // Text section expand toggles (same pattern as CardDetailPanel)
 const expandedSections = reactive<Record<string, boolean>>({
+  description: false,
   summon_condition: false,
   condition: false,
   effect: false,
@@ -47,6 +48,7 @@ const expandedSections = reactive<Record<string, boolean>>({
 })
 
 const textSections = [
+  { key: 'description' as const, label: 'Description', monsterOnly: false },
   { key: 'summon_condition' as const, label: 'Summon Condition', monsterOnly: true },
   { key: 'condition' as const, label: 'Condition', monsterOnly: false },
   { key: 'effect' as const, label: 'Effect', monsterOnly: false },

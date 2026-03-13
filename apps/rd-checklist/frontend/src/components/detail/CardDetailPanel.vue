@@ -3,6 +3,7 @@ import { ref, computed, reactive } from 'vue'
 import type { Card, CardUpdate } from '@/types/card'
 import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
+import { useUiStore } from '@/stores/ui'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 
@@ -14,6 +15,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   cardUpdated: []
 }>()
+
+const ui = useUiStore()
 
 const currentRarity = ref(props.activeRarity)
 const editing = ref(false)
@@ -38,6 +41,7 @@ const isMonster = computed(() => {
 
 // Track which optional text sections are expanded (for adding when empty)
 const expandedSections = reactive<Record<string, boolean>>({
+  description: false,
   summon_condition: false,
   condition: false,
   effect: false,
@@ -55,12 +59,14 @@ function startEdit() {
     level: c.level,
     atk: c.atk,
     defense: c.defense,
+    description: c.description,
     summon_condition: c.summon_condition,
     condition: c.condition,
     effect: c.effect,
     continuous_effect: c.continuous_effect,
   })
   // Expand sections that already have content
+  expandedSections.description = !!c.description
   expandedSections.summon_condition = !!c.summon_condition
   expandedSections.condition = !!c.condition
   expandedSections.effect = !!c.effect
@@ -140,6 +146,7 @@ async function onFileSelected(event: Event) {
       v.image_path = updated.image_path
     }
     imageCacheBuster.value = Date.now()
+    ui.markImageUpdated(props.card.card_id, currentRarity.value)
     emit('cardUpdated')
   } catch (e: any) {
     imageError.value = e?.response?.data?.detail ?? 'Upload failed'
@@ -161,6 +168,7 @@ async function onRevertImage() {
       v.image_path = updated.image_path
     }
     imageCacheBuster.value = Date.now()
+    ui.markImageUpdated(props.card.card_id, currentRarity.value)
     emit('cardUpdated')
   } catch (e: any) {
     imageError.value = e?.response?.data?.detail ?? 'Revert failed'
@@ -177,6 +185,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
 
 // Text section definitions for DRY rendering
 const textSections = computed(() => [
+  { key: 'description' as const, label: 'Description', monsterOnly: false },
   { key: 'summon_condition' as const, label: 'Summon Condition', monsterOnly: true },
   { key: 'condition' as const, label: 'Condition', monsterOnly: false },
   { key: 'effect' as const, label: 'Effect', monsterOnly: false },

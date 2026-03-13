@@ -10,6 +10,9 @@ export const useUiStore = defineStore('ui', () => {
   const sidebarMode = ref<'detail' | 'create'>('detail')
   const sidebarCreateSetId = ref<string | null>(null)
 
+  // Image cache busters: key = "card_id/rarity", value = timestamp
+  const imageUpdates = ref(new Map<string, number>())
+
   function toggleView() {
     viewMode.value = viewMode.value === 'grid' ? 'table' : 'grid'
   }
@@ -49,10 +52,14 @@ export const useUiStore = defineStore('ui', () => {
     sidebarMinimized.value = false
   }
 
+  function markImageUpdated(cardId: string, rarity: string) {
+    imageUpdates.value.set(`${cardId}/${rarity}`, Date.now())
+  }
+
   return {
     viewMode, sidebarOpen, sidebarMinimized, sidebarCardId, sidebarRarity,
-    sidebarMode, sidebarCreateSetId,
+    sidebarMode, sidebarCreateSetId, imageUpdates,
     toggleView, openSidebar, openCreateSidebar, closeSidebar,
-    minimizeSidebar, expandSidebar,
+    minimizeSidebar, expandSidebar, markImageUpdated,
   }
 })

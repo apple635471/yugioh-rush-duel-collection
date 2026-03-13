@@ -19,6 +19,7 @@ export interface Card {
   level: number | null
   atk: string | null
   defense: string | null
+  description: string | null
   summon_condition: string | null
   condition: string | null
   effect: string | null
@@ -40,6 +41,7 @@ export interface CardCreate {
   level?: number | null
   atk?: string | null
   defense?: string | null
+  description?: string | null
   summon_condition?: string | null
   condition?: string | null
   effect?: string | null
@@ -61,6 +63,7 @@ export interface CardUpdate {
   level?: number | null
   atk?: string | null
   defense?: string | null
+  description?: string | null
   summon_condition?: string | null
   condition?: string | null
   effect?: string | null

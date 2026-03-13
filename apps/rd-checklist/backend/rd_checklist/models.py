@@ -49,6 +49,7 @@ class CardModel(Base):
     level = Column(Integer)
     atk = Column(String)
     defense = Column(String)
+    description = Column(Text)
     summon_condition = Column(Text)
     condition = Column(Text)
     effect = Column(Text)

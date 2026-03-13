@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.4.2 (2026-03-13)
+
+### 修正
+
+- **卡圖即時更新**: 上傳或還原圖片後，card grid 的卡圖即時反映最新圖片（不再需要重整頁面）
+  - UI store 新增 `imageUpdates` map，`CardDetailPanel` 上傳/還原後呼叫 `markImageUpdated`
+  - `CardGridItem` 改用動態 timestamp cache buster，取代靜態 `?t=1`
+
+### 新增
+
+- **卡牌描述 (description) 欄位**: `CardDetailPanel` 與 `CardCreatePanel` 的編輯區新增 Description 欄位
+  - 有別於 Effect/Condition，用於填寫卡牌的背景介紹文字
+  - 後端 DB 新增 `description` 欄位（含 migration），API schema 同步更新
+
+---
+
 ## v0.4.1 (2026-03-13)
 
 ### 更新
