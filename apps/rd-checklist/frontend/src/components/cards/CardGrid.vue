@@ -12,7 +12,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+  <!-- auto-fill + minmax lets columns naturally shrink as container narrows (no hard jumps) -->
+  <div
+    class="grid gap-3"
+    style="grid-template-columns: repeat(auto-fill, minmax(190px, 1fr))"
+  >
     <CardGridItem
       v-for="card in cards"
       :key="card.card_id"

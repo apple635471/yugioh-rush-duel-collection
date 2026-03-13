@@ -29,26 +29,26 @@ function decrement() {
 </script>
 
 <template>
-  <div class="flex items-center gap-1" @click.stop>
+  <div class="flex items-center gap-0.5" @click.stop>
     <button
       @click="decrement"
       :disabled="localCount <= 0"
-      class="w-7 h-7 flex items-center justify-center rounded text-base font-bold transition-colors"
+      class="w-5 h-5 flex items-center justify-center rounded text-xs font-bold transition-colors leading-none"
       :class="localCount > 0
         ? 'bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white'
         : 'bg-gray-700 text-gray-500 cursor-not-allowed'"
     >
-      -
+      −
     </button>
     <span
-      class="w-8 text-center text-base font-semibold"
-      :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-400'"
+      class="w-5 text-center text-xs font-semibold tabular-nums"
+      :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-500'"
     >
       {{ localCount }}
     </span>
     <button
       @click="increment"
-      class="w-7 h-7 flex items-center justify-center rounded bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white text-base font-bold transition-colors"
+      class="w-5 h-5 flex items-center justify-center rounded bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white text-xs font-bold transition-colors leading-none"
     >
       +
     </button>

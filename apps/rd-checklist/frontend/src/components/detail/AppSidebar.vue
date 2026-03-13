@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { fetchCard } from '@/api/cards'
 import type { Card } from '@/types/card'
@@ -26,7 +26,7 @@ watch(() => ui.sidebarCardId, loadCard)
 onMounted(loadCard)
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') ui.closeSidebar()
+  if (e.key === 'Escape' && ui.sidebarOpen) ui.closeSidebar()
 }
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
@@ -34,30 +34,26 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 function onCardCreated() {
   ui.closeSidebar()
 }
+
+const cardLabel = computed(() =>
+  card.value?.name_zh || card.value?.name_jp || ui.sidebarCardId || ''
+)
 </script>
 
 <template>
   <Teleport to="body">
-    <!-- Backdrop -->
+    <!-- Mobile backdrop (hidden on sm+ since layout shifts instead) -->
     <div
-      class="fixed inset-0 bg-black/50 z-50"
+      v-if="ui.sidebarOpen && !ui.sidebarMinimized"
+      class="fixed inset-0 bg-black/50 z-40 sm:hidden"
       @click="ui.closeSidebar()"
     />
 
-    <!-- Sidebar panel -->
+    <!-- Full sidebar panel (no close button inside — handled by the tab below) -->
     <aside
+      v-if="ui.sidebarOpen && !ui.sidebarMinimized"
       class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 border-l border-gray-700 z-50 overflow-y-auto shadow-2xl"
     >
-      <!-- Close button -->
-      <button
-        @click="ui.closeSidebar()"
-        class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-gray-300 hover:text-white hover:bg-gray-600 transition-colors z-10"
-      >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-
       <!-- Create mode -->
       <template v-if="ui.sidebarMode === 'create'">
         <CardCreatePanel
@@ -69,12 +65,10 @@ function onCardCreated() {
 
       <!-- Detail mode -->
       <template v-else>
-        <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center h-64">
           <div class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
         </div>
 
-        <!-- Card detail -->
         <CardDetailPanel
           v-else-if="card"
           :card="card"
@@ -82,11 +76,46 @@ function onCardCreated() {
           @card-updated="loadCard"
         />
 
-        <!-- Error -->
         <div v-else class="p-6 text-center text-gray-500">
           Card not found.
         </div>
       </template>
     </aside>
+
+    <!--
+      Collapse tab (sidebar open): fixed at vertical center, right edge, z above sidebar.
+      Expand tab (sidebar minimized): same exact position.
+      Both render in same spot so the button never jumps.
+    -->
+    <button
+      v-if="ui.sidebarOpen && !ui.sidebarMinimized"
+      @click="ui.minimizeSidebar()"
+      class="fixed top-1/2 right-0 -translate-y-1/2 z-[60] bg-gray-700 border border-r-0 border-gray-600 rounded-l-lg shadow-lg px-1.5 py-3 flex flex-col items-center gap-1 text-gray-300 hover:text-yellow-400 hover:bg-gray-600 transition-colors"
+      title="收起面板"
+    >
+      <!-- chevron → (collapse) -->
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+
+    <button
+      v-if="ui.sidebarOpen && ui.sidebarMinimized"
+      @click="ui.expandSidebar()"
+      class="fixed top-1/2 right-0 -translate-y-1/2 z-50 bg-gray-800 border border-r-0 border-gray-600 rounded-l-lg shadow-lg px-1.5 py-4 flex flex-col items-center gap-2 text-gray-300 hover:text-yellow-400 hover:bg-gray-700 transition-colors group"
+      title="展開面板"
+    >
+      <!-- chevron ← (expand) -->
+      <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      <span
+        v-if="cardLabel"
+        class="text-[9px] text-gray-400 group-hover:text-yellow-400 max-h-28 overflow-hidden"
+        style="writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap;"
+      >
+        {{ cardLabel }}
+      </span>
+    </button>
   </Teleport>
 </template>

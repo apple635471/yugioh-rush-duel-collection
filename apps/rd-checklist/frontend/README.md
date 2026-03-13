@@ -17,11 +17,13 @@ App.vue
 │   │   ├── BreadcrumbBar
 │   │   ├── SetMetadataEditor  # 卡組 metadata 顯示/編輯 + override 管理
 │   │   ├── ViewToggle     # Grid ↔ Table 切換
-│   │   ├── CardGrid       # Grid 模式
+│   │   ├── CardGrid       # Grid 模式 (auto-fill minmax(190px,1fr))
 │   │   │   └── CardGridItem × N
-│   │   │       ├── OwnershipBadge  (右上角)
-│   │   │       ├── RarityTabs      (多稀有度切換)
-│   │   │       └── OwnershipControl ([ - 0 + ])
+│   │   │       ├── 完整卡牌編號列 + 複製按鈕  (卡圖上方)
+│   │   │       ├── OwnershipBadge  (卡圖右上角 overlay)
+│   │   │       ├── 卡名 / card_type
+│   │   │       ├── RarityTabs      (獨立一行靠右；click.stop 不觸發側邊欄)
+│   │   │       └── OwnershipControl ([ − 0 + ]，縮小版)
 │   │   └── CardTable      # Table 模式 (同樣的子元件)
 │   │
 │   └── SearchView         # /search?q=
@@ -31,7 +33,8 @@ App.vue
 │
 └── AppSidebar (Teleport)  # 條件: ui.sidebarOpen
     ├── CardDetailPanel    # ui.sidebarMode='detail': 大圖 + 完整資訊 + 效果 + Add Variant
-    └── CardCreatePanel    # ui.sidebarMode='create': 新卡建立表單
+    ├── CardCreatePanel    # ui.sidebarMode='create': 新卡建立表單
+    └── 收起/展開 tab      # fixed top-1/2 right-0，兩狀態同位置
 ```
 
 ## 狀態管理
@@ -73,6 +76,8 @@ App.vue
 - **未持有卡片**: grayscale + opacity-40 (Grid), opacity-40 整行 (Table)
 - **稀有度色碼**: UR=金, SER=紅, SR=橙, R=藍, N=灰, OVER-RUSH=紫, RUSH=青
 - **LEGEND 標記**: amber-500 badge
+- **Grid 容器**: `max-w-screen-2xl`（1536px），`auto-fill minmax(190px,1fr)`
+- **側邊欄 layout**: 開啟時主容器加 `sm:pr-[28rem]`（transition 500ms ease-in-out）
 
 ## 指令
 

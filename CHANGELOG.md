@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.4.1 (2026-03-13)
+
+### 更新
+
+#### 前端 Card Grid UI 改善
+
+- **完整卡牌編號顯示**: CardGridItem 在卡圖上方顯示完整編號（如 `RD/KP02-JP001`），旁邊附複製按鈕（複製成功顯示綠色打勾 1.5 秒）
+  - 相容兩種 `card_id` 格式：已含完整路徑（`RD/23PR-JP001`）直接顯示；短形式（`JP001`）自動補上 `RD/{set_id}-`
+- **稀有度獨立一行**: RarityTabs 移至資訊區底部靠右顯示；點稀有度 tab 切換卡圖，不再觸發側邊欄開啟（`@click.stop`）
+- **OwnershipControl 縮小**: 按鈕 `w-7 h-7 text-base` → `w-5 h-5 text-xs`，減少視覺佔用
+- **Grid 容器加寬**: `max-w-7xl` (1280px) → `max-w-screen-2xl` (1536px)，在 1440px+ 螢幕填滿版面
+- **Grid 自動填充**: 改用 `auto-fill minmax(190px, 1fr)`，欄數隨視窗寬度自然增減（不硬跳格）
+
+#### 側邊欄互動改善
+
+- **收起／展開按鈕位置統一**: 兩個狀態皆固定在畫面右側垂直正中間（`fixed top-1/2 right-0`），位置不跳動
+- **關閉後不捲回頂部**: 選中卡片的 `scrollIntoView` 延遲至 layout transition 完成後（520ms）才執行
+- **Layout transition 緩和**: `duration-300` → `duration-500 ease-in-out`，重排動畫更柔和
+
+---
+
 ## v0.4.0 (2026-03-07)
 
 ### 新增

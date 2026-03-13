@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Card } from '@/types/card'
 import { getCardImageUrl, updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
@@ -17,6 +17,8 @@ const emit = defineEmits<{
 
 const ui = useUiStore()
 const activeRarity = ref(props.card.variants[0]?.rarity ?? '')
+const cardEl = ref<HTMLElement | null>(null)
+const copied = ref(false)
 
 const activeVariant = computed(() =>
   props.card.variants.find(v => v.rarity === activeRarity.value) ?? props.card.variants[0]
@@ -25,25 +27,41 @@ const activeVariant = computed(() =>
 const imageUrl = computed(() => {
   if (!activeVariant.value) return ''
   const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
-  // Bust cache for user-uploaded images (URL stays the same but file changes)
   return activeVariant.value.image_source === 'user_upload' ? `${base}?t=1` : base
 })
 
-const isOwned = computed(() => activeVariant.value?.owned_count ?? 0 > 0)
+// card_id 有兩種格式：部分 set 已含完整路徑（如 RD/23PR-JP001），部分只有短形式（如 JP001）
+// 前者直接用，後者補 RD/{set_id}-
+const fullCardId = computed(() => {
+  const id = props.card.card_id
+  return id.includes('/') ? id : `RD/${props.card.set_id}-${id}`
+})
 
-const shortId = computed(() => {
-  // "RD/KP23-JP000" → "JP000"
-  const parts = props.card.card_id.split('-')
-  return parts.length > 1 ? parts[parts.length - 1] : props.card.card_id
+const isOwned = computed(() => (activeVariant.value?.owned_count ?? 0) > 0)
+const isSelected = computed(() => ui.sidebarCardId === props.card.card_id)
+
+// Scroll selected card into view after the 500ms padding transition settles
+watch(isSelected, (selected) => {
+  if (selected && cardEl.value) {
+    setTimeout(() => {
+      cardEl.value?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+    }, 520)
+  }
 })
 
 function openDetail() {
   ui.openSidebar(props.card.card_id, activeRarity.value)
 }
 
+async function copyCardNumber(e: Event) {
+  e.stopPropagation()
+  await navigator.clipboard.writeText(fullCardId.value)
+  copied.value = true
+  setTimeout(() => { copied.value = false }, 1500)
+}
+
 async function onOwnershipUpdate(cardId: string, rarity: string, count: number) {
   await updateOwnership(cardId, rarity, count)
-  // Update local variant
   const v = props.card.variants.find(v => v.card_id === cardId && v.rarity === rarity)
   if (v) v.owned_count = count
   emit('ownershipChanged')
@@ -52,10 +70,31 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
 
 <template>
   <div
+    ref="cardEl"
     @click="openDetail"
-    class="group relative bg-gray-800 border border-gray-700 rounded-lg overflow-hidden cursor-pointer hover:border-yellow-500/50 transition-all"
-    :class="{ 'ring-1 ring-yellow-500/20': ui.sidebarCardId === card.card_id }"
+    class="group relative bg-gray-800 border rounded-lg overflow-hidden cursor-pointer transition-all"
+    :class="isSelected
+      ? 'border-yellow-400 ring-2 ring-yellow-400 ring-offset-2 ring-offset-gray-900'
+      : 'border-gray-700 hover:border-yellow-500/50'"
   >
+    <!-- Card number row (above image) -->
+    <div class="flex items-center gap-1 px-2 pt-1.5 pb-1">
+      <span class="font-mono text-[11px] text-gray-200 truncate flex-1 leading-none">{{ fullCardId }}</span>
+      <button
+        @click="copyCardNumber"
+        class="shrink-0 text-gray-600 hover:text-gray-300 transition-colors"
+        :title="copied ? '已複製！' : '複製編號'"
+      >
+        <svg v-if="copied" class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        <svg v-else class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- Image -->
     <div class="aspect-[59/86] bg-gray-700 relative overflow-hidden">
       <img
@@ -87,23 +126,27 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
       </div>
     </div>
 
-    <!-- Info -->
-    <div class="p-2.5">
-      <div class="flex items-center justify-between gap-1 mb-1">
-        <span class="text-xs font-mono text-gray-400">{{ shortId }}</span>
+    <!-- Info (below image) -->
+    <div class="px-2 pt-1.5 pb-2">
+      <!-- Card name -->
+      <h4 class="text-sm font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
+        {{ card.name_zh || card.name_jp }}
+      </h4>
+
+      <!-- Card type -->
+      <p class="text-[9px] text-gray-500 mt-0.5 leading-none">{{ card.card_type }}</p>
+
+      <!-- Rarity — own line, right-aligned, click.stop so it doesn't open sidebar -->
+      <div class="flex justify-end mt-1" @click.stop>
         <RarityTabs
           :variants="card.variants"
           :active-rarity="activeRarity"
           @select="activeRarity = $event"
         />
       </div>
-      <h4 class="text-sm font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
-        {{ card.name_zh || card.name_jp }}
-      </h4>
-      <p class="text-xs text-gray-400 mt-0.5">{{ card.card_type }}</p>
 
       <!-- Ownership control -->
-      <div class="mt-2 flex justify-center">
+      <div class="mt-1 flex justify-center">
         <OwnershipControl
           :card-id="card.card_id"
           :rarity="activeRarity"
