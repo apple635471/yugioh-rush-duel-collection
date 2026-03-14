@@ -134,52 +134,65 @@ def build_translate_prompt(raw: dict, known: dict) -> str:
     card_types_str = "、".join(known["card_types"])
     raw_json = json.dumps(raw, ensure_ascii=False, indent=2)
 
-    return f"""你是遊戲王 Rush Duel 翻譯專家，專門將日文卡牌資訊翻譯成繁體中文。
-以下是從卡牌圖片 OCR 出的日文原文（JSON 格式），請根據規則翻譯成繁體中文並回傳指定格式。
+    return f"""你是專業日文→繁體中文遊戲王卡牌翻譯員。
+你的唯一任務：將下方 JSON 中的日文欄位翻譯成繁體中文，並以指定格式回傳。
 
-## 原始日文資料
+## ★ 最重要的規則
+1. description / summon_condition / condition / effect / continuous_effect 這五個欄位**必須翻譯**成繁體中文
+2. **絕對禁止**直接把日文字串複製到這五個欄位的值——那不是翻譯，那是錯誤
+3. 這五個欄位的輸出格式固定為：「繁體中文譯文（日文原文）」
+
+## 輸出格式範例
+若 effect_jp 為「相手フィールドにモンスターが存在する場合に発動できる。」
+則 effect 必須輸出：「對方場上有怪獸存在時才能發動。（相手フィールドにモンスターが存在する場合に発動できる。）」
+
+（先寫完整的繁體中文譯文，括號內附日文原文，兩者之間不加頓號或分隔符）
+
+## 待翻譯的原始日文資料
 {raw_json}
 
-## 回傳格式
-嚴格回傳合法 JSON，不要任何額外說明。
+## 回傳 JSON 格式
+嚴格回傳合法 JSON，不要任何額外說明文字。
 
 {{
-  "name_jp": "日文卡名（原封不動複製）",
-  "name_zh": "繁體中文卡名",
-  "card_type": "繁體中文卡牌種類（從下方清單選一個）",
-  "is_legend": true 或 false（同原始資料）,
-  "attribute": "繁體中文屬性（從下方清單選一個）或 null",
-  "monster_type": "繁體中文種族（從下方清單選一個）或 null",
-  "level": 等級數字或 null,
-  "atk": "ATK 原值或 null",
-  "defense": "DEF 原值或 null",
-  "description": "繁體中文說明文，格式：繁中（日文原文）或 null",
-  "summon_condition": "繁體中文召喚條件，格式：繁中（日文原文）或 null",
-  "condition": "繁體中文效果條件，格式：繁中（日文原文）或 null",
-  "effect": "繁體中文效果文字，格式：繁中（日文原文）或 null",
-  "continuous_effect": "繁體中文持續效果，格式：繁中（日文原文）或 null"
+  "name_jp": "<複製 name_jp 原文，不翻譯>",
+  "name_zh": "<卡名的繁體中文翻譯，固有名詞可音譯>",
+  "card_type": "<從下方 card_type 清單選一個最符合的，不附日文>",
+  "is_legend": <複製 is_legend 的 true/false>,
+  "attribute": "<從下方 attribute 清單選一個，或 null>",
+  "monster_type": "<從下方 monster_type 清單選一個，或 null>",
+  "level": <複製 level 數字，或 null>,
+  "atk": "<複製 atk 原值，或 null>",
+  "defense": "<複製 defense 原值，或 null>",
+  "description": "<繁體中文翻譯（日文原文）格式，或 null>",
+  "summon_condition": "<繁體中文翻譯（日文原文）格式，或 null>",
+  "condition": "<繁體中文翻譯（日文原文）格式，或 null>",
+  "effect": "<繁體中文翻譯（日文原文）格式，或 null>",
+  "continuous_effect": "<繁體中文翻譯（日文原文）格式，或 null>"
 }}
 
-## card_type 可能值（從以下選最符合的）：
+## card_type 對照清單（選最符合的一個）：
 {card_types_str}
 
-## attribute 可能值（屬性）：
+## attribute 對照清單：
 {attrs}
 
-## monster_type 可能值（種族）：
+## monster_type 對照清單：
 {types}
 
-## 翻譯術語對照
+## 術語對照（翻譯時使用）
 手札→手牌、デッキ→牌組、フィールド→場上、墓地→墓地、
 ライフポイント→生命值、モンスター→怪獸、魔法カード→魔法卡、
 罠カード→陷阱卡、攻撃→攻擊、守備→守備、破壊→破壞、
 特殊召喚→特殊召喚、バトルフェイズ→戰鬥階段、メインフェイズ→主要階段、
-ターン→回合、ドロー→抽牌、融合→融合、儀式→儀式。
+ターン→回合、ドロー→抽牌、融合→融合、儀式→儀式、
+表側表示→攻擊模式、裏側守備表示→守備模式、
+墓地へ送る→送入墓地、手札に加える→加入手牌、デッキに戻す→回到牌組、
+以外→以外、以上→以上、以下→以下、枚→張、体→隻/張。
 
-## 注意
-- card_type / attribute / monster_type 直接對應到繁中清單，不要附日文原文
-- 文字欄位格式務必是「繁中（日文原文）」
-- ATK/DEF 直接複製，不需翻譯
+## 再次確認（避免常見錯誤）
+- description/condition/effect/summon_condition/continuous_effect 若原文不為 null，輸出值絕對不能是純日文字串
+- 輸出格式：「完整繁中譯文（完整日文原文）」，缺一不可
 - 原始資料為 null 的欄位回傳 null
 """
 
