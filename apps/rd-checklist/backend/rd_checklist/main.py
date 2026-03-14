@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import init_db
-from .routers import card_sets, cards, images, ownership, search
+from .routers import card_sets, cards, images, ownership, scan, search
 
 app = FastAPI(
     title="Yu-Gi-Oh Rush Duel Checklist",
@@ -26,6 +26,7 @@ app.include_router(card_sets.router)
 app.include_router(cards.router)
 app.include_router(ownership.router)
 app.include_router(images.router)
+app.include_router(scan.router)
 app.include_router(search.router)
 
 

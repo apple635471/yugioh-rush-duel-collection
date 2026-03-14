@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.5.0 (2026-03-14)
+
+### 新增
+
+- **AI 卡牌掃描器 (rd-card-scanner)**: 透過 OpenAI gpt-4o Vision 從卡牌圖片萃取資訊並翻譯成繁體中文
+  - 新增 `tools/rd-card-scanner/` 工具，含 `scan_card.py` 主程式與 `README.md`
+  - 環境用 uv 管理，依賴：`openai>=1.0.0`
+  - OPENAI_API_KEY 讀取自專案根目錄 `.env`
+
+- **後端 Scan API** (`POST /api/scan/{card_id}/{rarity}`):
+  - 從 DB 讀取已知屬性 / 種族 / 卡牌種類，動態建構 prompt 確保術語一致性
+  - 圖片來源優先用 user_upload，否則 fallback scraper 圖
+  - 後端 `pyproject.toml` 新增 `openai>=1.0.0` 依賴
+
+- **前端 ScanResultPanel**: 浮動可拖曳剪貼板視窗
+  - CardDetailPanel 圖片下方新增 ✦ **Scan** 按鈕
+  - 掃描結果顯示所有欄位，每個欄位旁有單獨複製按鈕；底部有「複製全部欄位」按鈕
+  - **重整按鈕**：可重新呼叫 gpt-4o 取得新結果（因準確度有限，支援多次掃描）
+  - 面板可拖曳移動，使用 Teleport 到 body 避免被側邊欄遮擋
+
+---
+
 ## v0.4.2 (2026-03-13)
 
 ### 修正

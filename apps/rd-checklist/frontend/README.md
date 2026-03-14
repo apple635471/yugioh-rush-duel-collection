@@ -33,6 +33,7 @@ App.vue
 │
 └── AppSidebar (Teleport)  # 條件: ui.sidebarOpen
     ├── CardDetailPanel    # ui.sidebarMode='detail': 大圖 + 完整資訊 + 效果 + Add Variant
+    │   └── ScanResultPanel (Teleport, 浮動可拖曳)  # ✦ Scan 按鈕觸發，顯示 AI 掃描結果剪貼板
     ├── CardCreatePanel    # ui.sidebarMode='create': 新卡建立表單
     └── 收起/展開 tab      # fixed top-1/2 right-0，兩狀態同位置
 ```

@@ -1,0 +1,8 @@
+[project]
+name = "rd-card-scanner"
+version = "0.1.0"
+description = "Rush Duel 卡牌圖片掃描器（OpenAI Vision）"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.0.0",
+]

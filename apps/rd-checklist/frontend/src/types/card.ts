@@ -69,3 +69,20 @@ export interface CardUpdate {
   effect?: string | null
   continuous_effect?: string | null
 }
+
+export interface ScanResult {
+  name_jp: string | null
+  name_zh: string | null
+  card_type: string | null
+  is_legend: boolean | null
+  attribute: string | null
+  monster_type: string | null
+  level: number | null
+  atk: string | null
+  defense: string | null
+  description: string | null
+  summon_condition: string | null
+  condition: string | null
+  effect: string | null
+  continuous_effect: string | null
+}

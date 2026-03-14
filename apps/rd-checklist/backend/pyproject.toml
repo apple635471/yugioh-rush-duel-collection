@@ -10,4 +10,5 @@ dependencies = [
     "sqlalchemy>=2.0",
     "aiofiles>=24.1",
     "python-multipart>=0.0.18",
+    "openai>=1.0.0",
 ]

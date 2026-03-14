@@ -1,5 +1,5 @@
 import api from './client'
-import type { Card, CardCreate, CardUpdate, CardVariant, VariantCreate } from '@/types/card'
+import type { Card, CardCreate, CardUpdate, CardVariant, ScanResult, VariantCreate } from '@/types/card'
 
 export async function fetchCard(cardId: string): Promise<Card> {
   const { data } = await api.get<Card>(`/cards/${cardId}`)
@@ -88,4 +88,9 @@ export async function editVariantRarity(cardId: string, oldRarity: string, newRa
 
 export async function deleteVariant(cardId: string, rarity: string): Promise<void> {
   await api.delete(`/cards/${cardId}/variants/${rarity}`)
+}
+
+export async function scanCard(cardId: string, rarity: string): Promise<ScanResult> {
+  const { data } = await api.post<ScanResult>(`/scan/${cardId}/${rarity}`)
+  return data
 }
