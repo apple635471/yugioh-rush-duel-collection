@@ -1,12 +1,24 @@
 # rd-card-scanner
 
-用一張遊戲王 Rush Duel 卡牌圖片，透過 **OpenAI gpt-4o Vision** 自動萃取卡牌資訊並翻譯成繁體中文。
+用一張遊戲王 Rush Duel 卡牌圖片，透過 **兩階段 OpenAI API** 自動萃取卡牌資訊並翻譯成繁體中文。
+
+## 兩階段架構
+
+| 階段 | 模型（預設） | 工作 |
+|------|------------|------|
+| **Phase 1 — OCR** | `gpt-4o` | 讀取卡牌圖片，完整輸出日文原文，不翻譯 |
+| **Phase 2 — 翻譯** | `gpt-4o-mini` | 將 Phase 1 的日文 JSON 翻譯成繁體中文 |
+
+Phase 1 和 Phase 2 分離的好處：
+- 每個模型做好一件事，整體準確度更高
+- 可切換 Phase 2 到更強的模型（如 `gpt-4o`）提升翻譯品質
+- 結果同時保留原始日文與繁中翻譯，方便人工核對
 
 ## 功能
 
-- 從卡牌圖片辨識：卡名（日文 + 繁中）、卡牌種類、屬性、種族、等級、ATK/DEF、效果文字
-- 從專案 DB 讀取已知的屬性 / 種族 / 卡牌種類清單，讓 prompt 的翻譯術語與現有資料一致
-- 結果輸出為 JSON，可直接貼入 Checklist App 的編輯欄位
+- **Phase 1**: 從卡牌圖片 OCR 出日文原文（卡名、種族、效果文字等）
+- **Phase 2**: 翻譯成繁體中文，從 DB 讀取已知屬性/種族/卡牌種類確保術語一致
+- 結果輸出為 JSON，包含 `raw`（日文原文）與翻譯欄位
 - 支援 jpg / png / webp 圖片格式
 
 ## 環境設定
@@ -35,8 +47,13 @@ uv run python scan_card.py /path/to/card.jpg
 # 儲存結果到 JSON 檔
 uv run python scan_card.py /path/to/card.jpg -o result.json
 
-# 指定模型（預設 gpt-4o）
-uv run python scan_card.py /path/to/card.jpg --model gpt-4o
+# 指定兩階段的模型（預設如下）
+uv run python scan_card.py /path/to/card.jpg \
+  --extract-model gpt-4o \
+  --translate-model gpt-4o-mini
+
+# Phase 2 改用 gpt-4o 提升翻譯品質（費用較高）
+uv run python scan_card.py /path/to/card.jpg --translate-model gpt-4o
 ```
 
 ### 輸出範例

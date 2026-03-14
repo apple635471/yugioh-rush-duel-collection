@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.1 (2026-03-15)
+
+### 改善
+
+- **卡牌掃描器改為兩階段架構**（提升準確度）
+  - **Phase 1 — OCR** (`gpt-4o`): 只讀取日文原文，不翻譯，輸出 `raw` 欄位
+  - **Phase 2 — 翻譯** (`gpt-4o-mini`): 以 Phase 1 日文為輸入，專注翻譯成繁體中文
+  - 兩個模型各司其職，避免「同時看圖又翻譯」造成的混淆
+  - Phase 1 / Phase 2 模型可各自透過 API query params 或 CLI flag 覆寫
+  - 後端 `POST /api/scan/{card_id}/{rarity}` 新增 `extract_model` / `translate_model` query params
+  - 前端 `ScanResultPanel` 新增「繁體中文 / 原始日文」標籤切換，方便人工核對原文
+
+---
+
 ## v0.5.0 (2026-03-14)
 
 ### 新增
