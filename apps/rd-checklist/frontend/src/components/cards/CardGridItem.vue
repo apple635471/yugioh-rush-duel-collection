@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import type { Card } from '@/types/card'
 import { getCardImageUrl, updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
+
 import OwnershipBadge from './OwnershipBadge.vue'
 import RarityTabs from './RarityTabs.vue'
 import OwnershipControl from './OwnershipControl.vue'
@@ -27,6 +28,8 @@ const activeVariant = computed(() =>
 const imageUrl = computed(() => {
   if (!activeVariant.value) return ''
   const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
+  const buster = ui.imageUpdates.get(`${props.card.card_id}/${activeVariant.value.rarity}`)
+  if (buster) return `${base}?t=${buster}`
   return activeVariant.value.image_source === 'user_upload' ? `${base}?t=1` : base
 })
 
