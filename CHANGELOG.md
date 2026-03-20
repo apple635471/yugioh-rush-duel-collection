@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.7.0 (2026-03-20)
+
+### 改善
+
+- **視覺全面重新設計（黃金深色主題）**
+  - 引入 Google Fonts：`Cinzel`（品牌標題）、`Orbitron`（ID/數字/標籤）、`Noto Sans TC`（內文）
+  - 建立黃金色系設計 token（`--color-gold: #C9A84C`、`--color-gold-light`、`--color-gold-dim`、`--color-dark-bg: #09090F` 等），透過 Tailwind v4 `@theme` 統一管理
+  - `body` 背景改為深邃黑（`#09090F`）搭配細微黃金格線，全局 `background-attachment: fixed`
+  - **`AppHeader`**：改用 `Cinzel` 字型品牌名稱，深色背景加黃金邊框，導覽 active 狀態以金色框標示
+  - **`ProductTypeNav`**：pill 按鈕改為黃金邊框 / 金色底色 active 樣式
+  - **`SetList`**：卡組卡片改用 `bg-surface`（`#181B2A`）+ 黃金半透明邊框，set_id / 日期欄位改為 `Orbitron` 字型，4 欄響應式佈局
+  - **`SetView` 進度條**：改為獨立卡片式面板，標題用 `Orbitron uppercase`，數字用金色，進度條改為黃金漸層（`#6B5428 → #EAC96A`），高度加粗（`h-2`）
+  - **`CardGridItem`**：卡片背景改用 `bg-surface`，卡號改為 `Orbitron` 金色字型，選中 ring 改為金色
+  - **`CardTable`**：表頭改用 `Orbitron` + 金色，列分隔線改為黃金半透明
+  - **`AppSidebar`**：側邊欄背景改為 `bg-dark-1`，左側邊框 + 展開/收合 tab 改為黃金邊框樣式
+
+---
+
 ## v0.6.0 (2026-03-20)
 
 ### 改善

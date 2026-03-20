@@ -16,12 +16,12 @@ function onSearch() {
 </script>
 
 <template>
-  <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-40">
-    <div class="container mx-auto max-w-7xl px-4 h-14 flex items-center gap-4">
+  <header class="bg-dark-1 border-b border-[rgba(201,168,76,0.18)] sticky top-0 z-40 backdrop-blur-sm">
+    <div class="container mx-auto max-w-screen-2xl px-4 h-14 flex items-center gap-4">
       <!-- Logo / Home link -->
       <router-link
         to="/"
-        class="text-lg font-bold text-yellow-400 whitespace-nowrap hover:text-yellow-300 transition-colors"
+        class="font-cinzel text-xl font-bold text-gold whitespace-nowrap hover:text-gold-light transition-colors tracking-wide"
       >
         RD Checklist
       </router-link>
@@ -56,19 +56,19 @@ function onSearch() {
       <nav class="flex items-center gap-1 text-sm">
         <router-link
           to="/"
-          class="px-3 py-1.5 rounded-md transition-colors"
+          class="px-3 py-1.5 rounded-md transition-colors font-medium"
           :class="route.name === 'home' || route.name === 'sets-by-type'
-            ? 'bg-gray-700 text-yellow-400'
-            : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'"
+            ? 'bg-gold/10 text-gold border border-gold/30'
+            : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'"
         >
           Browse
         </router-link>
         <router-link
           :to="{ name: 'search' }"
-          class="px-3 py-1.5 rounded-md transition-colors"
+          class="px-3 py-1.5 rounded-md transition-colors font-medium"
           :class="route.name === 'search'
-            ? 'bg-gray-700 text-yellow-400'
-            : 'text-gray-300 hover:text-gray-100 hover:bg-gray-700'"
+            ? 'bg-gold/10 text-gold border border-gold/30'
+            : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'"
         >
           Search
         </router-link>

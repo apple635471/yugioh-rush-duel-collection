@@ -86,19 +86,19 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         </SetMetadataEditor>
 
         <!-- Progress bar -->
-        <div v-if="stats" class="mt-3 mb-2">
-          <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
-            <span>Collection Progress</span>
-            <span>
-              <span class="text-emerald-400 font-medium">{{ stats.owned_variants }}</span>
-              / {{ stats.total_variants }}
-              <span class="ml-1 text-gray-400">({{ progressPercent }}%)</span>
+        <div v-if="stats" class="mt-4 mb-2 bg-dark-2 border border-[rgba(201,168,76,0.14)] rounded-lg px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-orbitron text-gray-400 tracking-widest uppercase">Collection Progress</span>
+            <span class="text-xs font-orbitron">
+              <span class="text-gold font-bold">{{ stats.owned_variants }}</span>
+              <span class="text-gray-500"> / {{ stats.total_variants }}</span>
+              <span class="ml-2 text-gold-light font-bold">{{ progressPercent }}%</span>
             </span>
           </div>
-          <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+          <div class="h-2 bg-dark-4 rounded-full overflow-hidden">
             <div
-              class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
-              :style="{ width: `${progressPercent}%` }"
+              class="h-full rounded-full transition-all duration-700"
+              :style="{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, #6B5428, #EAC96A)' }"
             />
           </div>
         </div>

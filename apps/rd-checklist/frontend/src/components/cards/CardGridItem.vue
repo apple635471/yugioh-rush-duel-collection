@@ -76,14 +76,14 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
   <div
     ref="cardEl"
     @click="openDetail"
-    class="group relative bg-gray-800 border rounded-lg overflow-hidden cursor-pointer transition-all"
+    class="group relative bg-surface border rounded-lg overflow-hidden cursor-pointer transition-all"
     :class="isSelected
-      ? 'border-yellow-400 ring-2 ring-yellow-400 ring-offset-2 ring-offset-gray-900'
-      : 'border-gray-700 hover:border-yellow-500/50'"
+      ? 'border-gold ring-2 ring-gold/50 ring-offset-2 ring-offset-dark-bg'
+      : 'border-[rgba(201,168,76,0.18)] hover:border-gold/45'"
   >
     <!-- Card number row (above image) -->
     <div class="flex items-center gap-1 px-2 pt-1.5 pb-1">
-      <span class="font-mono text-xs text-gray-200 truncate flex-1 leading-none">{{ fullCardId }}</span>
+      <span class="font-orbitron text-[10px] text-gold/70 truncate flex-1 leading-none tracking-wide">{{ fullCardId }}</span>
       <Button
         @click="copyCardNumber"
         variant="text"
@@ -103,7 +103,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
     </div>
 
     <!-- Image -->
-    <div class="aspect-[59/86] bg-gray-700 relative overflow-hidden">
+    <div class="aspect-[59/86] bg-dark-3 relative overflow-hidden">
       <img
         v-if="imageUrl"
         :src="imageUrl"
@@ -136,7 +136,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
     <!-- Info (below image) -->
     <div class="px-2 pt-1.5 pb-2">
       <!-- Card name -->
-      <h4 class="text-base font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-yellow-400 transition-colors">
+      <h4 class="text-base font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-gold transition-colors">
         {{ card.name_zh || card.name_jp }}
       </h4>
 
