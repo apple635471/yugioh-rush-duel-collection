@@ -5,7 +5,6 @@ import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCa
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
-import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
 import Button from 'primevue/button'
@@ -233,32 +232,20 @@ const textSections = computed(() => [
   { key: 'continuous_effect' as const, label: 'Continuous Effect', monsterOnly: false },
 ])
 
-// Rarity color mapping
-const RARITY_COLOR: Record<string, { badge: string; text: string }> = {
-  N:      { badge: 'bg-[rgba(120,120,140,0.25)]', text: 'text-gray-400' },
-  NPR:    { badge: 'bg-[rgba(120,120,140,0.25)]', text: 'text-gray-400' },
-  R:      { badge: 'bg-[rgba(74,159,238,0.25)]',  text: 'text-blue-300' },
-  SR:     { badge: 'bg-[rgba(201,168,76,0.25)]',  text: 'text-gold-light' },
-  SPR:    { badge: 'bg-[rgba(201,168,76,0.25)]',  text: 'text-gold-light' },
-  UR:     { badge: 'bg-[rgba(176,64,216,0.25)]',  text: 'text-purple-300' },
-  PUR:    { badge: 'bg-[rgba(176,64,216,0.25)]',  text: 'text-purple-300' },
-  RUR:    { badge: 'bg-[rgba(212,80,96,0.25)]',   text: 'text-red-300' },
-  SER:    { badge: 'bg-[rgba(74,159,238,0.25)]',  text: 'text-blue-300' },
-  RR:     { badge: 'bg-[rgba(212,80,96,0.25)]',   text: 'text-red-400' },
-  ORR:    { badge: 'bg-[rgba(212,80,96,0.25)]',   text: 'text-red-400' },
-  ORRPBV: { badge: 'bg-[rgba(176,64,216,0.3)]',  text: 'text-purple-400' },
-  FORR:   { badge: 'bg-[rgba(201,168,76,0.35)]',  text: 'text-gold' },
-}
-
-function rarityColors(rarity: string) {
-  return RARITY_COLOR[rarity] ?? { badge: 'bg-[rgba(120,120,140,0.2)]', text: 'text-gray-400' }
-}
-
 function toggleSection(key: string) {
   expandedSections[key] = !expandedSections[key]
   if (!expandedSections[key]) {
     ;(form as any)[key] = null
   }
+}
+
+// ── Copy card ID ──────────────────────────────────────────────────────────────
+const copiedId = ref(false)
+
+function copyCardId() {
+  navigator.clipboard.writeText(props.card.card_id)
+  copiedId.value = true
+  setTimeout(() => { copiedId.value = false }, 1500)
 }
 
 // ---- Variant management ----
@@ -276,6 +263,8 @@ function startAddVariant() {
   newVariantRarity.value = availableRarities.value[0]?.value ?? ''
   variantError.value = ''
   addingVariant.value = true
+  editingRarity.value = false
+  confirmingDelete.value = false
 }
 
 function cancelAddVariant() {
@@ -314,6 +303,8 @@ function startEditRarity() {
   editRarityTarget.value = editableRarities.value[0]?.value ?? ''
   rarityEditError.value = ''
   editingRarity.value = true
+  addingVariant.value = false
+  confirmingDelete.value = false
 }
 
 function cancelEditRarity() {
@@ -345,6 +336,8 @@ const deleteError = ref('')
 function startDeleteVariant() {
   deleteError.value = ''
   confirmingDelete.value = true
+  addingVariant.value = false
+  editingRarity.value = false
 }
 
 function cancelDeleteVariant() {
@@ -410,7 +403,7 @@ async function submitDeleteVariant() {
     </div>
 
     <!-- Revert button + Scan button row -->
-    <div class="mb-2 flex items-center justify-between min-h-[1.5rem]">
+    <div class="mb-3 flex items-center justify-between min-h-[1.5rem]">
       <Button
         v-if="isUserUpload"
         @click="onRevertImage"
@@ -455,13 +448,72 @@ async function submitDeleteVariant() {
       @refresh="triggerScan"
     />
 
-    <!-- Rarity tabs -->
-    <div class="flex items-center justify-between mb-1">
-      <RarityTabs
-        :variants="card.variants"
-        :active-rarity="currentRarity"
-        @select="currentRarity = $event"
-      />
+    <!-- ── Rarity row ── -->
+    <div class="flex items-center gap-1.5 pb-2.5 border-b border-white/[0.08] mb-3">
+      <!-- Rarity buttons -->
+      <button
+        v-for="v in card.variants"
+        :key="v.rarity"
+        @click="currentRarity = v.rarity"
+        class="px-2.5 py-[3px] rounded-md text-xs font-medium border-[1.5px] bg-transparent cursor-pointer transition-all"
+        :class="v.rarity === currentRarity
+          ? 'border-[#a78bfa] text-[#a78bfa] bg-[rgba(167,139,250,0.13)]'
+          : 'border-[#444] text-[#777] hover:border-[#999] hover:text-[#ccc]'"
+      >{{ v.rarity }}</button>
+
+      <!-- Vertical separator -->
+      <div class="w-px h-4 bg-white/15 mx-0.5 shrink-0" />
+
+      <!-- Add variant icon button -->
+      <div v-if="availableRarities.length > 0 && !editing" class="relative group/tip">
+        <button
+          @click="startAddVariant"
+          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="8" cy="8" r="6"/><line x1="8" y1="5.5" x2="8" y2="5.6"/><line x1="8" y1="7.5" x2="8" y2="11"/>
+          </svg>
+        </button>
+        <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+          Add variant
+        </div>
+      </div>
+
+      <!-- Edit rarity icon button -->
+      <div v-if="editableRarities.length > 0 && !editing" class="relative group/tip">
+        <button
+          @click="startEditRarity"
+          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 2l3 3-8 8H3v-3L11 2z"/>
+          </svg>
+        </button>
+        <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+          Edit rarity
+        </div>
+      </div>
+
+      <!-- Delete variant icon button (only when >1 variant) -->
+      <div v-if="card.variants.length > 1 && !editing" class="relative group/tip">
+        <button
+          @click="startDeleteVariant"
+          class="w-7 h-7 rounded-md border border-[rgba(248,113,113,0.35)] bg-transparent text-[rgba(248,113,113,0.7)] cursor-pointer flex items-center justify-center transition-colors hover:bg-[rgba(248,113,113,0.12)] hover:text-[#f87171] shrink-0"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 4 13 4"/><path d="M5 4V3h6v1"/><rect x="4" y="5" width="8" height="9" rx="1"/>
+            <line x1="6.5" y1="7.5" x2="6.5" y2="11.5"/><line x1="9.5" y1="7.5" x2="9.5" y2="11.5"/>
+          </svg>
+        </button>
+        <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+          Delete
+        </div>
+      </div>
+
+      <!-- Spacer -->
+      <div class="flex-1" />
+
+      <!-- Ownership quantity control -->
       <OwnershipControl
         :card-id="card.card_id"
         :rarity="currentRarity"
@@ -470,8 +522,8 @@ async function submitDeleteVariant() {
       />
     </div>
 
-    <!-- Variant management (Add / Edit Rarity / Delete) -->
-    <div class="mb-3 space-y-1.5">
+    <!-- Variant management forms (inline, below rarity row) -->
+    <div v-if="addingVariant || editingRarity || confirmingDelete" class="mb-3 space-y-1.5">
       <!-- Add Variant form -->
       <template v-if="addingVariant">
         <div class="flex items-center gap-1.5">
@@ -543,103 +595,87 @@ async function submitDeleteVariant() {
         </div>
         <div v-if="deleteError" class="text-red-400 text-xs">{{ deleteError }}</div>
       </template>
-
-      <!-- Default: action buttons row -->
-      <div v-else-if="!editing" class="flex items-center gap-3">
-        <Button
-          v-if="availableRarities.length > 0"
-          @click="startAddVariant"
-          variant="text"
-          severity="secondary"
-          size="small"
-          class="gap-1 text-xs"
-        >
-          <span class="text-base leading-none">+</span>
-          <span>Add Variant</span>
-        </Button>
-        <Button
-          v-if="editableRarities.length > 0"
-          @click="startEditRarity"
-          variant="text"
-          severity="secondary"
-          size="small"
-          class="gap-1 text-xs"
-        >
-          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" />
-          </svg>
-          <span>Edit Rarity</span>
-        </Button>
-        <Button
-          v-if="card.variants.length > 1"
-          @click="startDeleteVariant"
-          variant="text"
-          severity="danger"
-          size="small"
-          class="gap-1 text-xs"
-        >
-          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-          <span>Delete</span>
-        </Button>
-      </div>
     </div>
 
-    <!-- Card header (name + rarity badge) -->
-    <div class="mb-4">
-      <template v-if="editing">
+    <!-- ── Card header ── -->
+    <template v-if="editing">
+      <div class="mb-4 space-y-1.5">
         <InputText v-model="form.name_zh" placeholder="Chinese Name" fluid size="small" />
-        <InputText v-model="form.name_jp" placeholder="Japanese Name" fluid size="small" class="mt-1.5" />
-      </template>
-      <template v-else>
-        <!-- Rarity badge + legend -->
-        <div class="flex items-center gap-2 mb-1.5">
-          <span
-            class="font-orbitron text-[10px] font-bold px-1.5 py-0.5 rounded tracking-wider"
-            :class="[rarityColors(currentRarity).badge, rarityColors(currentRarity).text]"
-          >
-            {{ currentRarity }}
-          </span>
-          <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
-        </div>
-        <!-- Card name in Cinzel -->
-        <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug">
-          {{ card.name_zh || card.name_jp }}
-        </h2>
-        <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-500 mt-0.5 font-orbitron tracking-wide">
-          {{ card.name_jp }}
-        </p>
-      </template>
-    </div>
+        <InputText v-model="form.name_jp" placeholder="Japanese Name" fluid size="small" />
+      </div>
+    </template>
+    <template v-else>
+      <!-- Card ID row -->
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-mono text-xs text-white/40 tracking-[0.03em]">{{ card.card_id }}</span>
+        <button
+          @click="copyCardId"
+          class="text-[11px] border-[0.5px] rounded px-[7px] py-[1px] cursor-pointer transition-all"
+          :class="copiedId
+            ? 'text-[#4ade80] border-[#4ade80] bg-transparent'
+            : 'text-white/35 border-white/15 bg-white/[0.04] hover:bg-[rgba(167,139,250,0.15)] hover:text-[#a78bfa] hover:border-[#a78bfa]'"
+        >{{ copiedId ? 'copied!' : 'copy' }}</button>
+        <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
+      </div>
 
-    <!-- ATK / DEF stat boxes (view mode, monsters only) -->
-    <div v-if="!editing && isMonster && (card.atk != null || card.defense != null)" class="grid grid-cols-2 gap-2 mb-4">
-      <div class="rounded-lg border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.06)] px-3 py-2 text-center">
-        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-red-400/70 uppercase mb-1">ATK</div>
-        <div class="font-orbitron text-2xl font-bold text-red-300 leading-none">
+      <!-- Card name -->
+      <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug mb-0.5">
+        {{ card.name_zh || card.name_jp }}
+      </h2>
+      <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-500 font-orbitron tracking-wide mb-4">
+        {{ card.name_jp }}
+      </p>
+      <div v-else class="mb-4" />
+    </template>
+
+    <!-- ── ATK / DEF stat boxes (view mode, monsters only) ── -->
+    <div v-if="!editing && isMonster && (card.atk != null || card.defense != null)" class="grid grid-cols-2 gap-2 mb-2">
+      <div class="rounded-lg border border-[rgba(220,50,50,0.3)] bg-[rgba(220,50,50,0.18)] px-3 py-[9px]">
+        <div class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-white/40 uppercase mb-[2px]">ATK</div>
+        <div class="font-orbitron text-[26px] font-medium text-[#f87171] leading-none">
           {{ card.atk ?? '?' }}
         </div>
       </div>
-      <div class="rounded-lg border border-[rgba(96,165,250,0.25)] bg-[rgba(96,165,250,0.06)] px-3 py-2 text-center">
-        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-blue-400/70 uppercase mb-1">DEF</div>
-        <div class="font-orbitron text-2xl font-bold text-blue-300 leading-none">
+      <div class="rounded-lg border border-[rgba(50,80,200,0.35)] bg-[rgba(50,80,200,0.20)] px-3 py-[9px]">
+        <div class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-white/40 uppercase mb-[2px]">DEF</div>
+        <div class="font-orbitron text-[26px] font-medium text-[#93c5fd] leading-none">
           {{ card.defense ?? '?' }}
         </div>
       </div>
     </div>
-    <!-- MAXIMUM ATK (view mode, 巨極 only) -->
-    <div v-if="!editing && isMaximum && card.maximum_atk != null" class="mb-4">
-      <div class="rounded-lg border border-gold/30 bg-[rgba(201,168,76,0.07)] px-3 py-2 text-center">
-        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold/60 uppercase mb-1">MAXIMUM ATK</div>
-        <div class="font-orbitron text-2xl font-bold text-gold leading-none">
-          {{ card.maximum_atk }}
-        </div>
-      </div>
+
+    <!-- ── MAXIMUM ATK (view mode, 巨極 only) ── -->
+    <div v-if="!editing && isMaximum && card.maximum_atk != null" class="rounded-lg border border-[rgba(180,130,0,0.3)] bg-[rgba(160,110,0,0.18)] px-3 py-2 mb-3 flex items-center justify-between">
+      <span class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-[rgba(200,150,0,0.7)] uppercase">Maximum ATK</span>
+      <span class="font-orbitron text-[18px] font-medium text-[#fbbf24] leading-none">{{ card.maximum_atk }}</span>
     </div>
 
-    <!-- Detail table (inline editable) -->
-    <div class="rounded-lg overflow-hidden mb-4 border border-[rgba(201,168,76,0.1)]">
+    <!-- ── Info grid (view mode) ── -->
+    <div v-if="!editing" class="grid grid-cols-3 gap-1.5 mb-3">
+      <!-- Type — full width -->
+      <div class="col-span-3 bg-white/[0.05] border border-white/[0.07] rounded-[7px] px-2.5 py-1.5">
+        <div class="text-[10px] text-white/35 uppercase tracking-[0.04em] mb-[2px]">Type</div>
+        <div class="text-[13px] text-[#ddd]">{{ card.card_type }}</div>
+      </div>
+      <!-- Monster-only: 屬性 / 種族 / Level -->
+      <template v-if="isMonster">
+        <div class="bg-white/[0.05] border border-white/[0.07] rounded-[7px] px-2.5 py-1.5">
+          <div class="text-[10px] text-white/35 uppercase tracking-[0.04em] mb-[2px]">屬性</div>
+          <div class="text-[13px] text-[#ddd]">{{ card.attribute || '–' }}</div>
+        </div>
+        <div class="bg-white/[0.05] border border-white/[0.07] rounded-[7px] px-2.5 py-1.5">
+          <div class="text-[10px] text-white/35 uppercase tracking-[0.04em] mb-[2px]">種族</div>
+          <div class="text-[13px] text-[#ddd]">{{ card.monster_type || '–' }}</div>
+        </div>
+        <div class="bg-white/[0.05] border border-white/[0.07] rounded-[7px] px-2.5 py-1.5">
+          <div class="text-[10px] text-white/35 uppercase tracking-[0.04em] mb-[2px]">Level</div>
+          <div class="text-[13px] text-[#ddd]">{{ card.level ?? '–' }}</div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ── Edit mode: detail table ── -->
+    <div v-if="editing" class="rounded-lg overflow-hidden mb-4 border border-[rgba(201,168,76,0.1)]">
       <!-- Card ID (always read-only) -->
       <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
         <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Card ID</span>
@@ -651,7 +687,6 @@ async function submitDeleteVariant() {
         <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Type</span>
         <div class="px-3 py-2 flex-1">
           <Select
-            v-if="editing"
             v-model="form.card_type"
             :options="cardTypeOptions"
             option-label="label"
@@ -659,7 +694,6 @@ async function submitDeleteVariant() {
             size="small"
             class="w-full"
           />
-          <span v-else class="text-sm text-gray-200">{{ card.card_type }}</span>
         </div>
       </div>
 
@@ -670,7 +704,6 @@ async function submitDeleteVariant() {
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">屬性</span>
           <div class="px-3 py-2 flex-1">
             <Select
-              v-if="editing"
               v-model="form.attribute"
               :options="attributeOptions"
               option-label="label"
@@ -678,8 +711,6 @@ async function submitDeleteVariant() {
               size="small"
               class="w-full"
             />
-            <span v-else-if="card.attribute" class="text-sm text-gray-200">{{ card.attribute }}</span>
-            <span v-else class="text-sm text-gray-600">-</span>
           </div>
         </div>
 
@@ -688,14 +719,11 @@ async function submitDeleteVariant() {
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">種族</span>
           <div class="px-3 py-2 flex-1">
             <InputText
-              v-if="editing"
               v-model="form.monster_type"
               placeholder="e.g. 龍族"
               fluid
               size="small"
             />
-            <span v-else-if="card.monster_type" class="text-sm text-gray-200">{{ card.monster_type }}</span>
-            <span v-else class="text-sm text-gray-600">-</span>
           </div>
         </div>
 
@@ -704,7 +732,6 @@ async function submitDeleteVariant() {
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Level</span>
           <div class="px-3 py-2 flex-1">
             <InputNumber
-              v-if="editing"
               v-model="form.level"
               :min="1"
               :max="12"
@@ -712,36 +739,32 @@ async function submitDeleteVariant() {
               fluid
               size="small"
             />
-            <span v-else-if="card.level != null" class="font-orbitron text-sm text-gray-200">{{ card.level }}</span>
-            <span v-else class="text-sm text-gray-600">-</span>
           </div>
         </div>
 
-        <!-- ATK / DEF (edit mode only — view mode has stat boxes above) -->
-        <template v-if="editing">
-          <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-            <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">ATK</span>
-            <div class="px-3 py-2 flex-1">
-              <InputText v-model="form.atk" fluid size="small" />
-            </div>
+        <!-- ATK / DEF / MAX ATK -->
+        <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">ATK</span>
+          <div class="px-3 py-2 flex-1">
+            <InputText v-model="form.atk" fluid size="small" />
           </div>
-          <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-            <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">DEF</span>
-            <div class="px-3 py-2 flex-1">
-              <InputText v-model="form.defense" fluid size="small" />
-            </div>
+        </div>
+        <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">DEF</span>
+          <div class="px-3 py-2 flex-1">
+            <InputText v-model="form.defense" fluid size="small" />
           </div>
-          <div v-if="isMaximum" class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-            <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">MAX ATK</span>
-            <div class="px-3 py-2 flex-1">
-              <InputText v-model="form.maximum_atk" fluid size="small" />
-            </div>
+        </div>
+        <div v-if="isMaximum" class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">MAX ATK</span>
+          <div class="px-3 py-2 flex-1">
+            <InputText v-model="form.maximum_atk" fluid size="small" />
           </div>
-        </template>
+        </div>
       </template>
     </div>
 
-    <!-- Text sections -->
+    <!-- ── Text sections ── -->
     <template v-for="section in textSections" :key="section.key">
       <template v-if="!section.monsterOnly || isMonster">
         <!-- View mode: only show if value exists -->
