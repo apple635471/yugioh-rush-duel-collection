@@ -76,10 +76,10 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
   <div
     ref="cardEl"
     @click="openDetail"
-    class="group relative bg-surface border rounded-lg overflow-hidden cursor-pointer transition-all"
+    class="group relative bg-surface border rounded-lg overflow-hidden cursor-pointer transition-all duration-200"
     :class="isSelected
       ? 'border-gold ring-2 ring-gold/50 ring-offset-2 ring-offset-dark-bg'
-      : 'border-[rgba(201,168,76,0.18)] hover:border-gold/45'"
+      : 'border-[rgba(201,168,76,0.18)] hover:border-gold/45 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/40'"
   >
     <!-- Card number row (above image) -->
     <div class="flex items-center gap-1 px-2 pt-1.5 pb-1">

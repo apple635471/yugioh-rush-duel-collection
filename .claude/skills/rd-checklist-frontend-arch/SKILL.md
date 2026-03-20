@@ -20,6 +20,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 - Button severity 規範：`warn` = 主要操作（amber）、`secondary` = 次要、`danger` = 刪除、`success` = 完成
 - Button variant 規範：(無) = 實心、`outlined` = 外框、`text` = 無背景
 
+**★ PrimeVue 優先原則**：所有互動式元素（按鈕、輸入框、下拉選單、彈窗等）必須優先使用 PrimeVue v4 元件，或以 PrimeVue 元件為基礎的自訂封裝。禁止使用原生 HTML 表單元素（`<button>`、`<input>`、`<select>`、`<textarea>`），除非 PrimeVue 沒有對應元件且無法合理封裝。
+
 ## 路由
 
 | Path | View | 說明 |
@@ -62,7 +64,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `ViewToggle`: 直接讀寫 `ui.viewMode`
 
 ### Navigation — 首頁
-- `ProductTypeNav`: pill 列，router-link 到 `/sets/{type}`
+- `ProductTypeSidebar`: 可收合左側導覽欄（200px 展開 / 36px 收合），依 display_name 關鍵字分組（補充包系列/構築/活動/其他），使用 PrimeVue Button 切換
+- `ProductTypeNav`: pill 列（舊版，仍保留但 HomeView 已改用 Sidebar）
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)
