@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import type { Card, CardUpdate } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant } from '@/api/cards'
+import type { Card, CardUpdate, ScanResult } from '@/types/card'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
+import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
 
 const props = defineProps<{
   card: Card
@@ -174,6 +175,26 @@ async function onRevertImage() {
     imageError.value = e?.response?.data?.detail ?? 'Revert failed'
   } finally {
     reverting.value = false
+  }
+}
+
+// ── Card scanner ─────────────────────────────────────────────────────────────
+const scanPanelOpen = ref(false)
+const scanResult = ref<ScanResult | null>(null)
+const scanLoading = ref(false)
+const scanError = ref('')
+
+async function triggerScan() {
+  scanPanelOpen.value = true
+  scanLoading.value = true
+  scanError.value = ''
+  scanResult.value = null
+  try {
+    scanResult.value = await scanCard(props.card.card_id, currentRarity.value)
+  } catch (e: any) {
+    scanError.value = e?.response?.data?.detail ?? 'Scan failed'
+  } finally {
+    scanLoading.value = false
   }
 }
 
@@ -355,7 +376,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       />
     </div>
 
-    <!-- Revert button (only for user uploads) -->
+    <!-- Revert button + Scan button row -->
     <div class="mb-2 flex items-center justify-between min-h-[1.5rem]">
       <button
         v-if="isUserUpload"
@@ -369,7 +390,32 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         {{ reverting ? 'Reverting...' : 'Revert to original' }}
       </button>
       <span v-if="imageError" class="text-xs text-red-400">{{ imageError }}</span>
+
+      <!-- Scan button -->
+      <button
+        @click="triggerScan"
+        :disabled="scanLoading"
+        title="用 AI 掃描卡牌資訊"
+        class="ml-auto flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors disabled:opacity-40"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+        </svg>
+        <span>{{ scanLoading ? 'Scanning…' : 'Scan' }}</span>
+      </button>
     </div>
+
+    <!-- Scan result panel (floating, draggable) -->
+    <ScanResultPanel
+      v-if="scanPanelOpen"
+      :card-id="card.card_id"
+      :rarity="currentRarity"
+      :result="scanResult"
+      :loading="scanLoading"
+      :error="scanError"
+      @close="scanPanelOpen = false"
+      @refresh="triggerScan"
+    />
 
     <!-- Rarity tabs -->
     <div class="flex items-center justify-between mb-1">
