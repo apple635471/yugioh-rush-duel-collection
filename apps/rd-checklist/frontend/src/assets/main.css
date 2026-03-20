@@ -1,4 +1,7 @@
-@layer tailwind-base, primevue, tailwind-utilities;
+/* Correct Tailwind v4 layer order: theme, base, components, utilities.
+   primevue must come AFTER base (so PrimeVue styles override preflight)
+   but BEFORE utilities (so Tailwind utilities override PrimeVue defaults). */
+@layer theme, base, primevue, components, utilities;
 @import "tailwindcss";
 
 @layer base {
@@ -19,16 +22,4 @@
 /* Match app font size in all PrimeVue components */
 [data-pc-name] {
   font-size: inherit;
-}
-
-/* Fix PrimeVue form inputs: Tailwind v4 preflight (@layer base) ends up with
-   higher cascade priority than PrimeVue (@layer primevue) because "base" and
-   "utilities" are not the same layer names as "tailwind-base"/"tailwind-utilities".
-   Un-layered CSS wins over all layers, so we restore border + background here. */
-[data-pc-name="inputtext"],
-[data-pc-name="textarea"],
-[data-pc-name="inputnumber"] input {
-  border-width: 1px;
-  border-style: solid;
-  background-color: var(--p-inputtext-background);
 }
