@@ -80,6 +80,33 @@ def get_stats(db: Session = Depends(get_db)):
     )
 
 
+@router.get("/stats-bulk", response_model=dict[str, OwnershipStatsOut])
+def get_all_set_stats(db: Session = Depends(get_db)):
+    """Get collection statistics for every set in one query."""
+    from ..models import CardModel
+    from sqlalchemy import case as sa_case
+
+    rows = (
+        db.query(
+            CardModel.set_id,
+            func.count(CardVariantModel.id).label("total"),
+            func.sum(sa_case((CardVariantModel.owned_count > 0, 1), else_=0)).label("owned"),
+            func.sum(CardVariantModel.owned_count).label("copies"),
+        )
+        .join(CardVariantModel, CardVariantModel.card_id == CardModel.card_id)
+        .group_by(CardModel.set_id)
+        .all()
+    )
+    return {
+        row.set_id: OwnershipStatsOut(
+            total_variants=row.total,
+            owned_variants=row.owned,
+            total_owned_copies=int(row.copies or 0),
+        )
+        for row in rows
+    }
+
+
 @router.get("/stats/{set_id}", response_model=OwnershipStatsOut)
 def get_set_stats(set_id: str, db: Session = Depends(get_db)):
     """Get collection statistics for a specific set."""
