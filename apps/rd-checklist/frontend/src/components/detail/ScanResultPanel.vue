@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { ScanResult, CardRawExtract } from '@/types/card'
+import Button from 'primevue/button'
 
 const props = defineProps<{
   cardId: string
@@ -167,50 +168,60 @@ function hasValue(value: any): boolean {
         </div>
         <div class="flex items-center gap-1">
           <!-- Refresh -->
-          <button
+          <Button
             @click.stop="emit('refresh')"
             :disabled="loading"
+            variant="text"
+            severity="secondary"
+            size="small"
             title="重新掃描"
-            class="p-1.5 rounded text-gray-400 hover:text-yellow-400 hover:bg-gray-600 transition-colors disabled:opacity-40"
+            class="p-1.5"
           >
             <svg class="w-4 h-4" :class="{ 'animate-spin': loading }"
                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
-          </button>
+          </Button>
           <!-- Close -->
-          <button
+          <Button
             @click.stop="emit('close')"
+            variant="text"
+            severity="secondary"
+            size="small"
             title="關閉"
-            class="p-1.5 rounded text-gray-400 hover:text-gray-100 hover:bg-gray-600 transition-colors"
+            class="p-1.5"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
       </div>
 
       <!-- View mode tabs (only when result exists) -->
       <div v-if="result && !loading" class="flex border-b border-gray-700">
-        <button
+        <Button
           @click="viewMode = 'translated'"
-          class="flex-1 py-1.5 text-xs font-medium transition-colors"
+          variant="text"
+          size="small"
+          class="flex-1 py-1.5 text-xs font-medium rounded-none"
           :class="viewMode === 'translated'
-            ? 'text-yellow-400 border-b-2 border-yellow-400 -mb-px bg-gray-750'
+            ? 'text-yellow-400 border-b-2 border-yellow-400 -mb-px'
             : 'text-gray-500 hover:text-gray-300'"
         >
           繁體中文
-        </button>
-        <button
+        </Button>
+        <Button
           @click="viewMode = 'raw'"
-          class="flex-1 py-1.5 text-xs font-medium transition-colors"
+          variant="text"
+          size="small"
+          class="flex-1 py-1.5 text-xs font-medium rounded-none"
           :class="viewMode === 'raw'
             ? 'text-blue-400 border-b-2 border-blue-400 -mb-px'
             : 'text-gray-500 hover:text-gray-300'"
         >
           原始日文
-        </button>
+        </Button>
       </div>
 
       <!-- Body -->
@@ -249,10 +260,13 @@ function hasValue(value: any): boolean {
             </span>
 
             <!-- Copy button -->
-            <button
+            <Button
               v-if="hasValue(getValue(field.source, field.key))"
               @click="copyField(`${viewMode}-${field.key}`, displayValue(field.key, getValue(field.source, field.key)))"
-              class="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-yellow-400"
+              variant="text"
+              severity="secondary"
+              size="small"
+              class="shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               title="複製"
             >
               <svg v-if="copiedKey === `${viewMode}-${field.key}`"
@@ -262,7 +276,7 @@ function hasValue(value: any): boolean {
               <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
               </svg>
-            </button>
+            </Button>
           </div>
         </template>
 
@@ -274,16 +288,17 @@ function hasValue(value: any): boolean {
 
       <!-- Footer: Copy All -->
       <div v-if="result && !loading" class="px-4 py-2.5 border-t border-gray-700">
-        <button
+        <Button
           @click="copyAll"
-          class="w-full py-1.5 text-xs font-medium rounded-lg transition-colors"
-          :class="copiedKey === '__all__'
-            ? 'bg-green-600/80 text-white'
-            : 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-gray-100'"
+          :severity="copiedKey === '__all__' ? 'success' : 'secondary'"
+          variant="outlined"
+          size="small"
+          fluid
+          class="text-xs"
         >
           <span v-if="copiedKey === '__all__'">✔ 已複製全部</span>
           <span v-else>複製目前頁面所有欄位</span>
-        </button>
+        </Button>
       </div>
     </div>
   </Teleport>

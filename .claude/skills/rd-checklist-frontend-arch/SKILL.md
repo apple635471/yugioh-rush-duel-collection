@@ -7,7 +7,18 @@ description: Vue 3 frontend architecture for rd-checklist (components, Pinia sto
 
 **何時讀此 SKILL**：加/改元件、debug UI、改 store 或路由、理解元件層級與 emit 流程。
 
-Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router。
+Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **PrimeVue v4**。
+
+## UI 元件庫
+
+**PrimeVue v4** (`primevue@^4.5.4` + `@primeuix/themes`)
+- 主題：`definePreset(Aura, ...)` 客製 primary palette 為 amber（`{amber.50}` → `{amber.950}`）
+- `darkModeSelector: ':root'` — 全域強制深色，不依賴系統設定
+- CSS layer 順序 (main.css)：`@layer tailwind-base, primevue, tailwind-utilities`
+  - Tailwind utilities 永遠覆蓋 PrimeVue 預設樣式
+- 使用元件：`Button`、`InputText`、`InputNumber`、`Select`、`Textarea`、`Checkbox`、`SelectButton`
+- Button severity 規範：`warn` = 主要操作（amber）、`secondary` = 次要、`danger` = 刪除、`success` = 完成
+- Button variant 規範：(無) = 實心、`outlined` = 外框、`text` = 無背景
 
 ## 路由
 

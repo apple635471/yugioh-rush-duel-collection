@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import InputText from 'primevue/inputtext'
 
 const router = useRouter()
 const route = useRoute()
@@ -28,14 +29,15 @@ function onSearch() {
       <!-- Search bar -->
       <form @submit.prevent="onSearch" class="flex-1 max-w-md">
         <div class="relative">
-          <input
+          <InputText
             v-model="searchQuery"
-            type="text"
             placeholder="Search cards..."
-            class="w-full bg-gray-700 border border-gray-600 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-100 placeholder-gray-400 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
+            size="small"
+            fluid
+            class="pl-9"
           />
           <svg
-            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

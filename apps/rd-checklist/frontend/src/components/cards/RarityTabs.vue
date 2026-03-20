@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CardVariant } from '@/types/card'
+import Button from 'primevue/button'
 
 defineProps<{
   variants: CardVariant[]
@@ -29,20 +30,22 @@ function getColor(rarity: string): string {
 
 <template>
   <div v-if="variants.length > 1" class="flex items-center gap-1">
-    <button
+    <Button
       v-for="v in variants"
       :key="v.rarity"
       @click="emit('select', v.rarity)"
-      class="px-2 py-0.5 text-sm font-semibold rounded border transition-all"
+      variant="text"
+      size="small"
       :class="[
+        'px-2 py-0.5 text-sm font-semibold rounded border transition-all',
         getColor(v.rarity),
         v.rarity === activeRarity
           ? 'bg-white/15 opacity-100'
-          : 'opacity-50 hover:opacity-80 border-transparent'
+          : 'opacity-50 hover:opacity-80 border-transparent',
       ]"
     >
       {{ v.rarity }}
-    </button>
+    </Button>
   </div>
   <span
     v-else-if="variants.length === 1"

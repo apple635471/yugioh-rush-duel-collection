@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.0 (2026-03-20)
+
+### 改善
+
+- **前端 UI 元件全面遷移至 PrimeVue v4**
+  - 安裝 `primevue@^4.5.4` + `@primeuix/themes`，移除手刻原生 HTML 表單元素
+  - 採用 Aura Dark 主題，primary palette 客製為 amber（配合既有黃色系設計語言）
+  - `darkModeSelector: ':root'` 全域強制深色模式
+  - CSS layer 宣告順序：`tailwind-base → primevue → tailwind-utilities`，確保 Tailwind utility class 永遠優先
+  - 替換元件涵蓋：`Button`、`InputText`、`InputNumber`、`Select`、`Textarea`、`Checkbox`、`SelectButton`
+  - 受影響元件：`ViewToggle`、`RarityTabs`、`OwnershipControl`、`AppHeader`、`SearchFilters`、`CardDetailPanel`、`CardCreatePanel`、`SetMetadataEditor`、`ScanResultPanel`、`AppSidebar`、`CardGridItem`
+
+---
+
 ## v0.5.1 (2026-03-15)
 
 ### 改善

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { RARITIES } from '@/constants/rarities'
+import Select from 'primevue/select'
 
 const emit = defineEmits<{
   change: [filters: FilterState]
@@ -34,50 +35,74 @@ const cardTypes = [
 ]
 
 const attributes = ['光', '暗', '炎', '水', '風', '地']
-const rarities = RARITIES
+
+const cardTypeOptions = [
+  { label: 'All Types', value: '' },
+  ...cardTypes.map(t => ({ label: t, value: t })),
+]
+
+const attributeOptions = [
+  { label: 'All Attributes', value: '' },
+  ...attributes.map(a => ({ label: a, value: a })),
+]
+
+const levelOptions = [
+  { label: 'All Levels', value: '' },
+  ...Array.from({ length: 12 }, (_, i) => ({ label: `Lv.${i + 1}`, value: String(i + 1) })),
+]
+
+const rarityOptions = [
+  { label: 'All Rarities', value: '' },
+  ...RARITIES,
+]
+
+const ownedOptions = [
+  { label: 'All Cards', value: '' },
+  { label: 'Owned', value: 'owned' },
+  { label: 'Missing', value: 'missing' },
+]
 </script>
 
 <template>
   <div class="flex flex-wrap gap-2">
-    <select
+    <Select
       v-model="filters.card_type"
-      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
-    >
-      <option value="">All Types</option>
-      <option v-for="t in cardTypes" :key="t" :value="t">{{ t }}</option>
-    </select>
+      :options="cardTypeOptions"
+      option-label="label"
+      option-value="value"
+      size="small"
+    />
 
-    <select
+    <Select
       v-model="filters.attribute"
-      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
-    >
-      <option value="">All Attributes</option>
-      <option v-for="a in attributes" :key="a" :value="a">{{ a }}</option>
-    </select>
+      :options="attributeOptions"
+      option-label="label"
+      option-value="value"
+      size="small"
+    />
 
-    <select
+    <Select
       v-model="filters.level"
-      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
-    >
-      <option value="">All Levels</option>
-      <option v-for="l in 12" :key="l" :value="String(l)">Lv.{{ l }}</option>
-    </select>
+      :options="levelOptions"
+      option-label="label"
+      option-value="value"
+      size="small"
+    />
 
-    <select
+    <Select
       v-model="filters.rarity"
-      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
-    >
-      <option value="">All Rarities</option>
-      <option v-for="r in rarities" :key="r.value" :value="r.value">{{ r.label }}</option>
-    </select>
+      :options="rarityOptions"
+      option-label="label"
+      option-value="value"
+      size="small"
+    />
 
-    <select
+    <Select
       v-model="filters.owned"
-      class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-yellow-500"
-    >
-      <option value="">All Cards</option>
-      <option value="owned">Owned</option>
-      <option value="missing">Missing</option>
-    </select>
+      :options="ownedOptions"
+      option-label="label"
+      option-value="value"
+      size="small"
+    />
   </div>
 </template>

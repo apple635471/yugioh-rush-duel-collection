@@ -7,6 +7,7 @@ import { useUiStore } from '@/stores/ui'
 import OwnershipBadge from './OwnershipBadge.vue'
 import RarityTabs from './RarityTabs.vue'
 import OwnershipControl from './OwnershipControl.vue'
+import Button from 'primevue/button'
 
 const props = defineProps<{
   card: Card
@@ -83,9 +84,12 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
     <!-- Card number row (above image) -->
     <div class="flex items-center gap-1 px-2 pt-1.5 pb-1">
       <span class="font-mono text-xs text-gray-200 truncate flex-1 leading-none">{{ fullCardId }}</span>
-      <button
+      <Button
         @click="copyCardNumber"
-        class="shrink-0 text-gray-600 hover:text-gray-300 transition-colors"
+        variant="text"
+        severity="secondary"
+        size="small"
+        class="shrink-0 p-0"
         :title="copied ? '已複製！' : '複製編號'"
       >
         <svg v-if="copied" class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -95,7 +99,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
           <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
         </svg>
-      </button>
+      </Button>
     </div>
 
     <!-- Image -->
