@@ -173,6 +173,11 @@ def _import_one_card(
     if card is None:
         card = CardModel(card_id=card_id, set_id=set_id)
         db.add(card)
+    # Never overwrite set_id for existing cards — scraper data may occasionally
+    # reference a card under the wrong set (e.g. a cross-post on the blog).
+    # Use --force to override this guard when a deliberate set move is needed.
+    elif force:
+        card.set_id = set_id
 
     # Load per-field overrides (skipped when force=True)
     overrides: dict[str, str | None] = {}
@@ -184,8 +189,6 @@ def _import_one_card(
         if field in overrides:
             return overrides[field]
         return scraper_val
-
-    card.set_id = set_id
     card.name_jp = _val("name_jp", card_data.get("name_jp", ""))
     card.name_zh = _val("name_zh", card_data.get("name_zh", ""))
     card.card_type = _val("card_type", card_data.get("card_type", ""))
