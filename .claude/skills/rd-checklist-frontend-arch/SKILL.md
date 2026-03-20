@@ -36,6 +36,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 **useCardSetsStore** — 資料存取層
 - `productTypes`, `sets`, `currentSet`, `loading`
 - `loadProductTypes()`, `loadSets(pt?)`, `loadSet(setId)` — 呼叫 api/*.ts
+- `patchVariantOwnership(cardId, rarity, count)` — 即時更新 `currentSet.cards` 中對應 variant 的 `owned_count`（側邊欄調整數量後呼叫）
+- `updateCardInSet(updated: Card)` — 以 `Object.assign` 將側邊欄重新載入的 card 物件同步回 `currentSet.cards`（編輯/圖片上傳後呼叫）
 
 **useUiStore** — UI 狀態
 - `viewMode: 'grid' | 'table'` — Grid/Table 切換
@@ -115,8 +117,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 
 **卡片編輯**:
 1. `CardDetailPanel` inline 編輯模式 → `PATCH /api/cards/...`
-2. → `emit('cardUpdated')` → `AppSidebar` 重新 `fetchCard()` 更新顯示
-3. 編輯時 `isMonster` computed 動態顯示/隱藏怪獸專屬欄位
+2. → `emit('cardUpdated')` → `AppSidebar` 重新 `fetchCard()` 更新顯示，並呼叫 `cardSetsStore.updateCardInSet()` 同步 card grid
+3. 編輯時 `isMonster` computed 動態顯示/隱藏怪獸專屬欄位；`isMaximum` computed 顯示/隱藏 MAXIMUM ATK 欄位
 4. `expandedSections` reactive 控制空白文字欄位的展開/收合
 
 **卡組 metadata 編輯**:

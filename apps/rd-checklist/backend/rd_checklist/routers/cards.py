@@ -100,6 +100,7 @@ def create_card(body: CardCreate, db: Session = Depends(get_db)):
         level=body.level,
         atk=body.atk,
         defense=body.defense,
+        maximum_atk=body.maximum_atk,
         summon_condition=body.summon_condition,
         condition=body.condition,
         effect=body.effect,

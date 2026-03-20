@@ -1,6 +1,10 @@
 ---
 name: rd-docs-sync
-description: Mandatory rule to keep documentation in sync with code changes. ALWAYS check this skill when modifying architecture, schemas, APIs, components, or data flow in this project.
+description: >
+  Mandatory workflow for ALL code changes in this project. TRIGGER AT THE START of any feature/fix/refactor request.
+  BEFORE writing any code: (1) ask the user if they want a PR opened, (2) create a new git branch (feat/* or fix/*).
+  AFTER finishing code: update CHANGELOG.md, update affected SKILL.md/README.md, then commit and create PR.
+  Never work directly on main. Never skip CHANGELOG. Never skip asking about PR.
 ---
 
 # 文件同步規則
@@ -59,14 +63,22 @@ apps/rd-checklist/frontend/README.md               # 元件樹、Pinia stores、
 > 缺少以下任一步驟都是不完整的交付。
 
 ```
-1. git checkout -b feat/xxx  或  fix/xxx        ← 開新 branch，不要在 main 直接 commit
-2. 寫程式碼
-3. 更新 CHANGELOG.md (見 rd-changelog-reminder)
-4. 更新受影響的 SKILL.md (見上方觸發時機表)
-5. git add + git commit
-6. git push -u origin <branch>
-7. gh pr create  (用 GH_TOKEN from .env，見 MEMORY.md)
+任務開始時（寫程式碼之前）：
+0a. 主動詢問使用者：「這個修改要開 PR 嗎？」
+0b. git checkout -b feat/xxx  或  fix/xxx  ← 一定要開新 branch，禁止在 main 直接 commit
+
+完成程式碼後：
+1. 更新 CHANGELOG.md (見 rd-changelog-reminder)
+2. 更新受影響的 SKILL.md / README.md（見觸發時機表）
+3. git add + git commit
+4. git push -u origin <branch>
+5. gh pr create  (用 GH_TOKEN from .env，見 MEMORY.md)
 ```
+
+**⚠️ 最常遺漏的步驟**：
+- 任務開始就問 PR → 不要等到使用者提醒才問
+- 任務開始就開 branch → 不要在 main 累積修改
+- 完成後更新 CHANGELOG → 不要等到使用者提醒
 
 **branch 命名**: `feat/<簡短功能>` 或 `fix/<簡短問題>`
 **PR title**: 英文，≤70 字元

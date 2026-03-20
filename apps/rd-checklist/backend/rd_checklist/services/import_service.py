@@ -200,6 +200,7 @@ def _import_one_card(
 
     card.atk = _val("atk", card_data.get("atk"))
     card.defense = _val("defense", card_data.get("defense"))
+    card.maximum_atk = _val("maximum_atk", card_data.get("maximum_atk"))
     card.summon_condition = _val("summon_condition", card_data.get("summon_condition"))
     card.condition = _val("condition", card_data.get("condition"))
     card.effect = _val("effect", card_data.get("effect"))

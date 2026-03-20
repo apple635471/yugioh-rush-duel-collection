@@ -53,6 +53,7 @@ const form = reactive<CardCreate>({
 })
 
 const isMonster = computed(() => (form.card_type ?? '').includes('怪獸'))
+const isMaximum = computed(() => (form.card_type ?? '').includes('巨極'))
 
 // Text section expand toggles (same pattern as CardDetailPanel)
 const expandedSections = reactive<Record<string, boolean>>({
@@ -103,6 +104,7 @@ async function onSubmit() {
       form.level = null
       form.atk = null
       form.defense = null
+      form.maximum_atk = null
       form.summon_condition = null
     }
     await createCard(form)
@@ -216,10 +218,20 @@ async function onSubmit() {
           />
         </div>
 
-        <div class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
+        <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">DEF</span>
           <InputText
             v-model="form.defense"
+            fluid
+            size="small"
+            class="flex-1"
+          />
+        </div>
+
+        <div v-if="isMaximum" class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
+          <span class="w-20 text-xs text-gold shrink-0">MAX ATK</span>
+          <InputText
+            v-model="form.maximum_atk"
             fluid
             size="small"
             class="flex-1"

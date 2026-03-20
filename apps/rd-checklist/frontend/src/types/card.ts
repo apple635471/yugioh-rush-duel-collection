@@ -24,6 +24,7 @@ export interface Card {
   condition: string | null
   effect: string | null
   continuous_effect: string | null
+  maximum_atk: string | null
   is_legend: boolean
   is_manual: boolean
   original_rarity_string: string
@@ -41,6 +42,7 @@ export interface CardCreate {
   level?: number | null
   atk?: string | null
   defense?: string | null
+  maximum_atk?: string | null
   description?: string | null
   summon_condition?: string | null
   condition?: string | null
@@ -63,6 +65,7 @@ export interface CardUpdate {
   level?: number | null
   atk?: string | null
   defense?: string | null
+  maximum_atk?: string | null
   description?: string | null
   summon_condition?: string | null
   condition?: string | null
