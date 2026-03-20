@@ -227,12 +227,12 @@ const fieldLabels: Record<string, string> = {
       <div v-if="error" class="text-red-400 text-sm mt-3">{{ error }}</div>
 
       <!-- Action buttons -->
-      <div class="flex gap-2 mt-4">
-        <Button @click="saveEdit" :disabled="saving" severity="warn" fluid>
-          {{ saving ? 'Saving...' : 'Save' }}
-        </Button>
-        <Button @click="cancelEdit" variant="outlined" severity="secondary" fluid>
+      <div class="flex justify-end gap-2 mt-4">
+        <Button @click="cancelEdit" variant="outlined" severity="secondary" size="small">
           Cancel
+        </Button>
+        <Button @click="saveEdit" :disabled="saving" severity="warn" size="small">
+          {{ saving ? 'Saving...' : 'Save' }}
         </Button>
       </div>
 

@@ -6,3 +6,29 @@
     @apply bg-gray-900 text-gray-100 antialiased;
   }
 }
+
+/* Override PrimeVue Aura dark surface tokens to match app's gray palette
+   (Aura defaults to zinc which is too dark / blue-tinted) */
+.p-dark {
+  --p-surface-700: #374151;  /* gray-700 */
+  --p-surface-800: #1f2937;  /* gray-800 */
+  --p-surface-900: #111827;  /* gray-900 */
+  --p-surface-950: #030712;  /* gray-950 */
+}
+
+/* Match app font size in all PrimeVue components */
+[data-pc-name] {
+  font-size: inherit;
+}
+
+/* Fix PrimeVue form inputs: Tailwind v4 preflight (@layer base) ends up with
+   higher cascade priority than PrimeVue (@layer primevue) because "base" and
+   "utilities" are not the same layer names as "tailwind-base"/"tailwind-utilities".
+   Un-layered CSS wins over all layers, so we restore border + background here. */
+[data-pc-name="inputtext"],
+[data-pc-name="textarea"],
+[data-pc-name="inputnumber"] input {
+  border-width: 1px;
+  border-style: solid;
+  background-color: var(--p-inputtext-background);
+}
