@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useUiStore } from '@/stores/ui'
+import { useCardSetsStore } from '@/stores/cardSets'
 import { fetchCard } from '@/api/cards'
 import type { Card } from '@/types/card'
 import CardDetailPanel from './CardDetailPanel.vue'
@@ -8,6 +9,7 @@ import CardCreatePanel from './CardCreatePanel.vue'
 import Button from 'primevue/button'
 
 const ui = useUiStore()
+const cardSetsStore = useCardSetsStore()
 const card = ref<Card | null>(null)
 const loading = ref(false)
 
@@ -16,6 +18,8 @@ async function loadCard() {
   loading.value = true
   try {
     card.value = await fetchCard(ui.sidebarCardId)
+    // 同步到 store，讓 card grid 即時反映變更（rarity、image、名稱等）
+    if (card.value) cardSetsStore.updateCardInSet(card.value)
   } catch {
     card.value = null
   } finally {

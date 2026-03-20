@@ -36,6 +36,7 @@ class CardOut(BaseModel):
     level: Optional[int] = None
     atk: Optional[str] = None
     defense: Optional[str] = None
+    maximum_atk: Optional[str] = None
     description: Optional[str] = None
     summon_condition: Optional[str] = None
     condition: Optional[str] = None
@@ -63,6 +64,7 @@ class CardCreate(BaseModel):
     level: Optional[int] = None
     atk: Optional[str] = None
     defense: Optional[str] = None
+    maximum_atk: Optional[str] = None
     description: Optional[str] = None
     summon_condition: Optional[str] = None
     condition: Optional[str] = None
@@ -97,6 +99,7 @@ class CardUpdate(BaseModel):
     level: Optional[int] = None
     atk: Optional[str] = None
     defense: Optional[str] = None
+    maximum_atk: Optional[str] = None
     description: Optional[str] = None
     summon_condition: Optional[str] = None
     condition: Optional[str] = None

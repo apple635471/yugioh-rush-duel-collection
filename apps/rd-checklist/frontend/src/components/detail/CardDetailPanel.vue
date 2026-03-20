@@ -4,6 +4,7 @@ import type { Card, CardUpdate, ScanResult } from '@/types/card'
 import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
+import { useCardSetsStore } from '@/stores/cardSets'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
+const cardSetsStore = useCardSetsStore()
 
 const currentRarity = ref(props.activeRarity)
 const editing = ref(false)
@@ -50,6 +52,10 @@ const isMonster = computed(() => {
   const ct = editing.value ? (form.card_type ?? props.card.card_type) : props.card.card_type
   return ct.includes('怪獸')
 })
+const isMaximum = computed(() => {
+  const ct = editing.value ? (form.card_type ?? props.card.card_type) : props.card.card_type
+  return ct.includes('巨極')
+})
 
 // Track which optional text sections are expanded (for adding when empty)
 const expandedSections = reactive<Record<string, boolean>>({
@@ -71,6 +77,7 @@ function startEdit() {
     level: c.level,
     atk: c.atk,
     defense: c.defense,
+    maximum_atk: c.maximum_atk,
     description: c.description,
     summon_condition: c.summon_condition,
     condition: c.condition,
@@ -102,6 +109,7 @@ async function saveEdit() {
       form.level = null
       form.atk = null
       form.defense = null
+      form.maximum_atk = null
       form.summon_condition = null
     }
     await updateCard(props.card.card_id, form)
@@ -213,6 +221,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
   await updateOwnership(cardId, rarity, count)
   const v = props.card.variants.find(v => v.card_id === cardId && v.rarity === rarity)
   if (v) v.owned_count = count
+  cardSetsStore.patchVariantOwnership(cardId, rarity, count)
 }
 
 // Text section definitions for DRY rendering
@@ -619,6 +628,15 @@ async function submitDeleteVariant() {
         </div>
       </div>
     </div>
+    <!-- MAXIMUM ATK (view mode, 巨極 only) -->
+    <div v-if="!editing && isMaximum && card.maximum_atk != null" class="mb-4">
+      <div class="rounded-lg border border-gold/30 bg-[rgba(201,168,76,0.07)] px-3 py-2 text-center">
+        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold/60 uppercase mb-1">MAXIMUM ATK</div>
+        <div class="font-orbitron text-2xl font-bold text-gold leading-none">
+          {{ card.maximum_atk }}
+        </div>
+      </div>
+    </div>
 
     <!-- Detail table (inline editable) -->
     <div class="rounded-lg overflow-hidden mb-4 border border-[rgba(201,168,76,0.1)]">
@@ -711,6 +729,12 @@ async function submitDeleteVariant() {
             <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">DEF</span>
             <div class="px-3 py-2 flex-1">
               <InputText v-model="form.defense" fluid size="small" />
+            </div>
+          </div>
+          <div v-if="isMaximum" class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+            <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">MAX ATK</span>
+            <div class="px-3 py-2 flex-1">
+              <InputText v-model="form.maximum_atk" fluid size="small" />
             </div>
           </div>
         </template>

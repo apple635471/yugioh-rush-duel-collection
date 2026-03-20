@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.9.0 (2026-03-21)
+
+### 新增
+
+- **巨極怪獸 MAXIMUM ATK 欄位**
+  - 後端：`cards` 表新增 `maximum_atk TEXT` 欄位，支援 migration（`ALTER TABLE ADD COLUMN` 已存在時跳過）
+  - 新增卡片（`CardCreatePanel`）：卡種含「巨極」時顯示 MAX ATK 輸入欄
+  - 編輯卡片（`CardDetailPanel`）：同上，編輯表單顯示 MAX ATK 欄位
+  - 詳情檢視：ATK/DEF 下方以金色方塊（`border-gold`、Orbitron 字型）展示 MAXIMUM ATK 數值
+
+- **側邊欄編輯即時同步 card grid**
+  - 調整持有數（+/-）：card grid 立即變彩色/灰色，不需重整頁面
+  - 修改稀有度、上傳/還原圖片、編輯卡片資訊後：card grid 立即反映最新圖片、稀有度 tab 等
+  - 實作方式：`cardSetsStore` 新增 `patchVariantOwnership` 與 `updateCardInSet` 兩個 action；`CardDetailPanel` 在 ownership 更新後呼叫前者；`AppSidebar` 在重新載入 card 後呼叫後者
+
+---
+
 ## v0.8.0 (2026-03-20)
 
 ### 改善
