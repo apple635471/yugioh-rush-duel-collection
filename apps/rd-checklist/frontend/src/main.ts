@@ -35,7 +35,7 @@ app.use(PrimeVue, {
   theme: {
     preset: YugiohPreset,
     options: {
-      darkModeSelector: ':root',
+      darkModeSelector: '.p-dark',
       cssLayer: {
         name: 'primevue',
         order: 'tailwind-base, primevue, tailwind-utilities',
