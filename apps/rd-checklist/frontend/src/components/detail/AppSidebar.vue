@@ -53,7 +53,7 @@ const cardLabel = computed(() =>
     <!-- Full sidebar panel -->
     <aside
       v-if="ui.sidebarOpen && !ui.sidebarMinimized"
-      class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 border-l border-gray-700 z-50 overflow-y-auto shadow-2xl"
+      class="fixed top-0 right-0 h-full w-full max-w-md bg-dark-1 border-l border-[rgba(201,168,76,0.18)] z-50 overflow-y-auto shadow-2xl"
     >
       <!-- Create mode -->
       <template v-if="ui.sidebarMode === 'create'">
@@ -67,7 +67,7 @@ const cardLabel = computed(() =>
       <!-- Detail mode -->
       <template v-else>
         <div v-if="loading" class="flex items-center justify-center h-64">
-          <div class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+          <div class="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
         </div>
 
         <CardDetailPanel
@@ -90,7 +90,7 @@ const cardLabel = computed(() =>
       variant="text"
       severity="secondary"
       title="收起面板"
-      class="fixed top-1/2 right-0 -translate-y-1/2 z-[60] bg-gray-700 border border-r-0 border-gray-600 rounded-l-lg shadow-lg px-1.5 py-3 flex-col gap-1 hover:text-yellow-400 hover:bg-gray-600"
+      class="fixed top-1/2 right-0 -translate-y-1/2 z-[60] bg-dark-2 border border-r-0 border-[rgba(201,168,76,0.25)] rounded-l-lg shadow-lg px-1.5 py-3 flex-col gap-1 hover:text-gold hover:bg-dark-3"
     >
       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -104,14 +104,14 @@ const cardLabel = computed(() =>
       variant="text"
       severity="secondary"
       title="展開面板"
-      class="fixed top-1/2 right-0 -translate-y-1/2 z-50 bg-gray-800 border border-r-0 border-gray-600 rounded-l-lg shadow-lg px-1.5 py-4 flex-col gap-2 hover:text-yellow-400 hover:bg-gray-700 group"
+      class="fixed top-1/2 right-0 -translate-y-1/2 z-50 bg-dark-1 border border-r-0 border-[rgba(201,168,76,0.25)] rounded-l-lg shadow-lg px-1.5 py-4 flex-col gap-2 hover:text-gold hover:bg-dark-2 group"
     >
       <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
       <span
         v-if="cardLabel"
-        class="text-[9px] text-gray-400 group-hover:text-yellow-400 max-h-28 overflow-hidden"
+        class="text-[9px] text-gray-400 group-hover:text-gold max-h-28 overflow-hidden"
         style="writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap;"
       >
         {{ cardLabel }}

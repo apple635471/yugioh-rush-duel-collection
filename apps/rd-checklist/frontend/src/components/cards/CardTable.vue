@@ -54,7 +54,7 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number, 
   <div class="overflow-x-auto">
     <table class="w-full text-base">
       <thead>
-        <tr class="border-b-2 border-gray-600 text-left text-xs text-gray-300 uppercase tracking-wider font-semibold">
+        <tr class="border-b border-[rgba(201,168,76,0.2)] text-left text-xs text-gold/60 uppercase tracking-widest font-orbitron">
           <th class="py-2.5 px-3 w-24">ID</th>
           <th class="py-2.5 px-3">Name</th>
           <th class="py-2.5 px-3 w-32">Type</th>
@@ -70,13 +70,13 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number, 
           v-for="card in cards"
           :key="card.card_id"
           @click="openDetail(card)"
-          class="border-b border-gray-700/60 hover:bg-gray-700/50 cursor-pointer transition-colors even:bg-gray-800/40"
+          class="border-b border-[rgba(201,168,76,0.07)] hover:bg-gold/5 cursor-pointer transition-colors even:bg-dark-2/40"
           :class="{
-            'bg-gray-700/30': ui.sidebarCardId === card.card_id,
+            'bg-gold/8': ui.sidebarCardId === card.card_id,
             'opacity-50': (getActiveVariant(card)?.owned_count ?? 0) === 0,
           }"
         >
-          <td class="py-2.5 px-3 font-mono text-sm text-gray-300">{{ shortId(card.card_id) }}</td>
+          <td class="py-2.5 px-3 font-orbitron text-xs text-gold/60">{{ shortId(card.card_id) }}</td>
           <td class="py-2.5 px-3">
             <div class="flex items-center gap-2">
               <span

@@ -19,8 +19,8 @@ function isActive(pt: ProductType): boolean {
       to="/"
       class="px-3 py-1.5 text-sm rounded-full border transition-colors"
       :class="!route.params.productType
-        ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
-        : 'border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200'"
+        ? 'border-gold/50 bg-gold/10 text-gold'
+        : 'border-[rgba(201,168,76,0.18)] text-gray-400 hover:border-gold/35 hover:text-gray-200'"
     >
       All
     </router-link>
@@ -30,8 +30,8 @@ function isActive(pt: ProductType): boolean {
       :to="`/sets/${pt.product_type}`"
       class="px-3 py-1.5 text-sm rounded-full border transition-colors"
       :class="isActive(pt)
-        ? 'border-yellow-500 bg-yellow-500/10 text-yellow-400'
-        : 'border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200'"
+        ? 'border-gold/50 bg-gold/10 text-gold'
+        : 'border-[rgba(201,168,76,0.18)] text-gray-400 hover:border-gold/35 hover:text-gray-200'"
     >
       {{ pt.display_name }}
       <span class="ml-1 text-xs opacity-60">({{ pt.set_count }})</span>

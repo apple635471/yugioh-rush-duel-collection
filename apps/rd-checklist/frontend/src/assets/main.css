@@ -4,14 +4,48 @@
 @layer theme, base, primevue, components, utilities;
 @import "tailwindcss";
 
+/* ── Design Tokens ─────────────────────────────────────────────────────── */
+@theme {
+  /* Gold palette */
+  --color-gold:       #C9A84C;
+  --color-gold-light: #EAC96A;
+  --color-gold-dim:   #6B5428;
+
+  /* Dark backgrounds */
+  --color-dark-bg: #09090F;
+  --color-dark-1:  #0E1018;
+  --color-dark-2:  #131520;
+  --color-dark-3:  #181B28;
+  --color-dark-4:  #1E2132;
+  --color-surface: #181B2A;
+
+  /* Fonts */
+  --font-cinzel:   'Cinzel', Georgia, serif;
+  --font-orbitron: 'Orbitron', 'Courier New', monospace;
+}
+
+/* ── Base Styles ───────────────────────────────────────────────────────── */
 @layer base {
   body {
-    @apply bg-gray-900 text-gray-100 antialiased;
+    background-color: #09090F;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent, transparent 40px,
+        rgba(201, 168, 76, 0.025) 40px, rgba(201, 168, 76, 0.025) 41px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent, transparent 40px,
+        rgba(201, 168, 76, 0.025) 40px, rgba(201, 168, 76, 0.025) 41px
+      );
+    background-attachment: fixed;
+    font-family: 'Noto Sans TC', system-ui, sans-serif;
+    @apply text-gray-100 antialiased;
   }
 }
 
-/* Override PrimeVue Aura dark surface tokens to match app's gray palette
-   (Aura defaults to zinc which is too dark / blue-tinted) */
+/* ── PrimeVue surface token overrides (zinc → app dark palette) ──────── */
 .p-dark {
   --p-surface-700: #374151;  /* gray-700 */
   --p-surface-800: #1f2937;  /* gray-800 */
