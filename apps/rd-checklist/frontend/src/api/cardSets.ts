@@ -22,6 +22,16 @@ export async function fetchSetStats(setId: string): Promise<OwnershipStats> {
   return data
 }
 
+export async function fetchGlobalStats(): Promise<OwnershipStats> {
+  const { data } = await api.get<OwnershipStats>('/ownership/stats')
+  return data
+}
+
+export async function fetchAllSetStats(): Promise<Record<string, OwnershipStats>> {
+  const { data } = await api.get<Record<string, OwnershipStats>>('/ownership/stats-bulk')
+  return data
+}
+
 export async function updateCardSet(setId: string, update: CardSetUpdate): Promise<CardSet> {
   const { data } = await api.patch<CardSet>(`/card-sets/${setId}`, update)
   return data

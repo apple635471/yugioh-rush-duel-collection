@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.8.0 (2026-03-20)
+
+### 改善
+
+- **首頁側邊欄導覽**：以可收合左側欄（`ProductTypeSidebar`）取代舊有 pill 導覽，依顯示名稱分為「補充包系列」、「構築/預組」、「活動/限定」等分組；使用 PrimeVue Button 控制展開/收合狀態（200px ↔ 36px）；進入卡組頁後自動隱藏
+- **首頁全局收集統計**：頁面右上角新增統計面板，顯示套牌包總數、卡片（variant）總數、整體收集百分比；後端新增 `GET /ownership/stats-bulk` 單一 SQL GROUP BY 查詢取得所有套牌統計
+- **SetList 進度條**：每張套牌卡片底部加入 owned/total 數字 + 黃金漸層進度條（完成時轉為翠綠色），資料來自新的 `stats-bulk` 批量 API
+- **Hover 效果**：套牌卡片 `hover:-translate-y-0.5 shadow-lg`；卡片格圖 `hover:-translate-y-1 scale-[1.02] shadow-xl`
+- **卡片詳情面板重設計**：
+  - 卡名改用 `Cinzel` 字型，顯示稀有度色彩標籤（N 灰/R 藍/SR 金/RR 紅/UR 紫等，13 種稀有度對應色碼）
+  - 怪獸卡顯示 ATK/DEF 大數字方塊（紅框/藍框，Orbitron 字型）
+  - 資料表格改為黃金色鍵欄（key column）+ 深色底，Orbitron 標籤
+  - 效果文字加上框線樣式區塊
+- **文件 / 規範**：`rd-checklist-frontend-arch` SKILL.md 新增 PrimeVue 優先原則（禁止使用原生 HTML 互動元素）
+
+---
+
 ## v0.7.1 (2026-03-21)
 
 ### 修正

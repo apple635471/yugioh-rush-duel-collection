@@ -224,6 +224,27 @@ const textSections = computed(() => [
   { key: 'continuous_effect' as const, label: 'Continuous Effect', monsterOnly: false },
 ])
 
+// Rarity color mapping
+const RARITY_COLOR: Record<string, { badge: string; text: string }> = {
+  N:      { badge: 'bg-[rgba(120,120,140,0.25)]', text: 'text-gray-400' },
+  NPR:    { badge: 'bg-[rgba(120,120,140,0.25)]', text: 'text-gray-400' },
+  R:      { badge: 'bg-[rgba(74,159,238,0.25)]',  text: 'text-blue-300' },
+  SR:     { badge: 'bg-[rgba(201,168,76,0.25)]',  text: 'text-gold-light' },
+  SPR:    { badge: 'bg-[rgba(201,168,76,0.25)]',  text: 'text-gold-light' },
+  UR:     { badge: 'bg-[rgba(176,64,216,0.25)]',  text: 'text-purple-300' },
+  PUR:    { badge: 'bg-[rgba(176,64,216,0.25)]',  text: 'text-purple-300' },
+  RUR:    { badge: 'bg-[rgba(212,80,96,0.25)]',   text: 'text-red-300' },
+  SER:    { badge: 'bg-[rgba(74,159,238,0.25)]',  text: 'text-blue-300' },
+  RR:     { badge: 'bg-[rgba(212,80,96,0.25)]',   text: 'text-red-400' },
+  ORR:    { badge: 'bg-[rgba(212,80,96,0.25)]',   text: 'text-red-400' },
+  ORRPBV: { badge: 'bg-[rgba(176,64,216,0.3)]',  text: 'text-purple-400' },
+  FORR:   { badge: 'bg-[rgba(201,168,76,0.35)]',  text: 'text-gold' },
+}
+
+function rarityColors(rarity: string) {
+  return RARITY_COLOR[rarity] ?? { badge: 'bg-[rgba(120,120,140,0.2)]', text: 'text-gray-400' }
+}
+
 function toggleSection(key: string) {
   expandedSections[key] = !expandedSections[key]
   if (!expandedSections[key]) {
@@ -556,125 +577,143 @@ async function submitDeleteVariant() {
       </div>
     </div>
 
-    <!-- Card names -->
+    <!-- Card header (name + rarity badge) -->
     <div class="mb-4">
       <template v-if="editing">
         <InputText v-model="form.name_zh" placeholder="Chinese Name" fluid size="small" />
         <InputText v-model="form.name_jp" placeholder="Japanese Name" fluid size="small" class="mt-1.5" />
       </template>
       <template v-else>
-        <h2 class="text-lg font-bold text-gray-100 leading-snug">
+        <!-- Rarity badge + legend -->
+        <div class="flex items-center gap-2 mb-1.5">
+          <span
+            class="font-orbitron text-[10px] font-bold px-1.5 py-0.5 rounded tracking-wider"
+            :class="[rarityColors(currentRarity).badge, rarityColors(currentRarity).text]"
+          >
+            {{ currentRarity }}
+          </span>
+          <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
+        </div>
+        <!-- Card name in Cinzel -->
+        <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug">
           {{ card.name_zh || card.name_jp }}
         </h2>
-        <p v-if="card.name_zh && card.name_jp" class="text-sm text-gray-400 mt-0.5">
+        <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-500 mt-0.5 font-orbitron tracking-wide">
           {{ card.name_jp }}
         </p>
       </template>
-      <div v-if="card.is_legend" class="mt-1">
-        <span class="bg-amber-500/90 text-black text-xs font-bold px-1.5 py-0.5 rounded">LEGEND</span>
+    </div>
+
+    <!-- ATK / DEF stat boxes (view mode, monsters only) -->
+    <div v-if="!editing && isMonster && (card.atk != null || card.defense != null)" class="grid grid-cols-2 gap-2 mb-4">
+      <div class="rounded-lg border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.06)] px-3 py-2 text-center">
+        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-red-400/70 uppercase mb-1">ATK</div>
+        <div class="font-orbitron text-2xl font-bold text-red-300 leading-none">
+          {{ card.atk ?? '?' }}
+        </div>
+      </div>
+      <div class="rounded-lg border border-[rgba(96,165,250,0.25)] bg-[rgba(96,165,250,0.06)] px-3 py-2 text-center">
+        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-blue-400/70 uppercase mb-1">DEF</div>
+        <div class="font-orbitron text-2xl font-bold text-blue-300 leading-none">
+          {{ card.defense ?? '?' }}
+        </div>
       </div>
     </div>
 
     <!-- Detail table (inline editable) -->
-    <div class="bg-gray-700/50 rounded-lg overflow-hidden mb-4">
+    <div class="rounded-lg overflow-hidden mb-4 border border-[rgba(201,168,76,0.1)]">
       <!-- Card ID (always read-only) -->
-      <div class="flex items-center px-3 py-2 border-b border-gray-700">
-        <span class="w-20 text-xs text-gray-400 shrink-0">Card ID</span>
-        <span class="text-sm text-gray-200 font-mono">{{ card.card_id }}</span>
+      <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+        <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Card ID</span>
+        <span class="px-3 py-2 text-sm text-gray-200 font-mono">{{ card.card_id }}</span>
       </div>
 
       <!-- Card Type -->
-      <div class="flex items-center px-3 py-2 border-b border-gray-700">
-        <span class="w-20 text-xs text-gray-400 shrink-0">Type</span>
-        <Select
-          v-if="editing"
-          v-model="form.card_type"
-          :options="cardTypeOptions"
-          option-label="label"
-          option-value="value"
-          size="small"
-          class="flex-1"
-        />
-        <span v-else class="text-sm text-gray-200 font-mono">{{ card.card_type }}</span>
+      <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+        <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Type</span>
+        <div class="px-3 py-2 flex-1">
+          <Select
+            v-if="editing"
+            v-model="form.card_type"
+            :options="cardTypeOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="w-full"
+          />
+          <span v-else class="text-sm text-gray-200">{{ card.card_type }}</span>
+        </div>
       </div>
 
       <!-- Monster-only fields -->
       <template v-if="isMonster">
         <!-- Attribute -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">Attribute</span>
-          <Select
-            v-if="editing"
-            v-model="form.attribute"
-            :options="attributeOptions"
-            option-label="label"
-            option-value="value"
-            size="small"
-            class="flex-1"
-          />
-          <span v-else-if="card.attribute" class="text-sm text-gray-200 font-mono">{{ card.attribute }}</span>
-          <span v-else class="text-sm text-gray-600">-</span>
+        <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">屬性</span>
+          <div class="px-3 py-2 flex-1">
+            <Select
+              v-if="editing"
+              v-model="form.attribute"
+              :options="attributeOptions"
+              option-label="label"
+              option-value="value"
+              size="small"
+              class="w-full"
+            />
+            <span v-else-if="card.attribute" class="text-sm text-gray-200">{{ card.attribute }}</span>
+            <span v-else class="text-sm text-gray-600">-</span>
+          </div>
         </div>
 
         <!-- Monster Type -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">Race</span>
-          <InputText
-            v-if="editing"
-            v-model="form.monster_type"
-            placeholder="e.g. 龍族"
-            fluid
-            size="small"
-            class="flex-1"
-          />
-          <span v-else-if="card.monster_type" class="text-sm text-gray-200 font-mono">{{ card.monster_type }}</span>
-          <span v-else class="text-sm text-gray-600">-</span>
+        <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">種族</span>
+          <div class="px-3 py-2 flex-1">
+            <InputText
+              v-if="editing"
+              v-model="form.monster_type"
+              placeholder="e.g. 龍族"
+              fluid
+              size="small"
+            />
+            <span v-else-if="card.monster_type" class="text-sm text-gray-200">{{ card.monster_type }}</span>
+            <span v-else class="text-sm text-gray-600">-</span>
+          </div>
         </div>
 
         <!-- Level -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">Level</span>
-          <InputNumber
-            v-if="editing"
-            v-model="form.level"
-            :min="1"
-            :max="12"
-            :use-grouping="false"
-            fluid
-            size="small"
-            class="flex-1"
-          />
-          <span v-else-if="card.level != null" class="text-sm text-gray-200 font-mono">{{ card.level }}</span>
-          <span v-else class="text-sm text-gray-600">-</span>
+        <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Level</span>
+          <div class="px-3 py-2 flex-1">
+            <InputNumber
+              v-if="editing"
+              v-model="form.level"
+              :min="1"
+              :max="12"
+              :use-grouping="false"
+              fluid
+              size="small"
+            />
+            <span v-else-if="card.level != null" class="font-orbitron text-sm text-gray-200">{{ card.level }}</span>
+            <span v-else class="text-sm text-gray-600">-</span>
+          </div>
         </div>
 
-        <!-- ATK -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">ATK</span>
-          <InputText
-            v-if="editing"
-            v-model="form.atk"
-            fluid
-            size="small"
-            class="flex-1"
-          />
-          <span v-else-if="card.atk != null" class="text-sm text-gray-200 font-mono">{{ card.atk }}</span>
-          <span v-else class="text-sm text-gray-600">-</span>
-        </div>
-
-        <!-- DEF -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
-          <span class="w-20 text-xs text-gray-400 shrink-0">DEF</span>
-          <InputText
-            v-if="editing"
-            v-model="form.defense"
-            fluid
-            size="small"
-            class="flex-1"
-          />
-          <span v-else-if="card.defense != null" class="text-sm text-gray-200 font-mono">{{ card.defense }}</span>
-          <span v-else class="text-sm text-gray-600">-</span>
-        </div>
+        <!-- ATK / DEF (edit mode only — view mode has stat boxes above) -->
+        <template v-if="editing">
+          <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+            <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">ATK</span>
+            <div class="px-3 py-2 flex-1">
+              <InputText v-model="form.atk" fluid size="small" />
+            </div>
+          </div>
+          <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
+            <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">DEF</span>
+            <div class="px-3 py-2 flex-1">
+              <InputText v-model="form.defense" fluid size="small" />
+            </div>
+          </div>
+        </template>
       </template>
     </div>
 
@@ -683,8 +722,8 @@ async function submitDeleteVariant() {
       <template v-if="!section.monsterOnly || isMonster">
         <!-- View mode: only show if value exists -->
         <div v-if="!editing && (card as any)[section.key]" class="mb-3">
-          <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ section.label }}</h3>
-          <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line">{{ (card as any)[section.key] }}</p>
+          <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold-dim uppercase mb-1.5">{{ section.label }}</div>
+          <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded-md px-3 py-2">{{ (card as any)[section.key] }}</p>
         </div>
 
         <!-- Edit mode: show expanded or show + button -->
