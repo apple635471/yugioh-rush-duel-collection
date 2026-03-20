@@ -7,6 +7,11 @@ import { useUiStore } from '@/stores/ui'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
+import Textarea from 'primevue/textarea'
 
 const props = defineProps<{
   card: Card
@@ -34,6 +39,12 @@ const allCardTypes = [
 ]
 
 const attributes = ['光', '暗', '炎', '水', '風', '地']
+
+const cardTypeOptions = allCardTypes.map(t => ({ label: t, value: t }))
+const attributeOptions = [
+  { label: '-', value: null },
+  ...attributes.map(a => ({ label: a, value: a })),
+]
 
 const isMonster = computed(() => {
   const ct = editing.value ? (form.card_type ?? props.card.card_type) : props.card.card_type
@@ -221,7 +232,6 @@ function toggleSection(key: string) {
 }
 
 // ---- Variant management ----
-// availableRarities: rarities not yet assigned to this card
 const availableRarities = computed(() =>
   RARITIES.filter(r => !props.card.variants.some(v => v.rarity === r.value))
 )
@@ -265,7 +275,6 @@ const editRarityTarget = ref('')
 const savingRarityEdit = ref(false)
 const rarityEditError = ref('')
 
-// rarities available to remap current rarity to (excludes the current rarity itself)
 const editableRarities = computed(() =>
   RARITIES.filter(r => !props.card.variants.some(v => v.rarity === r.value) || r.value === currentRarity.value)
     .filter(r => r.value !== currentRarity.value)
@@ -319,7 +328,6 @@ async function submitDeleteVariant() {
   try {
     await deleteVariant(props.card.card_id, currentRarity.value)
     confirmingDelete.value = false
-    // Switch to first remaining rarity
     emit('cardUpdated')
     const remaining = props.card.variants.filter(v => v.rarity !== currentRarity.value)
     if (remaining.length > 0 && remaining[0]) currentRarity.value = remaining[0].rarity
@@ -329,9 +337,6 @@ async function submitDeleteVariant() {
     deletingVariant.value = false
   }
 }
-
-const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500'
-const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500 appearance-none'
 </script>
 
 <template>
@@ -354,10 +359,8 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
         :class="{ '!opacity-100': uploading }"
       >
-        <!-- Spinner while uploading -->
         <div v-if="uploading" class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
         <template v-else>
-          <!-- Camera icon -->
           <svg class="w-8 h-8 text-white/80 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
@@ -378,31 +381,36 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
 
     <!-- Revert button + Scan button row -->
     <div class="mb-2 flex items-center justify-between min-h-[1.5rem]">
-      <button
+      <Button
         v-if="isUserUpload"
         @click="onRevertImage"
         :disabled="reverting"
-        class="text-xs text-gray-400 hover:text-yellow-400 transition-colors flex items-center gap-1"
+        variant="text"
+        severity="secondary"
+        size="small"
+        class="gap-1 text-xs"
       >
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
         {{ reverting ? 'Reverting...' : 'Revert to original' }}
-      </button>
+      </Button>
       <span v-if="imageError" class="text-xs text-red-400">{{ imageError }}</span>
 
-      <!-- Scan button -->
-      <button
+      <Button
         @click="triggerScan"
         :disabled="scanLoading"
+        variant="text"
+        severity="secondary"
+        size="small"
         title="用 AI 掃描卡牌資訊"
-        class="ml-auto flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors disabled:opacity-40"
+        class="ml-auto gap-1 text-xs"
       >
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
         </svg>
         <span>{{ scanLoading ? 'Scanning…' : 'Scan' }}</span>
-      </button>
+      </Button>
     </div>
 
     <!-- Scan result panel (floating, draggable) -->
@@ -437,17 +445,25 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <!-- Add Variant form -->
       <template v-if="addingVariant">
         <div class="flex items-center gap-1.5">
-          <select v-model="newVariantRarity" :class="selectClass" class="!w-auto flex-1">
-            <option v-for="r in availableRarities" :key="r.value" :value="r.value">{{ r.label }}</option>
-          </select>
-          <button
+          <Select
+            v-model="newVariantRarity"
+            :options="availableRarities"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="flex-1"
+          />
+          <Button
             @click="submitAddVariant"
             :disabled="savingVariant || !newVariantRarity"
-            class="text-xs px-2 py-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium rounded transition-colors disabled:opacity-50"
+            severity="warn"
+            size="small"
           >
             {{ savingVariant ? '...' : 'Add' }}
-          </button>
-          <button @click="cancelAddVariant" class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
+          </Button>
+          <Button @click="cancelAddVariant" variant="text" severity="secondary" size="small">
+            Cancel
+          </Button>
         </div>
         <div v-if="variantError" class="text-red-400 text-xs">{{ variantError }}</div>
       </template>
@@ -456,17 +472,25 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <template v-else-if="editingRarity">
         <div class="flex items-center gap-1.5">
           <span class="text-xs text-gray-400 shrink-0">改為</span>
-          <select v-model="editRarityTarget" :class="selectClass" class="!w-auto flex-1">
-            <option v-for="r in editableRarities" :key="r.value" :value="r.value">{{ r.label }}</option>
-          </select>
-          <button
+          <Select
+            v-model="editRarityTarget"
+            :options="editableRarities"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="flex-1"
+          />
+          <Button
             @click="submitEditRarity"
             :disabled="savingRarityEdit || !editRarityTarget"
-            class="text-xs px-2 py-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium rounded transition-colors disabled:opacity-50"
+            severity="warn"
+            size="small"
           >
             {{ savingRarityEdit ? '...' : 'Save' }}
-          </button>
-          <button @click="cancelEditRarity" class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
+          </Button>
+          <Button @click="cancelEditRarity" variant="text" severity="secondary" size="small">
+            Cancel
+          </Button>
         </div>
         <div v-if="rarityEditError" class="text-red-400 text-xs">{{ rarityEditError }}</div>
       </template>
@@ -475,56 +499,68 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <template v-else-if="confirmingDelete">
         <div class="flex items-center gap-1.5">
           <span class="text-xs text-gray-300">刪除 <strong>{{ currentRarity }}</strong>？</span>
-          <button
+          <Button
             @click="submitDeleteVariant"
             :disabled="deletingVariant"
-            class="text-xs px-2 py-1 bg-red-600 hover:bg-red-500 text-white font-medium rounded transition-colors disabled:opacity-50"
+            severity="danger"
+            size="small"
           >
             {{ deletingVariant ? '...' : '確認刪除' }}
-          </button>
-          <button @click="cancelDeleteVariant" class="text-xs px-2 py-1 text-gray-400 hover:text-gray-200 transition-colors">Cancel</button>
+          </Button>
+          <Button @click="cancelDeleteVariant" variant="text" severity="secondary" size="small">
+            Cancel
+          </Button>
         </div>
         <div v-if="deleteError" class="text-red-400 text-xs">{{ deleteError }}</div>
       </template>
 
       <!-- Default: action buttons row -->
       <div v-else-if="!editing" class="flex items-center gap-3">
-        <button
+        <Button
           v-if="availableRarities.length > 0"
           @click="startAddVariant"
-          class="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors"
+          variant="text"
+          severity="secondary"
+          size="small"
+          class="gap-1 text-xs"
         >
           <span class="text-base leading-none">+</span>
           <span>Add Variant</span>
-        </button>
-        <button
+        </Button>
+        <Button
           v-if="editableRarities.length > 0"
           @click="startEditRarity"
-          class="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors"
+          variant="text"
+          severity="secondary"
+          size="small"
+          class="gap-1 text-xs"
         >
           <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" />
           </svg>
           <span>Edit Rarity</span>
-        </button>
-        <button
+        </Button>
+        <Button
           v-if="card.variants.length > 1"
           @click="startDeleteVariant"
-          class="flex items-center gap-1 text-xs text-gray-500 hover:text-red-400 transition-colors"
+          variant="text"
+          severity="danger"
+          size="small"
+          class="gap-1 text-xs"
         >
           <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
           </svg>
           <span>Delete</span>
-        </button>
+        </Button>
       </div>
     </div>
 
     <!-- Card names -->
     <div class="mb-4">
       <template v-if="editing">
-        <input v-model="form.name_zh" :class="inputClass" placeholder="Chinese Name" />
-        <input v-model="form.name_jp" :class="inputClass" class="mt-1.5" placeholder="Japanese Name" />
+        <InputText v-model="form.name_zh" placeholder="Chinese Name" fluid size="small" />
+        <InputText v-model="form.name_jp" placeholder="Japanese Name" fluid size="small" class="mt-1.5" />
       </template>
       <template v-else>
         <h2 class="text-lg font-bold text-gray-100 leading-snug">
@@ -550,9 +586,15 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <!-- Card Type -->
       <div class="flex items-center px-3 py-2 border-b border-gray-700">
         <span class="w-20 text-xs text-gray-400 shrink-0">Type</span>
-        <select v-if="editing" v-model="form.card_type" :class="selectClass">
-          <option v-for="t in allCardTypes" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <Select
+          v-if="editing"
+          v-model="form.card_type"
+          :options="cardTypeOptions"
+          option-label="label"
+          option-value="value"
+          size="small"
+          class="flex-1"
+        />
         <span v-else class="text-sm text-gray-200 font-mono">{{ card.card_type }}</span>
       </div>
 
@@ -561,10 +603,15 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <!-- Attribute -->
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Attribute</span>
-          <select v-if="editing" v-model="form.attribute" :class="selectClass">
-            <option :value="null">-</option>
-            <option v-for="a in attributes" :key="a" :value="a">{{ a }}</option>
-          </select>
+          <Select
+            v-if="editing"
+            v-model="form.attribute"
+            :options="attributeOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="flex-1"
+          />
           <span v-else-if="card.attribute" class="text-sm text-gray-200 font-mono">{{ card.attribute }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
@@ -572,7 +619,14 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <!-- Monster Type -->
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Race</span>
-          <input v-if="editing" v-model="form.monster_type" :class="inputClass" placeholder="e.g. 龍族" />
+          <InputText
+            v-if="editing"
+            v-model="form.monster_type"
+            placeholder="e.g. 龍族"
+            fluid
+            size="small"
+            class="flex-1"
+          />
           <span v-else-if="card.monster_type" class="text-sm text-gray-200 font-mono">{{ card.monster_type }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
@@ -580,7 +634,16 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <!-- Level -->
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Level</span>
-          <input v-if="editing" v-model.number="form.level" type="number" min="1" max="12" :class="inputClass" />
+          <InputNumber
+            v-if="editing"
+            v-model="form.level"
+            :min="1"
+            :max="12"
+            :use-grouping="false"
+            fluid
+            size="small"
+            class="flex-1"
+          />
           <span v-else-if="card.level != null" class="text-sm text-gray-200 font-mono">{{ card.level }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
@@ -588,7 +651,13 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <!-- ATK -->
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">ATK</span>
-          <input v-if="editing" v-model="form.atk" :class="inputClass" />
+          <InputText
+            v-if="editing"
+            v-model="form.atk"
+            fluid
+            size="small"
+            class="flex-1"
+          />
           <span v-else-if="card.atk != null" class="text-sm text-gray-200 font-mono">{{ card.atk }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
@@ -596,16 +665,21 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <!-- DEF -->
         <div class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
           <span class="w-20 text-xs text-gray-400 shrink-0">DEF</span>
-          <input v-if="editing" v-model="form.defense" :class="inputClass" />
+          <InputText
+            v-if="editing"
+            v-model="form.defense"
+            fluid
+            size="small"
+            class="flex-1"
+          />
           <span v-else-if="card.defense != null" class="text-sm text-gray-200 font-mono">{{ card.defense }}</span>
           <span v-else class="text-sm text-gray-600">-</span>
         </div>
       </template>
     </div>
 
-    <!-- Text sections: summon_condition, condition, effect, continuous_effect -->
+    <!-- Text sections -->
     <template v-for="section in textSections" :key="section.key">
-      <!-- Skip monster-only sections for non-monsters -->
       <template v-if="!section.monsterOnly || isMonster">
         <!-- View mode: only show if value exists -->
         <div v-if="!editing && (card as any)[section.key]" class="mb-3">
@@ -617,28 +691,35 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <template v-if="editing">
           <div v-if="expandedSections[section.key]" class="mb-3">
             <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ section.label }}</h3>
-            <textarea
+            <Textarea
               v-model="(form as any)[section.key]"
-              rows="2"
-              :class="inputClass"
+              :rows="2"
+              fluid
+              size="small"
               class="resize-y"
             />
-            <button
+            <Button
               v-if="!(card as any)[section.key]"
               @click="toggleSection(section.key)"
-              class="text-xs text-gray-600 hover:text-gray-400 mt-0.5"
+              variant="text"
+              severity="secondary"
+              size="small"
+              class="text-xs mt-0.5"
             >
               Remove
-            </button>
+            </Button>
           </div>
-          <button
+          <Button
             v-else
             @click="toggleSection(section.key)"
-            class="flex items-center gap-1 text-xs text-gray-600 hover:text-yellow-500 mb-2 transition-colors"
+            variant="text"
+            severity="secondary"
+            size="small"
+            class="gap-1 text-xs mb-2"
           >
             <span class="text-base leading-none">+</span>
             <span>{{ section.label }}</span>
-          </button>
+          </Button>
         </template>
       </template>
     </template>
@@ -648,26 +729,15 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
 
     <!-- Action buttons -->
     <div v-if="editing" class="flex gap-2">
-      <button
-        @click="saveEdit"
-        :disabled="saving"
-        class="flex-1 py-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium text-sm rounded-lg transition-colors disabled:opacity-50"
-      >
+      <Button @click="saveEdit" :disabled="saving" severity="warn" fluid>
         {{ saving ? 'Saving...' : 'Save' }}
-      </button>
-      <button
-        @click="cancelEdit"
-        class="flex-1 py-2 text-sm text-gray-300 hover:text-gray-100 border border-gray-600 rounded-lg hover:border-gray-400 transition-colors"
-      >
+      </Button>
+      <Button @click="cancelEdit" variant="outlined" severity="secondary" fluid>
         Cancel
-      </button>
+      </Button>
     </div>
-    <button
-      v-else
-      @click="startEdit"
-      class="w-full py-2 text-sm text-gray-300 hover:text-yellow-400 border border-gray-600 rounded-lg hover:border-yellow-500/50 transition-colors"
-    >
+    <Button v-else @click="startEdit" variant="outlined" severity="secondary" fluid>
       Edit Card Info
-    </button>
+    </Button>
   </div>
 </template>

@@ -2,6 +2,10 @@
 import { ref, reactive, computed } from 'vue'
 import type { CardSetWithCards, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
 import { updateCardSet, fetchCardSetOverrides, deleteCardSetOverride } from '@/api/cardSets'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
 
 const props = defineProps<{
   cardSet: CardSetWithCards
@@ -20,19 +24,19 @@ const showOverrides = ref(false)
 const form = reactive<CardSetUpdate>({})
 
 const productTypes = [
-  { value: 'booster',          label: 'Booster Pack (補充包)' },
-  { value: 'structure_deck',   label: 'Structure Deck (預組)' },
-  { value: 'character_pack',   label: 'Character Pack (角色包)' },
-  { value: 'go_rush_character',label: 'Go Rush Character (GRC 角色包)' },
-  { value: 'battle_pack',      label: 'Battle Pack (戰鬥包)' },
-  { value: 'maximum_pack',     label: 'Maximum Pack (Maximum 包)' },
-  { value: 'extra_pack',       label: 'Extra Pack (Extra 包)' },
-  { value: 'legend_pack',      label: 'Legend Pack (傳說包)' },
-  { value: 'vs_pack',          label: 'VS Pack (VS 包)' },
-  { value: 'tournament_pack',  label: 'Tournament Pack (大會包)' },
-  { value: 'advanced_pack',    label: 'Advanced Pack (進階包)' },
-  { value: 'over_rush_pack',   label: 'Over Rush Pack (Over Rush 包)' },
-  { value: 'unknown',          label: 'Other (其他)' },
+  { value: 'booster',           label: 'Booster Pack (補充包)' },
+  { value: 'structure_deck',    label: 'Structure Deck (預組)' },
+  { value: 'character_pack',    label: 'Character Pack (角色包)' },
+  { value: 'go_rush_character', label: 'Go Rush Character (GRC 角色包)' },
+  { value: 'battle_pack',       label: 'Battle Pack (戰鬥包)' },
+  { value: 'maximum_pack',      label: 'Maximum Pack (Maximum 包)' },
+  { value: 'extra_pack',        label: 'Extra Pack (Extra 包)' },
+  { value: 'legend_pack',       label: 'Legend Pack (傳說包)' },
+  { value: 'vs_pack',           label: 'VS Pack (VS 包)' },
+  { value: 'tournament_pack',   label: 'Tournament Pack (大會包)' },
+  { value: 'advanced_pack',     label: 'Advanced Pack (進階包)' },
+  { value: 'over_rush_pack',    label: 'Over Rush Pack (Over Rush 包)' },
+  { value: 'unknown',           label: 'Other (其他)' },
 ]
 
 const overriddenFields = computed(() => new Set(overrides.value.map(o => o.field_name)))
@@ -97,9 +101,6 @@ const fieldLabels: Record<string, string> = {
   total_cards: 'Total Cards',
   rarity_distribution: 'Rarity Distribution',
 }
-
-const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500'
-const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500 appearance-none'
 </script>
 
 <template>
@@ -115,16 +116,18 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button
+        <Button
           @click="startEdit"
-          class="text-xs text-gray-400 hover:text-yellow-400 border border-gray-600 hover:border-yellow-500/50 rounded px-2 py-1 transition-colors"
+          variant="outlined"
+          severity="secondary"
+          size="small"
           title="Edit set metadata"
         >
-          <svg class="w-3.5 h-3.5 inline-block mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg class="w-3.5 h-3.5 mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
           </svg>
           Edit
-        </button>
+        </Button>
         <slot name="view-toggle" />
       </div>
     </div>
@@ -150,7 +153,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Chinese Name</label>
           <div class="flex-1 relative">
-            <input v-model="form.set_name_zh" :class="inputClass" placeholder="e.g. 衝擊極限包" />
+            <InputText v-model="form.set_name_zh" placeholder="e.g. 衝擊極限包" fluid size="small" />
             <span v-if="overriddenFields.has('set_name_zh')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden (won't be reset by import)">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
@@ -161,7 +164,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Japanese Name</label>
           <div class="flex-1 relative">
-            <input v-model="form.set_name_jp" :class="inputClass" />
+            <InputText v-model="form.set_name_jp" fluid size="small" />
             <span v-if="overriddenFields.has('set_name_jp')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
@@ -172,10 +175,15 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Product Type</label>
           <div class="flex-1 relative">
-            <select v-model="form.product_type" :class="selectClass">
-              <option v-for="pt in productTypes" :key="pt.value" :value="pt.value">{{ pt.label }}</option>
-            </select>
-            <span v-if="overriddenFields.has('product_type')" class="absolute right-6 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
+            <Select
+              v-model="form.product_type"
+              :options="productTypes"
+              option-label="label"
+              option-value="value"
+              size="small"
+              fluid
+            />
+            <span v-if="overriddenFields.has('product_type')" class="absolute right-8 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
           </div>
@@ -185,7 +193,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Release Date</label>
           <div class="flex-1 relative">
-            <input v-model="form.release_date" :class="inputClass" placeholder="e.g. 2024/4/13" />
+            <InputText v-model="form.release_date" placeholder="e.g. 2024/4/13" fluid size="small" />
             <span v-if="overriddenFields.has('release_date')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
@@ -196,7 +204,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Total Cards</label>
           <div class="flex-1 relative">
-            <input v-model.number="form.total_cards" type="number" min="0" :class="inputClass" />
+            <InputNumber v-model="form.total_cards" :min="0" :use-grouping="false" fluid size="small" />
             <span v-if="overriddenFields.has('total_cards')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
@@ -207,7 +215,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <div class="flex items-start gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0 pt-1.5">Rarity Dist.</label>
           <div class="flex-1 relative">
-            <input v-model="form.rarity_distribution" :class="inputClass" placeholder='e.g. {"UR":4,"SR":6,"R":12,"N":28}' />
+            <InputText v-model="form.rarity_distribution" placeholder='e.g. {"UR":4,"SR":6,"R":12,"N":28}' fluid size="small" />
             <span v-if="overriddenFields.has('rarity_distribution')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
@@ -219,27 +227,23 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <div v-if="error" class="text-red-400 text-sm mt-3">{{ error }}</div>
 
       <!-- Action buttons -->
-      <div class="flex gap-2 mt-4">
-        <button
-          @click="saveEdit"
-          :disabled="saving"
-          class="flex-1 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium text-sm rounded-lg transition-colors disabled:opacity-50"
-        >
-          {{ saving ? 'Saving...' : 'Save' }}
-        </button>
-        <button
-          @click="cancelEdit"
-          class="flex-1 py-1.5 text-sm text-gray-300 hover:text-gray-100 border border-gray-600 rounded-lg hover:border-gray-400 transition-colors"
-        >
+      <div class="flex justify-end gap-2 mt-4">
+        <Button @click="cancelEdit" variant="outlined" severity="secondary" size="small">
           Cancel
-        </button>
+        </Button>
+        <Button @click="saveEdit" :disabled="saving" severity="warn" size="small">
+          {{ saving ? 'Saving...' : 'Save' }}
+        </Button>
       </div>
 
       <!-- Overrides section -->
       <div v-if="overrides.length > 0" class="mt-3 pt-3 border-t border-gray-700">
-        <button
+        <Button
           @click="showOverrides = !showOverrides"
-          class="text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1"
+          variant="text"
+          severity="secondary"
+          size="small"
+          class="gap-1 text-xs"
         >
           <svg
             class="w-3 h-3 transition-transform"
@@ -249,7 +253,7 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
           {{ overrides.length }} override(s) active
-        </button>
+        </Button>
         <div v-if="showOverrides" class="mt-2 space-y-1">
           <div
             v-for="ov in overrides"
@@ -259,15 +263,18 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
             <span class="text-gray-300">
               <span class="text-yellow-500">{{ fieldLabels[ov.field_name] || ov.field_name }}</span>
             </span>
-            <button
+            <Button
               @click="removeOverride(ov.field_name)"
-              class="text-gray-500 hover:text-red-400 transition-colors"
+              variant="text"
+              severity="danger"
+              size="small"
+              class="p-0.5"
               title="Remove override (revert to scraper value on next import)"
             >
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -1,7 +1,25 @@
+/* Correct Tailwind v4 layer order: theme, base, components, utilities.
+   primevue must come AFTER base (so PrimeVue styles override preflight)
+   but BEFORE utilities (so Tailwind utilities override PrimeVue defaults). */
+@layer theme, base, primevue, components, utilities;
 @import "tailwindcss";
 
 @layer base {
   body {
     @apply bg-gray-900 text-gray-100 antialiased;
   }
+}
+
+/* Override PrimeVue Aura dark surface tokens to match app's gray palette
+   (Aura defaults to zinc which is too dark / blue-tinted) */
+.p-dark {
+  --p-surface-700: #374151;  /* gray-700 */
+  --p-surface-800: #1f2937;  /* gray-800 */
+  --p-surface-900: #111827;  /* gray-900 */
+  --p-surface-950: #030712;  /* gray-950 */
+}
+
+/* Match app font size in all PrimeVue components */
+[data-pc-name] {
+  font-size: inherit;
 }

@@ -3,6 +3,12 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import type { CardCreate } from '@/types/card'
 import { createCard, getNextCardId } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
+import Textarea from 'primevue/textarea'
+import Checkbox from 'primevue/checkbox'
 
 const props = defineProps<{
   setId: string
@@ -26,6 +32,16 @@ const allCardTypes = [
 ]
 
 const attributes = ['光', '暗', '炎', '水', '風', '地']
+
+const rarityOptions = allRarities
+const cardTypeOptions = [
+  { label: '-- Select --', value: '' },
+  ...allCardTypes.map(t => ({ label: t, value: t })),
+]
+const attributeOptions = [
+  { label: '-', value: null },
+  ...attributes.map(a => ({ label: a, value: a })),
+]
 
 const form = reactive<CardCreate>({
   card_id: '',
@@ -97,9 +113,6 @@ async function onSubmit() {
     saving.value = false
   }
 }
-
-const inputClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500'
-const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm text-gray-100 focus:outline-none focus:border-yellow-500 appearance-none'
 </script>
 
 <template>
@@ -113,7 +126,13 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
         <span class="w-20 text-xs text-gray-400 shrink-0">Card ID</span>
         <div class="flex-1">
           <div v-if="loadingId" class="text-sm text-gray-500">Loading...</div>
-          <input v-else v-model="form.card_id" :class="inputClass" placeholder="e.g. RD/KP01-JP050" />
+          <InputText
+            v-else
+            v-model="form.card_id"
+            placeholder="e.g. RD/KP01-JP050"
+            fluid
+            size="small"
+          />
         </div>
       </div>
 
@@ -126,62 +145,99 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <!-- Rarity -->
       <div class="flex items-center px-3 py-2 border-b border-gray-700">
         <span class="w-20 text-xs text-gray-400 shrink-0">Rarity</span>
-        <select v-model="form.rarity" :class="selectClass">
-          <option v-for="r in allRarities" :key="r.value" :value="r.value">{{ r.label }}</option>
-        </select>
+        <Select
+          v-model="form.rarity"
+          :options="rarityOptions"
+          option-label="label"
+          option-value="value"
+          size="small"
+          class="flex-1"
+        />
       </div>
 
       <!-- Card Type -->
       <div class="flex items-center px-3 py-2 border-b border-gray-700">
         <span class="w-20 text-xs text-gray-400 shrink-0">Type</span>
-        <select v-model="form.card_type" :class="selectClass">
-          <option value="">-- Select --</option>
-          <option v-for="t in allCardTypes" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <Select
+          v-model="form.card_type"
+          :options="cardTypeOptions"
+          option-label="label"
+          option-value="value"
+          size="small"
+          class="flex-1"
+        />
       </div>
 
       <!-- Monster-only fields -->
       <template v-if="isMonster">
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Attribute</span>
-          <select v-model="form.attribute" :class="selectClass">
-            <option :value="null">-</option>
-            <option v-for="a in attributes" :key="a" :value="a">{{ a }}</option>
-          </select>
+          <Select
+            v-model="form.attribute"
+            :options="attributeOptions"
+            option-label="label"
+            option-value="value"
+            size="small"
+            class="flex-1"
+          />
         </div>
 
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Race</span>
-          <input v-model="form.monster_type" :class="inputClass" placeholder="e.g. 龍族" />
+          <InputText
+            v-model="form.monster_type"
+            placeholder="e.g. 龍族"
+            fluid
+            size="small"
+            class="flex-1"
+          />
         </div>
 
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Level</span>
-          <input v-model.number="form.level" type="number" min="1" max="12" :class="inputClass" />
+          <InputNumber
+            v-model="form.level"
+            :min="1"
+            :max="12"
+            :use-grouping="false"
+            fluid
+            size="small"
+            class="flex-1"
+          />
         </div>
 
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">ATK</span>
-          <input v-model="form.atk" :class="inputClass" />
+          <InputText
+            v-model="form.atk"
+            fluid
+            size="small"
+            class="flex-1"
+          />
         </div>
 
         <div class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
           <span class="w-20 text-xs text-gray-400 shrink-0">DEF</span>
-          <input v-model="form.defense" :class="inputClass" />
+          <InputText
+            v-model="form.defense"
+            fluid
+            size="small"
+            class="flex-1"
+          />
         </div>
       </template>
     </div>
 
     <!-- Card names -->
     <div class="mb-4">
-      <input v-model="form.name_zh" :class="inputClass" placeholder="Chinese Name" />
-      <input v-model="form.name_jp" :class="inputClass" class="mt-1.5" placeholder="Japanese Name" />
+      <InputText v-model="form.name_zh" placeholder="Chinese Name" fluid size="small" />
+      <InputText v-model="form.name_jp" placeholder="Japanese Name" fluid size="small" class="mt-1.5" />
     </div>
 
     <!-- Legend toggle -->
-    <label class="flex items-center gap-2 mb-4 text-sm text-gray-300 cursor-pointer">
-      <input type="checkbox" v-model="form.is_legend" class="rounded bg-gray-700 border-gray-600 text-yellow-500 focus:ring-yellow-500" />
-      LEGEND Card
+    <label class="flex items-center gap-2 mb-4 cursor-pointer">
+      <Checkbox v-model="form.is_legend" :binary="true" input-id="legend-create" />
+      <span class="text-sm text-gray-300">LEGEND Card</span>
     </label>
 
     <!-- Text sections -->
@@ -189,27 +245,34 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
       <template v-if="!section.monsterOnly || isMonster">
         <div v-if="expandedSections[section.key]" class="mb-3">
           <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ section.label }}</h3>
-          <textarea
+          <Textarea
             v-model="(form as any)[section.key]"
-            rows="2"
-            :class="inputClass"
+            :rows="2"
+            fluid
+            size="small"
             class="resize-y"
           />
-          <button
+          <Button
             @click="toggleSection(section.key)"
-            class="text-xs text-gray-600 hover:text-gray-400 mt-0.5"
+            variant="text"
+            severity="secondary"
+            size="small"
+            class="text-xs mt-0.5"
           >
             Remove
-          </button>
+          </Button>
         </div>
-        <button
+        <Button
           v-else
           @click="toggleSection(section.key)"
-          class="flex items-center gap-1 text-xs text-gray-600 hover:text-yellow-500 mb-2 transition-colors"
+          variant="text"
+          severity="secondary"
+          size="small"
+          class="gap-1 text-xs mb-2"
         >
           <span class="text-base leading-none">+</span>
           <span>{{ section.label }}</span>
-        </button>
+        </Button>
       </template>
     </template>
 
@@ -217,13 +280,14 @@ const selectClass = 'w-full bg-gray-700 border border-gray-600 rounded-md px-2 p
     <div v-if="error" class="text-red-400 text-sm mb-3">{{ error }}</div>
 
     <!-- Submit -->
-    <button
+    <Button
       @click="onSubmit"
       :disabled="saving || loadingId"
-      class="w-full py-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-medium text-sm rounded-lg transition-colors disabled:opacity-50"
+      severity="warn"
+      fluid
     >
       {{ saving ? 'Creating...' : 'Create Card' }}
-    </button>
+    </Button>
 
     <p class="text-xs text-gray-600 mt-2 text-center">
       Image can be uploaded after creation.

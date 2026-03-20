@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import Button from 'primevue/button'
 
 const props = defineProps<{
   cardId: string
@@ -30,27 +31,33 @@ function decrement() {
 
 <template>
   <div class="flex items-center gap-0.5" @click.stop>
-    <button
+    <Button
       @click="decrement"
       :disabled="localCount <= 0"
-      class="w-5 h-5 flex items-center justify-center rounded text-xs font-bold transition-colors leading-none"
-      :class="localCount > 0
-        ? 'bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white'
-        : 'bg-gray-700 text-gray-500 cursor-not-allowed'"
+      variant="text"
+      size="small"
+      :class="[
+        'w-5 h-5 p-0 flex items-center justify-center rounded text-xs font-bold leading-none',
+        localCount > 0
+          ? 'bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white'
+          : 'bg-gray-700 text-gray-500 cursor-not-allowed',
+      ]"
     >
       −
-    </button>
+    </Button>
     <span
       class="w-5 text-center text-xs font-semibold tabular-nums"
       :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-500'"
     >
       {{ localCount }}
     </span>
-    <button
+    <Button
       @click="increment"
-      class="w-5 h-5 flex items-center justify-center rounded bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white text-xs font-bold transition-colors leading-none"
+      variant="text"
+      size="small"
+      class="w-5 h-5 p-0 flex items-center justify-center rounded bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white text-xs font-bold leading-none"
     >
       +
-    </button>
+    </Button>
   </div>
 </template>

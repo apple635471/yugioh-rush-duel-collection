@@ -1,6 +1,6 @@
 # rd-checklist Frontend
 
-Vue 3 + TypeScript + Tailwind CSS 前端，深色主題卡牌收藏管理介面。
+Vue 3 + TypeScript + Tailwind CSS + **PrimeVue v4** 前端，深色主題卡牌收藏管理介面。
 
 ## 元件架構
 
@@ -70,6 +70,14 @@ App.vue
     → 更新本地 variant.owned_count (樂觀更新)
     → emit('ownershipChanged') → SetView.loadStats() (進度條更新)
 ```
+
+## UI 元件庫
+
+**PrimeVue v4** (`primevue@^4.5.4` + `@primeuix/themes`)
+- 主題：Aura Dark，primary palette 客製為 amber（配合 yellow-400/500 系設計語言）
+- `darkModeSelector: ':root'` 全域強制深色模式
+- CSS layer 順序：`tailwind-base → primevue → tailwind-utilities`（Tailwind 優先覆蓋）
+- 使用元件：`Button`、`InputText`、`InputNumber`、`Select`、`Textarea`、`Checkbox`、`SelectButton`
 
 ## 視覺設計
 
