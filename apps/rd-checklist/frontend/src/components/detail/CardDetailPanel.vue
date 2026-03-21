@@ -404,37 +404,49 @@ async function submitDeleteVariant() {
     </div>
 
     <!-- Revert button + Scan button row -->
-    <div class="mb-3 flex items-center justify-between min-h-[1.5rem]">
-      <Button
-        v-if="isUserUpload"
-        @click="onRevertImage"
-        :disabled="reverting"
-        variant="text"
-        severity="secondary"
-        size="small"
-        class="gap-1 text-[11px]"
-      >
-        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-        </svg>
-        {{ reverting ? 'Reverting...' : 'Revert to original' }}
-      </Button>
-      <span v-if="imageError" class="text-xs text-red-400">{{ imageError }}</span>
+    <div class="mb-3 flex items-center gap-1.5">
+      <!-- Revert to original icon button -->
+      <div v-if="isUserUpload" class="relative group/tip">
+        <button
+          @click="onRevertImage"
+          :disabled="reverting"
+          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <svg v-if="reverting" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+          </svg>
+        </button>
+        <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+          Revert to original
+        </div>
+      </div>
 
-      <Button
-        @click="triggerScan"
-        :disabled="scanLoading"
-        variant="text"
-        severity="secondary"
-        size="small"
-        title="用 AI 掃描卡牌資訊"
-        class="ml-auto gap-1 text-[11px]"
-      >
-        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
-        </svg>
-        <span>{{ scanLoading ? 'Scanning…' : 'Scan' }}</span>
-      </Button>
+      <span v-if="imageError" class="text-[11px] text-red-400">{{ imageError }}</span>
+
+      <!-- Spacer -->
+      <div class="flex-1" />
+
+      <!-- Scan icon button -->
+      <div class="relative group/tip">
+        <button
+          @click="triggerScan"
+          :disabled="scanLoading"
+          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <svg v-if="scanLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+          </svg>
+        </button>
+        <div class="absolute top-[calc(100%+6px)] right-0 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+          Scan with AI
+        </div>
+      </div>
     </div>
 
     <!-- Scan result panel (floating, draggable) -->
