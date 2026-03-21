@@ -7,10 +7,11 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import CardVariantModel
+from ..models import CardModel, CardVariantModel
 from ..schemas import CardVariantOut
 from ..services.image_service import (
     delete_user_image,
+    fetch_konami_image,
     get_image_path,
     get_user_image_path,
     save_user_image,
@@ -96,6 +97,42 @@ async def upload_image(
     rel_path = save_user_image(card_id, rarity, content)
 
     # Preserve scraper path before overwriting (one-time backfill for old data)
+    if not variant.scraper_image_path and variant.image_source == "scraper" and variant.image_path:
+        variant.scraper_image_path = variant.image_path
+
+    variant.image_source = "user_upload"
+    variant.image_path = rel_path
+    db.commit()
+    db.refresh(variant)
+    return variant
+
+
+@router.post("/card/{card_id:path}/{rarity}/fetch-konami", response_model=CardVariantOut)
+async def fetch_from_konami(
+    card_id: str,
+    rarity: str,
+    db: Session = Depends(get_db),
+):
+    """Fetch card image from Konami CDN and save as user upload."""
+    variant = (
+        db.query(CardVariantModel)
+        .filter_by(card_id=card_id, rarity=rarity)
+        .first()
+    )
+    if not variant:
+        raise HTTPException(status_code=404, detail="Variant not found")
+
+    # For short-form card_ids (e.g. "JP005"), look up the set_id
+    card = db.query(CardModel).filter_by(card_id=card_id).first()
+    set_id = card.set_id if card else None
+
+    content = await fetch_konami_image(card_id, rarity, set_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Image not found on Konami CDN")
+
+    rel_path = save_user_image(card_id, rarity, content)
+
+    # Preserve scraper path before overwriting (one-time backfill)
     if not variant.scraper_image_path and variant.image_source == "scraper" and variant.image_path:
         variant.scraper_image_path = variant.image_path
 

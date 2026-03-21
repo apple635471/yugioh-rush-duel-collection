@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.9.2 (2026-03-21)
+
+### 新增
+
+- **從 Konami CDN 一鍵抓圖**：CardDetailPanel 圖片區新增「Fetch from Konami」按鈕（雲端上傳 icon，位於 Scan 按鈕左側）
+  - 點擊後自動組出 Konami CDN URL：`https://img.konami.com/yugioh/rushduel/products/{set}/cards/{num}_{rarity}.jpg`
+  - 稀有度名稱對應：`UPR→urp`、`SER→se`、`FORR→for`，其他直接小寫
+  - 找到圖片則自動儲存為 user upload（等同手動上傳）；找不到則顯示提示訊息
+  - 後端新增 `POST /api/images/card/{card_id}/{rarity}/fetch-konami` 端點
+  - 新增 `httpx` 依賴（async HTTP client）
+
+---
+
 ## v0.9.1 (2026-03-21)
 
 ### 改善

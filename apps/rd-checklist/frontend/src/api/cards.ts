@@ -66,6 +66,16 @@ export async function revertCardImage(
   return data
 }
 
+export async function fetchKonamiImage(
+  cardId: string,
+  rarity: string,
+): Promise<CardVariant> {
+  const { data } = await api.post<CardVariant>(
+    `/images/card/${cardId}/${rarity}/fetch-konami`,
+  )
+  return data
+}
+
 export async function getNextCardId(setId: string): Promise<string> {
   const { data } = await api.get<{ next_card_id: string }>(`/cards/next-id/${setId}`)
   return data.next_card_id
