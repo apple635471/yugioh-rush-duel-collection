@@ -365,32 +365,36 @@ async function submitDeleteVariant() {
 
 <template>
   <div class="p-5">
-    <!-- Image with upload overlay -->
-    <div class="relative group aspect-[59/86] bg-gray-700 rounded-lg overflow-hidden mb-2">
-      <img
-        v-if="imageUrl"
-        :src="imageUrl"
-        :alt="card.name_zh || card.name_jp"
-        class="w-full h-full object-cover"
-      />
-      <div v-else class="w-full h-full flex items-center justify-center text-gray-500">
-        No Image
-      </div>
+    <!-- Image with upload overlay + corner action buttons -->
+    <!-- outer: no overflow-hidden so tooltips can escape; inner div clips the image -->
+    <div class="relative group aspect-[59/86] bg-gray-700 rounded-lg mb-3">
+      <!-- Image + upload overlay (clipped to rounded corners) -->
+      <div class="absolute inset-0 rounded-lg overflow-hidden">
+        <img
+          v-if="imageUrl"
+          :src="imageUrl"
+          :alt="card.name_zh || card.name_jp"
+          class="w-full h-full object-cover"
+        />
+        <div v-else class="w-full h-full flex items-center justify-center text-gray-500">
+          No Image
+        </div>
 
-      <!-- Upload overlay (hover) -->
-      <div
-        @click="triggerFileSelect"
-        class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-        :class="{ '!opacity-100': uploading }"
-      >
-        <div v-if="uploading" class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
-        <template v-else>
-          <svg class="w-8 h-8 text-white/80 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-          </svg>
-          <span class="text-white/80 text-xs font-medium">Upload Image</span>
-        </template>
+        <!-- Upload overlay (hover) -->
+        <div
+          @click="triggerFileSelect"
+          class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          :class="{ '!opacity-100': uploading }"
+        >
+          <div v-if="uploading" class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+          <template v-else>
+            <svg class="w-8 h-8 text-white/80 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+            </svg>
+            <span class="text-white/80 text-xs font-medium">Upload Image</span>
+          </template>
+        </div>
       </div>
 
       <!-- Hidden file input -->
@@ -401,16 +405,13 @@ async function submitDeleteVariant() {
         class="hidden"
         @change="onFileSelected"
       />
-    </div>
 
-    <!-- Revert button + Scan button row -->
-    <div class="mb-3 flex items-center gap-1.5">
-      <!-- Revert to original icon button -->
-      <div v-if="isUserUpload" class="relative group/tip">
+      <!-- Revert to original — bottom-left corner, tooltip opens upward -->
+      <div v-if="isUserUpload" class="absolute bottom-2 left-2 group/tip z-10">
         <button
           @click="onRevertImage"
           :disabled="reverting"
-          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-7 h-7 rounded-md border border-white/20 bg-black/50 text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-black/70 hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg v-if="reverting" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -419,22 +420,17 @@ async function submitDeleteVariant() {
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
           </svg>
         </button>
-        <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+        <div class="absolute bottom-[calc(100%+6px)] left-0 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
           Revert to original
         </div>
       </div>
 
-      <span v-if="imageError" class="text-[11px] text-red-400">{{ imageError }}</span>
-
-      <!-- Spacer -->
-      <div class="flex-1" />
-
-      <!-- Scan icon button -->
-      <div class="relative group/tip">
+      <!-- Scan — bottom-right corner, tooltip opens upward -->
+      <div class="absolute bottom-2 right-2 group/tip z-10">
         <button
           @click="triggerScan"
           :disabled="scanLoading"
-          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-7 h-7 rounded-md border border-white/20 bg-black/50 text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-black/70 hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg v-if="scanLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -443,11 +439,14 @@ async function submitDeleteVariant() {
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
           </svg>
         </button>
-        <div class="absolute top-[calc(100%+6px)] right-0 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+        <div class="absolute bottom-[calc(100%+6px)] right-0 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
           Scan with AI
         </div>
       </div>
     </div>
+
+    <!-- Image error -->
+    <div v-if="imageError" class="text-[11px] text-red-400 mb-2">{{ imageError }}</div>
 
     <!-- Scan result panel (floating, draggable) -->
     <ScanResultPanel
