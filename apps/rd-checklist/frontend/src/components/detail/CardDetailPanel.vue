@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import type { Card, CardUpdate, ScanResult } from '@/types/card'
 import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
@@ -27,6 +27,8 @@ const ui = useUiStore()
 const cardSetsStore = useCardSetsStore()
 
 const currentRarity = ref(props.activeRarity)
+// Keep ui.sidebarRarity in sync so CardGridItem can follow along
+watch(currentRarity, (r) => { ui.sidebarRarity = r })
 const editing = ref(false)
 const saving = ref(false)
 const error = ref('')
