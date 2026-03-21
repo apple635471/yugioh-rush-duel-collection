@@ -77,9 +77,14 @@ def build_konami_image_url(
 
     set_part, num_part = after_slash.split("-", 1)  # "5TH1", "JP005"
     konami_rarity = _KONAMI_RARITY_MAP.get(rarity.upper(), rarity.lower())
+    # N rarity has no suffix in the Konami CDN URL
+    if konami_rarity == "n":
+        filename = f"{num_part.lower()}.jpg"
+    else:
+        filename = f"{num_part.lower()}_{konami_rarity}.jpg"
     return (
         f"https://img.konami.com/yugioh/rushduel/products/"
-        f"{set_part.lower()}/cards/{num_part.lower()}_{konami_rarity}.jpg"
+        f"{set_part.lower()}/cards/{filename}"
     )
 
 
