@@ -120,6 +120,7 @@ def get_card_set(set_id: str, db: Session = Depends(get_db)):
         post_url=card_set.post_url,
         total_cards=card_set.total_cards,
         rarity_distribution=card_set.rarity_distribution,
+        is_manual=card_set.is_manual,
         cards=[CardOut.model_validate(c) for c in cards],
     )
 

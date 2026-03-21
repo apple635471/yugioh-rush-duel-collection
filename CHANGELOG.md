@@ -2,6 +2,11 @@
 
 ## v0.9.3 (2026-03-22)
 
+### 修正
+
+- **AppSidebar 錯誤訊息顯示**：卡片載入失敗時顯示實際錯誤原因（HTTP 狀態碼 / 後端 detail），並透過 `console.error` 輸出詳細錯誤，方便除錯
+- **`GET /api/card-sets/{id}` 回應補 `is_manual` 欄位**：原先手動建立的卡組在 `CardSetWithCardsOut` 中 `is_manual` 永遠回傳 `false`，現已修正
+
 ### 新增
 
 - **手動新增卡組**：首頁標題右側加入「新增卡組」按鈕，可透過 Dialog 建立任意 set_id 的卡組
