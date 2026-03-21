@@ -6,9 +6,12 @@ import { fetchGlobalStats, fetchAllSetStats } from '@/api/cardSets'
 import type { OwnershipStats } from '@/types/cardSet'
 import ProductTypeSidebar from '@/components/navigation/ProductTypeSidebar.vue'
 import SetList from '@/components/navigation/SetList.vue'
+import CreateCardSetDialog from '@/components/navigation/CreateCardSetDialog.vue'
+import Button from 'primevue/button'
 
 const route = useRoute()
 const store = useCardSetsStore()
+const createDialog = ref<InstanceType<typeof CreateCardSetDialog> | null>(null)
 
 const currentProductType = computed(() =>
   (route.params.productType as string) || undefined
@@ -64,11 +67,27 @@ watch(currentProductType, async (pt) => {
           </h1>
         </div>
 
-        <!-- Stats panel -->
-        <div
-          v-if="globalStats"
-          class="flex shrink-0 border border-[rgba(201,168,76,0.2)] rounded-lg overflow-hidden"
-        >
+        <div class="flex items-end gap-3 shrink-0">
+          <!-- New card set button -->
+          <Button
+            label="新增卡組"
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            @click="createDialog?.open()"
+          >
+            <template #icon>
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+            </template>
+          </Button>
+
+          <!-- Stats panel -->
+          <div
+            v-if="globalStats"
+            class="flex border border-[rgba(201,168,76,0.2)] rounded-lg overflow-hidden"
+          >
           <div class="px-5 py-2.5 text-center border-r border-[rgba(201,168,76,0.12)]">
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ store.sets.length }}
@@ -87,8 +106,9 @@ watch(currentProductType, async (pt) => {
             </div>
             <div class="text-[10px] text-gray-500 uppercase tracking-wide">收集率</div>
           </div>
-        </div>
-      </div>
+          </div><!-- end stats panel -->
+        </div><!-- end right side wrapper -->
+      </div><!-- end header row -->
 
       <!-- Set grid -->
       <SetList
@@ -98,4 +118,6 @@ watch(currentProductType, async (pt) => {
       />
     </div>
   </div>
+
+  <CreateCardSetDialog ref="createDialog" />
 </template>

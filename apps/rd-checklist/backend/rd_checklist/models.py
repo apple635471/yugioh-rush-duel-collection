@@ -30,6 +30,7 @@ class CardSetModel(Base):
     post_url = Column(String, nullable=False, default="")
     total_cards = Column(Integer, nullable=False, default=0)
     rarity_distribution = Column(Text)  # JSON string
+    is_manual = Column(Boolean, nullable=False, default=False)
     created_at = Column(String, nullable=False, server_default=func.datetime("now"))
     updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
 

@@ -119,9 +119,20 @@ class CardSetOut(BaseModel):
     post_url: str = ""
     total_cards: int = 0
     rarity_distribution: Optional[str] = None
+    is_manual: bool = False
 
     class Config:
         from_attributes = True
+
+
+class CardSetCreate(BaseModel):
+    """Create a new card set manually."""
+
+    set_id: str
+    set_name_jp: str = ""
+    set_name_zh: str = ""
+    product_type: str = "other"
+    release_date: Optional[str] = None
 
 
 class CardSetUpdate(BaseModel):

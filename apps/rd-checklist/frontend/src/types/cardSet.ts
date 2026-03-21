@@ -9,6 +9,15 @@ export interface CardSet {
   post_url: string
   total_cards: number
   rarity_distribution: string | null
+  is_manual?: boolean
+}
+
+export interface CardSetCreate {
+  set_id: string
+  set_name_jp?: string
+  set_name_zh?: string
+  product_type?: string
+  release_date?: string | null
 }
 
 export interface CardSetWithCards extends CardSet {
