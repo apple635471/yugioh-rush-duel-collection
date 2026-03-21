@@ -5,6 +5,7 @@ import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCa
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
+import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
 import Button from 'primevue/button'
@@ -411,9 +412,9 @@ async function submitDeleteVariant() {
         variant="text"
         severity="secondary"
         size="small"
-        class="gap-1 text-xs"
+        class="gap-1 text-[11px]"
       >
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
         {{ reverting ? 'Reverting...' : 'Revert to original' }}
@@ -427,9 +428,9 @@ async function submitDeleteVariant() {
         severity="secondary"
         size="small"
         title="用 AI 掃描卡牌資訊"
-        class="ml-auto gap-1 text-xs"
+        class="ml-auto gap-1 text-[11px]"
       >
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
         </svg>
         <span>{{ scanLoading ? 'Scanning…' : 'Scan' }}</span>
@@ -450,32 +451,28 @@ async function submitDeleteVariant() {
 
     <!-- ── Rarity row ── -->
     <div class="flex items-center gap-1.5 pb-2.5 border-b border-white/[0.08] mb-3">
-      <!-- Rarity buttons -->
-      <button
-        v-for="v in card.variants"
-        :key="v.rarity"
-        @click="currentRarity = v.rarity"
-        class="px-2.5 py-[3px] rounded-md text-xs font-medium border-[1.5px] bg-transparent cursor-pointer transition-all"
-        :class="v.rarity === currentRarity
-          ? 'border-[#a78bfa] text-[#a78bfa] bg-[rgba(167,139,250,0.13)]'
-          : 'border-[#444] text-[#777] hover:border-[#999] hover:text-[#ccc]'"
-      >{{ v.rarity }}</button>
+      <!-- Rarity tabs (same style as card list) -->
+      <RarityTabs
+        :variants="card.variants"
+        :active-rarity="currentRarity"
+        @select="currentRarity = $event"
+      />
 
       <!-- Vertical separator -->
       <div class="w-px h-4 bg-white/15 mx-0.5 shrink-0" />
 
-      <!-- Add variant icon button -->
+      <!-- Add rarity icon button -->
       <div v-if="availableRarities.length > 0 && !editing" class="relative group/tip">
         <button
           @click="startAddVariant"
           class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0"
         >
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <circle cx="8" cy="8" r="6"/><line x1="8" y1="5.5" x2="8" y2="5.6"/><line x1="8" y1="7.5" x2="8" y2="11"/>
+            <line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/>
           </svg>
         </button>
         <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
-          Add variant
+          Add rarity
         </div>
       </div>
 
@@ -606,16 +603,25 @@ async function submitDeleteVariant() {
     </template>
     <template v-else>
       <!-- Card ID row -->
-      <div class="flex items-center gap-2 mb-1">
-        <span class="font-mono text-xs text-white/40 tracking-[0.03em]">{{ card.card_id }}</span>
-        <button
-          @click="copyCardId"
-          class="text-[11px] border-[0.5px] rounded px-[7px] py-[1px] cursor-pointer transition-all"
-          :class="copiedId
-            ? 'text-[#4ade80] border-[#4ade80] bg-transparent'
-            : 'text-white/35 border-white/15 bg-white/[0.04] hover:bg-[rgba(167,139,250,0.15)] hover:text-[#a78bfa] hover:border-[#a78bfa]'"
-        >{{ copiedId ? 'copied!' : 'copy' }}</button>
+      <div class="flex items-center gap-1.5 mb-1">
+        <span class="font-mono text-xs text-white/40 tracking-[0.03em] flex-1">{{ card.card_id }}</span>
         <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
+        <Button
+          @click="copyCardId"
+          variant="text"
+          severity="secondary"
+          size="small"
+          class="shrink-0 p-0"
+          :title="copiedId ? '已複製！' : '複製編號'"
+        >
+          <svg v-if="copiedId" class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <svg v-else class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        </Button>
       </div>
 
       <!-- Card name -->
@@ -630,24 +636,20 @@ async function submitDeleteVariant() {
 
     <!-- ── ATK / DEF stat boxes (view mode, monsters only) ── -->
     <div v-if="!editing && isMonster && (card.atk != null || card.defense != null)" class="grid grid-cols-2 gap-2 mb-2">
-      <div class="rounded-lg border border-[rgba(220,50,50,0.3)] bg-[rgba(220,50,50,0.18)] px-3 py-[9px]">
-        <div class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-white/40 uppercase mb-[2px]">ATK</div>
-        <div class="font-orbitron text-[26px] font-medium text-[#f87171] leading-none">
-          {{ card.atk ?? '?' }}
-        </div>
+      <div class="rounded-lg border border-[rgba(220,50,50,0.3)] bg-[rgba(220,50,50,0.18)] px-3 py-2 flex items-center justify-between">
+        <span class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-white/40 uppercase">ATK</span>
+        <span class="font-orbitron text-xl font-medium text-[#f87171] leading-none">{{ card.atk ?? '?' }}</span>
       </div>
-      <div class="rounded-lg border border-[rgba(50,80,200,0.35)] bg-[rgba(50,80,200,0.20)] px-3 py-[9px]">
-        <div class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-white/40 uppercase mb-[2px]">DEF</div>
-        <div class="font-orbitron text-[26px] font-medium text-[#93c5fd] leading-none">
-          {{ card.defense ?? '?' }}
-        </div>
+      <div class="rounded-lg border border-[rgba(50,80,200,0.35)] bg-[rgba(50,80,200,0.20)] px-3 py-2 flex items-center justify-between">
+        <span class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-white/40 uppercase">DEF</span>
+        <span class="font-orbitron text-xl font-medium text-[#93c5fd] leading-none">{{ card.defense ?? '?' }}</span>
       </div>
     </div>
 
     <!-- ── MAXIMUM ATK (view mode, 巨極 only) ── -->
     <div v-if="!editing && isMaximum && card.maximum_atk != null" class="rounded-lg border border-[rgba(180,130,0,0.3)] bg-[rgba(160,110,0,0.18)] px-3 py-2 mb-3 flex items-center justify-between">
       <span class="font-orbitron text-[10px] font-bold tracking-[0.08em] text-[rgba(200,150,0,0.7)] uppercase">Maximum ATK</span>
-      <span class="font-orbitron text-[18px] font-medium text-[#fbbf24] leading-none">{{ card.maximum_atk }}</span>
+      <span class="font-orbitron text-xl font-medium text-[#fbbf24] leading-none">{{ card.maximum_atk }}</span>
     </div>
 
     <!-- ── Info grid (view mode) ── -->
