@@ -83,7 +83,7 @@ const cardLabel = computed(() =>
         <CardDetailPanel
           v-else-if="card"
           :card="card"
-          :active-rarity="ui.sidebarRarity ?? card.variants[0]?.rarity ?? ''"
+          :active-rarity="ui.sidebarRarity || card.variants[0]?.rarity || ''"
           @card-updated="loadCard"
         />
 

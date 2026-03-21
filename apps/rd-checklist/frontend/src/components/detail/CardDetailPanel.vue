@@ -157,6 +157,11 @@ async function onFileSelected(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
+  if (!currentRarity.value) {
+    imageError.value = '無效的稀有度，請重新開啟側欄'
+    input.value = ''
+    return
+  }
 
   uploading.value = true
   imageError.value = ''
