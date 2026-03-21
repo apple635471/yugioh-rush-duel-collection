@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.9.1 (2026-03-21)
+
+### 改善
+
+- **CardDetailPanel 版面重設計（v3）**：
+  - **Rarity row**：稀有度 pill 按鈕（紫色 active 樣式）+ 分隔線 + icon 按鈕群（Add Variant ⓘ、Edit Rarity 鉛筆、Delete 垃圾桶，含 hover tooltip）+ spacer + 持有數控制；整合原本分散的 RarityTabs、OwnershipControl、variant 管理按鈕成單一橫排
+  - **Card ID row**：獨立行顯示卡片編號（monospace），靠右有 `copy` pill 按鈕，點擊後顯示 `copied!`（綠色），1.5 秒後自動復原
+  - **ATK / DEF 方塊**：標籤與數字靠左對齊（移除置中），ATK 紅框 `#f87171`、DEF 藍框 `#93c5fd`；MAXIMUM ATK 方塊改為標籤靠左、數值靠右 flex 排列
+  - **Info grid**：三欄 grid 取代舊 detail table 的 view mode；Type 佔全寬，屬性／種族／Level 並排三格，每格有小 uppercase label + 數值
+
+---
+
 ## v0.9.0 (2026-03-21)
 
 ### 新增

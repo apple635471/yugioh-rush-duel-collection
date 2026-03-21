@@ -44,6 +44,11 @@ const fullCardId = computed(() => {
 const isOwned = computed(() => (activeVariant.value?.owned_count ?? 0) > 0)
 const isSelected = computed(() => ui.sidebarCardId === props.card.card_id)
 
+// Sync rarity tab when sidebar switches rarity for this card
+watch(() => ui.sidebarRarity, (r) => {
+  if (isSelected.value && r) activeRarity.value = r
+})
+
 // Scroll selected card into view after the 500ms padding transition settles
 watch(isSelected, (selected) => {
   if (selected && cardEl.value) {
