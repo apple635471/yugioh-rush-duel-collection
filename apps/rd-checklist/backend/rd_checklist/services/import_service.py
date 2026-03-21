@@ -103,8 +103,14 @@ def _import_one_set(db: Session, data: dict, force: bool) -> None:
     """
     set_id = data["set_id"]
 
+    # Skip manually created sets — they are managed by the user, not the scraper
+    existing = db.query(CardSetModel).filter_by(set_id=set_id).first()
+    if existing and existing.is_manual:
+        logger.debug(f"Skipping manually created set: {set_id}")
+        return
+
     # Upsert card_set
-    card_set = db.query(CardSetModel).filter_by(set_id=set_id).first()
+    card_set = existing
     if card_set is None:
         card_set = CardSetModel(set_id=set_id)
         db.add(card_set)

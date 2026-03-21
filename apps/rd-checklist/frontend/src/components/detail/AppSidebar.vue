@@ -12,16 +12,22 @@ const ui = useUiStore()
 const cardSetsStore = useCardSetsStore()
 const card = ref<Card | null>(null)
 const loading = ref(false)
+const loadError = ref<string | null>(null)
 
 async function loadCard() {
   if (!ui.sidebarCardId) return
   loading.value = true
+  loadError.value = null
   try {
     card.value = await fetchCard(ui.sidebarCardId)
     // 同步到 store，讓 card grid 即時反映變更（rarity、image、名稱等）
     if (card.value) cardSetsStore.updateCardInSet(card.value)
-  } catch {
+  } catch (e: any) {
     card.value = null
+    const status = e?.response?.status
+    const detail = e?.response?.data?.detail
+    loadError.value = detail ?? (status ? `HTTP ${status}` : '網路錯誤')
+    console.error('[AppSidebar] Failed to load card:', ui.sidebarCardId, e)
   } finally {
     loading.value = false
   }
@@ -77,12 +83,14 @@ const cardLabel = computed(() =>
         <CardDetailPanel
           v-else-if="card"
           :card="card"
-          :active-rarity="ui.sidebarRarity ?? card.variants[0]?.rarity ?? ''"
+          :active-rarity="ui.sidebarRarity || card.variants[0]?.rarity || ''"
           @card-updated="loadCard"
         />
 
         <div v-else class="p-6 text-center text-gray-500">
-          Card not found.
+          <p>Card not found.</p>
+          <p v-if="loadError" class="text-xs text-red-400 mt-1 font-mono">{{ loadError }}</p>
+          <p v-if="ui.sidebarCardId" class="text-xs text-gray-600 mt-1 font-mono">{{ ui.sidebarCardId }}</p>
         </div>
       </template>
     </aside>

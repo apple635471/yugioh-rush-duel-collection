@@ -12,6 +12,7 @@ from ..database import get_db
 from ..models import CardModel, CardSetModel, CardSetOverrideModel, CardVariantModel
 from ..schemas import (
     CardOut,
+    CardSetCreate,
     CardSetOut,
     CardSetOverrideOut,
     CardSetUpdate,
@@ -34,6 +35,7 @@ PRODUCT_TYPE_LABELS = {
     "tournament_pack": "大會包 Tournament Pack",
     "advanced_pack": "進階包 Advanced Pack",
     "over_rush_pack": "Over Rush 包",
+    "other": "其他 / Promo",
     "unknown": "其他",
 }
 
@@ -69,6 +71,32 @@ def list_card_sets(
     return q.all()
 
 
+@router.post("", response_model=CardSetOut, status_code=201)
+def create_card_set(body: CardSetCreate, db: Session = Depends(get_db)):
+    """Manually create a new card set (is_manual=True, import will not overwrite)."""
+    existing = db.query(CardSetModel).filter_by(set_id=body.set_id).first()
+    if existing:
+        raise HTTPException(status_code=409, detail=f"Set {body.set_id} already exists")
+
+    now = datetime.now(timezone.utc).isoformat()
+    card_set = CardSetModel(
+        set_id=body.set_id,
+        set_name_jp=body.set_name_jp,
+        set_name_zh=body.set_name_zh,
+        product_type=body.product_type,
+        release_date=body.release_date,
+        post_url="",
+        total_cards=0,
+        is_manual=True,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(card_set)
+    db.commit()
+    db.refresh(card_set)
+    return card_set
+
+
 @router.get("/{set_id}", response_model=CardSetWithCardsOut)
 def get_card_set(set_id: str, db: Session = Depends(get_db)):
     """Get a card set with all its cards and variants."""
@@ -92,6 +120,7 @@ def get_card_set(set_id: str, db: Session = Depends(get_db)):
         post_url=card_set.post_url,
         total_cards=card_set.total_cards,
         rarity_distribution=card_set.rarity_distribution,
+        is_manual=card_set.is_manual,
         cards=[CardOut.model_validate(c) for c in cards],
     )
 

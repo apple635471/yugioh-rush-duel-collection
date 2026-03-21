@@ -20,7 +20,7 @@ export const useUiStore = defineStore('ui', () => {
   function openSidebar(cardId: string, rarity?: string) {
     sidebarMode.value = 'detail'
     sidebarCardId.value = cardId
-    sidebarRarity.value = rarity ?? null
+    sidebarRarity.value = rarity || null
     sidebarCreateSetId.value = null
     sidebarOpen.value = true
     sidebarMinimized.value = false
