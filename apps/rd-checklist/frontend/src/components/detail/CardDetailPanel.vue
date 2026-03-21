@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, watch } from 'vue'
 import type { Card, CardUpdate, ScanResult } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, fetchKonamiImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
@@ -146,6 +146,7 @@ const isUserUpload = computed(() => activeVariant.value?.image_source === 'user_
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const reverting = ref(false)
+const fetchingKonami = ref(false)
 const imageError = ref('')
 
 function triggerFileSelect() {
@@ -196,6 +197,29 @@ async function onRevertImage() {
     imageError.value = e?.response?.data?.detail ?? 'Revert failed'
   } finally {
     reverting.value = false
+  }
+}
+
+async function onFetchKonami() {
+  fetchingKonami.value = true
+  imageError.value = ''
+  try {
+    const updated = await fetchKonamiImage(props.card.card_id, currentRarity.value)
+    const v = props.card.variants.find(v => v.rarity === currentRarity.value)
+    if (v) {
+      v.image_source = updated.image_source
+      v.image_path = updated.image_path
+    }
+    imageCacheBuster.value = Date.now()
+    ui.markImageUpdated(props.card.card_id, currentRarity.value)
+    emit('cardUpdated')
+  } catch (e: any) {
+    const detail = e?.response?.data?.detail ?? ''
+    imageError.value = detail === 'Image not found on Konami CDN'
+      ? 'Konami CDN 上找不到此圖片'
+      : (detail || 'Fetch failed')
+  } finally {
+    fetchingKonami.value = false
   }
 }
 
@@ -424,6 +448,25 @@ async function submitDeleteVariant() {
         </button>
         <div class="absolute bottom-[calc(100%+6px)] left-0 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
           Revert to original
+        </div>
+      </div>
+
+      <!-- Fetch from Konami — bottom-right, left of Scan -->
+      <div class="absolute bottom-2 right-11 group/tip z-10">
+        <button
+          @click="onFetchKonami"
+          :disabled="fetchingKonami"
+          class="w-7 h-7 rounded-md border border-white/20 bg-black/50 text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-black/70 hover:text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <svg v-if="fetchingKonami" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+          </svg>
+        </button>
+        <div class="absolute bottom-[calc(100%+6px)] right-0 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
+          Fetch from Konami
         </div>
       </div>
 

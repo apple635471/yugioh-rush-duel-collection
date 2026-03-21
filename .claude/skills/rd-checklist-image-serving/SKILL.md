@@ -43,6 +43,12 @@ DELETE /api/images/card/{card_id}/{rarity}/upload
   → 刪除 user upload 檔案
   → 從 scraper_image_path 恢復 DB: image_source = "scraper", image_path = scraper_image_path
   → scraper_image_path 在匯入與首次上傳時設定，確保還原永遠可用
+
+POST /api/images/card/{card_id}/{rarity}/fetch-konami
+  → 從 Konami CDN 抓圖：https://img.konami.com/yugioh/rushduel/products/{set}/cards/{num}_{rarity}.jpg
+  → 稀有度對應：UPR→urp, SER→se, FORR→for，其他直接小寫
+  → 找到 (HTTP 200) → 存到 user_uploads，更新 DB (同 upload)
+  → 找不到 (非 200) → 回傳 404 "Image not found on Konami CDN"
 ```
 
 ## 快取與 Cache Buster
