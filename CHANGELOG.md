@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.9.5 (2026-03-24)
+
+### 修正
+
+- **Fetch Konami 抓到卡背 SAMPLE / 舊 rarity 問題**：
+  - 修正更改 rarity 後「Fetch Konami」仍用舊 rarity 組 URL 的 bug（`submitEditRarity` 時同步更新 `ui.sidebarRarity`）
+  - 修正 Konami CDN URL 稀有度尾綴對應：N→無尾綴, R→`_r`, RR→`_rr`, SR→`_sr`, UR→`_ur`, UPR→`_urp`, SER→`_se`, FORR→`_for`；未知 rarity 不猜，直接進備案
+  - 新增 Rush DB 備案機制：CDN 404 時以 `stype=4` 搜尋 card number 取得 cid/ciid/enc，依 rarity 對應尾綴優先嘗試所有已知 CDN 尾綴（CDN 高畫質）；全部 404 才使用 `get_image.action` 作最終手段
+
+### 改善
+
+- **卡組列表排序**：改為依發售日期新到舊排列（`printf('%04d%02d',year,month)` 避免單位數月份排序錯誤）；無日期的卡組排到最後再依 set_id 排序
+- **產品類型名稱統一**：前後端全面改為「English (中文)」格式（例：`Booster Pack (補充包)`、`Promo (Promo)`），側欄顯示名稱、下拉選單、後端 `PRODUCT_TYPE_LABELS` 三者一致
+- **新增 / 編輯卡組對話框產品類型選項統一**：共用 `src/constants/productTypes.ts`，選項完整且格式一致
+- **Total Cards / Rarity Distribution 改為自動計算**：`SetMetadataEditor` 不再允許手動編輯，從 `cardSet.cards` 即時計算；後端 `CardSetUpdate` schema 與前端型別移除這兩個欄位
+
+---
+
 ## v0.9.4 (2026-03-24)
 
 ### 新增

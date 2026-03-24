@@ -144,14 +144,13 @@ class CardSetUpdate(BaseModel):
     """Partial update for card set metadata.
 
     Only provided fields will be updated and stored as overrides.
+    total_cards and rarity_distribution are auto-computed from card data, not editable.
     """
 
     set_name_jp: Optional[str] = None
     set_name_zh: Optional[str] = None
     product_type: Optional[str] = None
     release_date: Optional[str] = None
-    total_cards: Optional[int] = None
-    rarity_distribution: Optional[str] = None  # JSON string
 
 
 class CardSetOverrideOut(BaseModel):

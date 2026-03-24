@@ -2,9 +2,10 @@
 import { ref, reactive, computed } from 'vue'
 import type { CardSetWithCards, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
 import { updateCardSet, fetchCardSetOverrides, deleteCardSetOverride } from '@/api/cardSets'
+import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
+import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 
 const props = defineProps<{
@@ -23,23 +24,31 @@ const showOverrides = ref(false)
 
 const form = reactive<CardSetUpdate>({})
 
-const productTypes = [
-  { value: 'booster',           label: 'Booster Pack (補充包)' },
-  { value: 'structure_deck',    label: 'Structure Deck (預組)' },
-  { value: 'character_pack',    label: 'Character Pack (角色包)' },
-  { value: 'go_rush_character', label: 'Go Rush Character (GRC 角色包)' },
-  { value: 'battle_pack',       label: 'Battle Pack (戰鬥包)' },
-  { value: 'maximum_pack',      label: 'Maximum Pack (Maximum 包)' },
-  { value: 'extra_pack',        label: 'Extra Pack (Extra 包)' },
-  { value: 'legend_pack',       label: 'Legend Pack (傳說包)' },
-  { value: 'vs_pack',           label: 'VS Pack (VS 包)' },
-  { value: 'tournament_pack',   label: 'Tournament Pack (大會包)' },
-  { value: 'advanced_pack',     label: 'Advanced Pack (進階包)' },
-  { value: 'over_rush_pack',    label: 'Over Rush Pack (Over Rush 包)' },
-  { value: 'unknown',           label: 'Other (其他)' },
-]
-
 const overriddenFields = computed(() => new Set(overrides.value.map(o => o.field_name)))
+
+// Auto-computed stats from actual card data
+const totalCards = computed(() => props.cardSet.cards?.length ?? 0)
+
+const rarityDist = computed(() => {
+  const dist: Record<string, number> = {}
+  for (const card of props.cardSet.cards ?? []) {
+    for (const v of card.variants) {
+      dist[v.rarity] = (dist[v.rarity] ?? 0) + 1
+    }
+  }
+  return dist
+})
+
+const rarityDistSorted = computed(() =>
+  Object.entries(rarityDist.value).sort(([a], [b]) => {
+    const ai = RARITY_VALUES.indexOf(a)
+    const bi = RARITY_VALUES.indexOf(b)
+    if (ai === -1 && bi === -1) return a.localeCompare(b)
+    if (ai === -1) return 1
+    if (bi === -1) return -1
+    return ai - bi
+  })
+)
 
 function startEdit() {
   const s = props.cardSet
@@ -48,8 +57,6 @@ function startEdit() {
     set_name_zh: s.set_name_zh,
     product_type: s.product_type,
     release_date: s.release_date ?? '',
-    total_cards: s.total_cards,
-    rarity_distribution: s.rarity_distribution ?? '',
   })
   error.value = ''
   editing.value = true
@@ -98,8 +105,6 @@ const fieldLabels: Record<string, string> = {
   set_name_zh: 'Chinese Name',
   product_type: 'Product Type',
   release_date: 'Release Date',
-  total_cards: 'Total Cards',
-  rarity_distribution: 'Rarity Distribution',
 }
 </script>
 
@@ -136,7 +141,14 @@ const fieldLabels: Record<string, string> = {
     <div class="flex flex-wrap gap-3 text-xs text-gray-400">
       <span class="bg-gray-700 px-2 py-0.5 rounded">{{ cardSet.set_id }}</span>
       <span v-if="cardSet.release_date">{{ cardSet.release_date }}</span>
-      <span>{{ cardSet.cards?.length ?? cardSet.total_cards }} cards</span>
+      <span>{{ totalCards }} cards</span>
+      <template v-if="rarityDistSorted.length > 0">
+        <span
+          v-for="[rarity, count] in rarityDistSorted"
+          :key="rarity"
+          class="bg-gray-700/60 px-1.5 py-0.5 rounded font-mono"
+        >{{ rarity }}×{{ count }}</span>
+      </template>
     </div>
   </template>
 
@@ -177,7 +189,7 @@ const fieldLabels: Record<string, string> = {
           <div class="flex-1 relative">
             <Select
               v-model="form.product_type"
-              :options="productTypes"
+              :options="PRODUCT_TYPE_OPTIONS"
               option-label="label"
               option-value="value"
               size="small"
@@ -200,26 +212,20 @@ const fieldLabels: Record<string, string> = {
           </div>
         </div>
 
-        <!-- Total Cards -->
+        <!-- Auto-computed (read-only) -->
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Total Cards</label>
-          <div class="flex-1 relative">
-            <InputNumber v-model="form.total_cards" :min="0" :use-grouping="false" fluid size="small" />
-            <span v-if="overriddenFields.has('total_cards')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
-            </span>
-          </div>
+          <span class="text-xs text-gray-500 italic">{{ totalCards }} (auto-computed)</span>
         </div>
-
-        <!-- Rarity Distribution -->
         <div class="flex items-start gap-2">
-          <label class="w-24 text-xs text-gray-400 shrink-0 pt-1.5">Rarity Dist.</label>
-          <div class="flex-1 relative">
-            <InputText v-model="form.rarity_distribution" placeholder='e.g. {"UR":4,"SR":6,"R":12,"N":28}' fluid size="small" />
-            <span v-if="overriddenFields.has('rarity_distribution')" class="absolute right-2 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
-            </span>
-          </div>
+          <label class="w-24 text-xs text-gray-400 shrink-0 pt-0.5">Rarity Dist.</label>
+          <span class="text-xs text-gray-500 italic flex flex-wrap gap-1">
+            <template v-if="rarityDistSorted.length > 0">
+              <span v-for="[rarity, count] in rarityDistSorted" :key="rarity">{{ rarity }}×{{ count }}</span>
+            </template>
+            <span v-else>—</span>
+            <span class="text-gray-600">(auto-computed)</span>
+          </span>
         </div>
       </div>
 
