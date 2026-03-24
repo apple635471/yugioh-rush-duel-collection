@@ -356,6 +356,7 @@ async function submitEditRarity() {
   try {
     await editVariantRarity(props.card.card_id, currentRarity.value, editRarityTarget.value)
     currentRarity.value = editRarityTarget.value
+    ui.sidebarRarity = editRarityTarget.value
     editingRarity.value = false
     emit('cardUpdated')
   } catch (e: any) {

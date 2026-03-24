@@ -45,10 +45,17 @@ DELETE /api/images/card/{card_id}/{rarity}/upload
   → scraper_image_path 在匯入與首次上傳時設定，確保還原永遠可用
 
 POST /api/images/card/{card_id}/{rarity}/fetch-konami
-  → 從 Konami CDN 抓圖：https://img.konami.com/yugioh/rushduel/products/{set}/cards/{num}_{rarity}.jpg
-  → 稀有度對應：UPR→urp, SER→se, FORR→for，其他直接小寫
-  → 找到 (HTTP 200) → 存到 user_uploads，更新 DB (同 upload)
-  → 找不到 (非 200) → 回傳 404 "Image not found on Konami CDN"
+  → 三段式抓圖流程（image_service.py）：
+  1. 主路徑：依 rarity 組出 CDN URL 直接試
+     - N→無尾綴, R→_r, RR→_rr, SR→_sr, UR→_ur, UPR→_urp, SER→_se, FORR→_for
+     - rarity 不在 map 裡（如 DB 誤植的 NR）→ 跳過主路徑，直接進備案
+  2. 備案（CDN 404 或 rarity 未知）：打 Rush DB card number 搜尋
+     - stype=4&keyword={card_num} 取得 cid/ciid/enc
+     - 依 rarity 對應尾綴優先，再嘗試所有已知尾綴（"", _sp, _r, _rr, _sr, _ur, _urp, _se, _for）
+     - 找到 CDN 200 → 使用 CDN 圖（高畫質）
+  3. 最終手段：Rush DB get_image.action（低畫質 SAMPLE，盡量避免）
+  → 取得圖片後存到 user_uploads，更新 DB (同 upload)
+  → 全部失敗 → 回傳 404 "Image not found on Konami CDN"
 ```
 
 ## 快取與 Cache Buster

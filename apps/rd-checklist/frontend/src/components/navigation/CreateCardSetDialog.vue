@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { createCardSet } from '@/api/cardSets'
 import { useCardSetsStore } from '@/stores/cardSets'
+import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
@@ -19,21 +20,7 @@ const visible = ref(false)
 const saving = ref(false)
 const errorMsg = ref('')
 
-const PRODUCT_TYPE_OPTIONS = [
-  { label: '其他 / Promo', value: 'other' },
-  { label: '補充包 Booster Pack', value: 'booster' },
-  { label: '預組', value: 'structure_deck' },
-  { label: '角色包 Character Pack', value: 'character_pack' },
-  { label: 'Go Rush 角色包', value: 'go_rush_character' },
-  { label: '戰鬥包 Battle Pack', value: 'battle_pack' },
-  { label: 'Maximum 包', value: 'maximum_pack' },
-  { label: 'Extra 包', value: 'extra_pack' },
-  { label: '傳說包 Legend Pack', value: 'legend_pack' },
-  { label: 'VS 包', value: 'vs_pack' },
-  { label: '大會包 Tournament Pack', value: 'tournament_pack' },
-  { label: '進階包 Advanced Pack', value: 'advanced_pack' },
-  { label: 'Over Rush 包', value: 'over_rush_pack' },
-]
+
 
 const form = reactive({
   set_id: '',
