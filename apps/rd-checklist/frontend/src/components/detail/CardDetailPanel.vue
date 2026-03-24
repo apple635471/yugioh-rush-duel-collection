@@ -5,6 +5,7 @@ import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCa
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
+import { useRoute, useRouter } from 'vue-router'
 import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
@@ -25,6 +26,10 @@ const emit = defineEmits<{
 
 const ui = useUiStore()
 const cardSetsStore = useCardSetsStore()
+const route = useRoute()
+const router = useRouter()
+
+const isOnCardSet = computed(() => route.params.setId === props.card.set_id)
 
 const currentRarity = ref(props.activeRarity)
 // Keep ui.sidebarRarity in sync so CardGridItem can follow along
@@ -667,6 +672,15 @@ async function submitDeleteVariant() {
       <div class="flex items-center gap-1.5 mb-1">
         <span class="font-mono text-xs text-white/40 tracking-[0.03em] flex-1">{{ card.card_id }}</span>
         <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
+        <Button
+          v-if="!isOnCardSet"
+          @click="router.push('/set/' + card.set_id)"
+          size="small"
+          severity="secondary"
+          variant="text"
+          class="!text-[10px] !px-1.5 !py-0.5 !h-auto font-mono text-gold-dim hover:text-gold-light"
+          :title="'前往 ' + card.set_id + ' 卡組頁'"
+        >{{ card.set_id }}</Button>
         <Button
           @click="copyCardId"
           variant="text"
