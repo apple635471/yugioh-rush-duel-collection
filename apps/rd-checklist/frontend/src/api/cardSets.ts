@@ -1,5 +1,5 @@
 import api from './client'
-import type { CardSet, CardSetWithCards, ProductType, OwnershipStats, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
+import type { CardSet, CardSetCreate, CardSetWithCards, ProductType, OwnershipStats, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
 
 export async function fetchProductTypes(): Promise<ProductType[]> {
   const { data } = await api.get<ProductType[]>('/card-sets/product-types')
@@ -44,4 +44,9 @@ export async function fetchCardSetOverrides(setId: string): Promise<CardSetOverr
 
 export async function deleteCardSetOverride(setId: string, fieldName: string): Promise<void> {
   await api.delete(`/card-sets/${setId}/overrides/${fieldName}`)
+}
+
+export async function createCardSet(data: CardSetCreate): Promise<CardSet> {
+  const { data: result } = await api.post<CardSet>('/card-sets', data)
+  return result
 }

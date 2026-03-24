@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 
 
@@ -56,6 +56,11 @@ class CardCreate(BaseModel):
 
     card_id: str
     set_id: str
+
+    @field_validator("card_id", "set_id", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
     name_jp: str = ""
     name_zh: str = ""
     card_type: str = ""
@@ -119,9 +124,20 @@ class CardSetOut(BaseModel):
     post_url: str = ""
     total_cards: int = 0
     rarity_distribution: Optional[str] = None
+    is_manual: bool = False
 
     class Config:
         from_attributes = True
+
+
+class CardSetCreate(BaseModel):
+    """Create a new card set manually."""
+
+    set_id: str
+    set_name_jp: str = ""
+    set_name_zh: str = ""
+    product_type: str = "other"
+    release_date: Optional[str] = None
 
 
 class CardSetUpdate(BaseModel):
