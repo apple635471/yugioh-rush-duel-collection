@@ -9,11 +9,18 @@ import httpx
 
 from ..config import SCRAPER_DATA_DIR, USER_IMAGES_DIR
 
-# Rarity name mapping: app rarity → Konami CDN suffix
+# Rarity name mapping: app rarity → Konami CDN filename suffix (empty string = no suffix)
+# Rarities not listed here (e.g. erroneous "N"/"NR" entries) return None from .get(),
+# causing build_konami_image_url to return None and triggering the Rush DB fallback.
 _KONAMI_RARITY_MAP: dict[str, str] = {
-    "UPR": "urp",
-    "SER": "se",
-    "FORR": "for",
+    "N":    "",      # Normal            → jp001.jpg  (no suffix)
+    "R":    "r",     # Rare              → jp001_r.jpg
+    "RR":   "rr",    # Rush Rare         → jp001_rr.jpg
+    "SR":   "sr",    # Super Rare        → jp001_sr.jpg
+    "UR":   "ur",    # Ultra Rare        → jp001_ur.jpg
+    "UPR":  "urp",   # Ultra Premium Rare
+    "SER":  "se",    # Secret Rare
+    "FORR": "for",   # Full Over Rush Rare
 }
 
 
@@ -76,12 +83,14 @@ def build_konami_image_url(
         return None
 
     set_part, num_part = after_slash.split("-", 1)  # "5TH1", "JP005"
-    konami_rarity = _KONAMI_RARITY_MAP.get(rarity.upper(), rarity.lower())
-    # N rarity has no suffix in the Konami CDN URL
-    if konami_rarity == "n":
+    suffix = _KONAMI_RARITY_MAP.get(rarity.upper())
+    if suffix is None:
+        # Unknown rarity - can't build a reliable URL
+        return None
+    if suffix == "":
         filename = f"{num_part.lower()}.jpg"
     else:
-        filename = f"{num_part.lower()}_{konami_rarity}.jpg"
+        filename = f"{num_part.lower()}_{suffix}.jpg"
     return (
         f"https://img.konami.com/yugioh/rushduel/products/"
         f"{set_part.lower()}/cards/{filename}"
@@ -91,17 +100,82 @@ def build_konami_image_url(
 async def fetch_konami_image(
     card_id: str, rarity: str, set_id: str | None = None
 ) -> bytes | None:
-    """Fetch card image from Konami CDN.
+    """Fetch card image from Konami, trying CDN first then Rush DB fallback.
 
-    Returns raw image bytes if found (HTTP 200), None otherwise.
+    Returns raw image bytes if found, None otherwise.
     """
-    url = build_konami_image_url(card_id, rarity, set_id)
-    if not url:
-        return None
     async with httpx.AsyncClient(follow_redirects=False) as client:
-        resp = await client.get(url, timeout=10.0)
-        if resp.status_code == 200:
-            return resp.content
+        # 1) Try the direct CDN URL first
+        url = build_konami_image_url(card_id, rarity, set_id)
+        if url:
+            resp = await client.get(url, timeout=10.0)
+            if resp.status_code == 200:
+                return resp.content
+
+        # 2) Fallback: search Rush DB by card number
+        return await _fetch_from_rushdb(client, card_id, rarity)
+
+
+_CDN_SUFFIXES_FALLBACK = ("", "_sp", "_r", "_rr", "_sr", "_ur", "_urp", "_se", "_for")
+
+
+async def _fetch_from_rushdb(
+    client: httpx.AsyncClient, card_id: str, rarity: str = ""
+) -> bytes | None:
+    """Fallback: search Rush DB by card number to locate the correct CDN image.
+
+    Strategy:
+    1. Search Rush DB with stype=4 to confirm the card exists and get cid/ciid/enc.
+    2. Try every known CDN suffix for that card number (higher quality than get_image.action).
+    3. If all CDN attempts fail, use get_image.action as the last resort.
+    """
+    # Extract the card number part: "RD/KP03-JP004" → "KP03-JP004"
+    card_num = card_id.split("/", 1)[-1] if "/" in card_id else card_id
+
+    search_url = (
+        "https://www.db.yugioh-card.com/rushdb/card_search.action"
+        f"?ope=1&request_locale=ja&stype=4&keyword={card_num}&rp=1"
+    )
+    resp = await client.get(search_url, timeout=15.0, follow_redirects=True)
+    if resp.status_code != 200:
+        return None
+
+    # Parse cid, ciid, enc from JS: cid=15783&ciid=1&enc=xxxxx
+    m = re.search(r"cid=(\d+)&ciid=(\d+)&enc=([A-Za-z0-9_\-]+)", resp.text)
+    if not m:
+        return None
+
+    cid, ciid, enc = m.group(1), m.group(2), m.group(3)
+
+    # Derive set/num parts from card_num e.g. "KP03-JP004" → "kp03", "jp004"
+    if "-" in card_num:
+        set_part, num_part = card_num.split("-", 1)
+        cdn_base = (
+            f"https://img.konami.com/yugioh/rushduel/products/"
+            f"{set_part.lower()}/cards/{num_part.lower()}"
+        )
+        # 把 rarity 對應的尾綴排到第一個，其餘補在後面
+        rarity_suffix = _KONAMI_RARITY_MAP.get(rarity.upper())
+        if rarity_suffix is not None:
+            rarity_cdn = f"_{rarity_suffix}" if rarity_suffix else ""
+            ordered = [rarity_cdn] + [s for s in _CDN_SUFFIXES_FALLBACK if s != rarity_cdn]
+        else:
+            ordered = list(_CDN_SUFFIXES_FALLBACK)
+
+        # Try all known CDN suffixes – prefer CDN over get_image.action for quality
+        for suffix in ordered:
+            cdn_resp = await client.get(f"{cdn_base}{suffix}.jpg", timeout=10.0)
+            if cdn_resp.status_code == 200:
+                return cdn_resp.content
+
+    # Last resort: use Rush DB get_image.action (lower quality SAMPLE)
+    img_url = (
+        f"https://www.db.yugioh-card.com/rushdb/get_image.action"
+        f"?type=1&osplang=1&cid={cid}&ciid={ciid}&enc={enc}"
+    )
+    img_resp = await client.get(img_url, timeout=15.0, follow_redirects=True)
+    if img_resp.status_code == 200:
+        return img_resp.content
     return None
 
 

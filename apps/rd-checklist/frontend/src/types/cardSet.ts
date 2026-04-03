@@ -41,8 +41,6 @@ export interface CardSetUpdate {
   set_name_zh?: string
   product_type?: string
   release_date?: string
-  total_cards?: number
-  rarity_distribution?: string
 }
 
 export interface CardSetOverride {

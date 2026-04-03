@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -23,20 +23,20 @@ from ..schemas import (
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
 PRODUCT_TYPE_LABELS = {
-    "booster": "補充包 Booster Pack",
-    "structure_deck": "預組",
-    "character_pack": "角色包 Character Pack",
-    "go_rush_character": "Go Rush 角色包",
-    "battle_pack": "戰鬥包 Battle Pack",
-    "maximum_pack": "Maximum 包",
-    "extra_pack": "Extra 包",
-    "legend_pack": "傳說包 Legend Pack",
-    "vs_pack": "VS 包",
-    "tournament_pack": "大會包 Tournament Pack",
-    "advanced_pack": "進階包 Advanced Pack",
-    "over_rush_pack": "Over Rush 包",
-    "other": "其他 / Promo",
-    "unknown": "其他",
+    "booster":           "Booster Pack (補充包)",
+    "structure_deck":    "Structure Deck (預組)",
+    "character_pack":    "Character Pack (角色包)",
+    "go_rush_character": "Go Rush Character (GRC 角色包)",
+    "battle_pack":       "Battle Pack (戰鬥包)",
+    "maximum_pack":      "Maximum Pack (Maximum 包)",
+    "extra_pack":        "Extra Pack (Extra 包)",
+    "legend_pack":       "Legend Pack (傳說包)",
+    "vs_pack":           "VS Pack (VS 包)",
+    "tournament_pack":   "Tournament Pack (大會包)",
+    "advanced_pack":     "Advanced Pack (進階包)",
+    "over_rush_pack":    "Over Rush Pack (Over Rush 包)",
+    "other":             "Promo (Promo)",
+    "unknown":           "Other (其他)",
 }
 
 
@@ -67,7 +67,19 @@ def list_card_sets(
     q = db.query(CardSetModel)
     if product_type:
         q = q.filter(CardSetModel.product_type == product_type)
-    q = q.order_by(CardSetModel.release_date.desc().nullslast(), CardSetModel.set_id)
+    # release_date is stored as "YYYY/M/D" (months/days may be single-digit).
+    # Build a zero-padded "YYYYMM" key so numeric order is correct (e.g. "202511" > "202508").
+    # Sets without a date sort last, then by set_id.
+    q = q.order_by(
+        text(
+            "CASE WHEN release_date IS NULL THEN '0' "
+            "ELSE printf('%04d%02d',"
+            "  CAST(substr(release_date,1,4) AS INTEGER),"
+            "  CAST(substr(release_date,6,2) AS INTEGER)"
+            ") END DESC"
+        ),
+        CardSetModel.set_id,
+    )
     return q.all()
 
 
@@ -131,8 +143,6 @@ _OVERRIDABLE_FIELDS = {
     "set_name_zh",
     "product_type",
     "release_date",
-    "total_cards",
-    "rarity_distribution",
 }
 
 
