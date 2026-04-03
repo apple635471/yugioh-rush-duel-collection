@@ -251,16 +251,21 @@ def _upsert_variant(
     sort_order: int,
     image_file: str | None,
 ) -> None:
-    """Upsert a card variant, preserving owned_count."""
+    """Upsert a card variant, preserving owned_count.
+
+    Scrapers only produce normal (non-alternate-art) variants, so this always
+    queries and creates with is_alternate_art=False.
+    """
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=rarity)
+        .filter_by(card_id=card_id, rarity=rarity, is_alternate_art=False)
         .first()
     )
     if variant is None:
         variant = CardVariantModel(
             card_id=card_id,
             rarity=rarity,
+            is_alternate_art=False,
             sort_order=sort_order,
             image_source="scraper" if image_file else None,
             image_path=image_file,

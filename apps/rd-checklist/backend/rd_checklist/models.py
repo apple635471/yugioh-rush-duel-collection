@@ -72,6 +72,7 @@ class CardVariantModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     card_id = Column(String, ForeignKey("cards.card_id"), nullable=False, index=True)
     rarity = Column(String, nullable=False)
+    is_alternate_art = Column(Boolean, nullable=False, default=False)
     sort_order = Column(Integer, nullable=False, default=0)
     image_source = Column(String)  # "scraper" or "user_upload"
     image_path = Column(String)  # relative path to current image file
@@ -80,7 +81,7 @@ class CardVariantModel(Base):
     created_at = Column(String, nullable=False, server_default=func.datetime("now"))
     updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
 
-    __table_args__ = (UniqueConstraint("card_id", "rarity"),)
+    __table_args__ = (UniqueConstraint("card_id", "rarity", "is_alternate_art"),)
 
     card = relationship("CardModel", back_populates="variants")
 

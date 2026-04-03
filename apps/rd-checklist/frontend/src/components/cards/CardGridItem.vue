@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Card } from '@/types/card'
+import { variantKey } from '@/types/card'
 import { getCardImageUrl, updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
 
@@ -18,18 +19,19 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
-const activeRarity = ref(props.card.variants[0]?.rarity ?? '')
+const activeRarity = ref(props.card.variants[0] ? variantKey(props.card.variants[0]) : '')
 const cardEl = ref<HTMLElement | null>(null)
 const copied = ref(false)
 
 const activeVariant = computed(() =>
-  props.card.variants.find(v => v.rarity === activeRarity.value) ?? props.card.variants[0]
+  props.card.variants.find(v => variantKey(v) === activeRarity.value) ?? props.card.variants[0]
 )
 
 const imageUrl = computed(() => {
   if (!activeVariant.value) return ''
-  const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
-  const buster = ui.imageUpdates.get(`${props.card.card_id}/${activeVariant.value.rarity}`)
+  const key = variantKey(activeVariant.value)
+  const base = getCardImageUrl(props.card.card_id, key)
+  const buster = ui.imageUpdates.get(`${props.card.card_id}/${key}`)
   if (buster) return `${base}?t=${buster}`
   return activeVariant.value.image_source === 'user_upload' ? `${base}?t=1` : base
 })
@@ -69,9 +71,9 @@ async function copyCardNumber(e: Event) {
   setTimeout(() => { copied.value = false }, 1500)
 }
 
-async function onOwnershipUpdate(cardId: string, rarity: string, count: number) {
-  await updateOwnership(cardId, rarity, count)
-  const v = props.card.variants.find(v => v.card_id === cardId && v.rarity === rarity)
+async function onOwnershipUpdate(cardId: string, rarityKey: string, count: number) {
+  await updateOwnership(cardId, rarityKey, count)
+  const v = props.card.variants.find(v => v.card_id === cardId && variantKey(v) === rarityKey)
   if (v) v.owned_count = count
   emit('ownershipChanged')
 }

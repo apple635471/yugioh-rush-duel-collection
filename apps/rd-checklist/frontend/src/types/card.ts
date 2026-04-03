@@ -2,10 +2,32 @@ export interface CardVariant {
   id: number
   card_id: string
   rarity: string
+  is_alternate_art: boolean
   sort_order: number
   image_source: string | null
   image_path: string | null
   owned_count: number
+}
+
+/**
+ * Returns the URL-safe rarity key for a variant.
+ * Normal SR  → "SR"
+ * Alt-art SR → "SR-alt"
+ */
+export function variantKey(variant: CardVariant): string {
+  return variant.is_alternate_art ? `${variant.rarity}-alt` : variant.rarity
+}
+
+/**
+ * Parses a rarity key back into its components.
+ * "SR"     → { rarity: "SR", isAlt: false }
+ * "SR-alt" → { rarity: "SR", isAlt: true }
+ */
+export function parseRarityKey(key: string): { rarity: string; isAlt: boolean } {
+  if (key.endsWith('-alt')) {
+    return { rarity: key.slice(0, -4), isAlt: true }
+  }
+  return { rarity: key, isAlt: false }
 }
 
 export interface Card {
@@ -54,6 +76,7 @@ export interface CardCreate {
 
 export interface VariantCreate {
   rarity: string
+  is_alternate_art?: boolean
 }
 
 export interface CardUpdate {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { Card } from '@/types/card'
+import { variantKey } from '@/types/card'
 import { updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
 import OwnershipBadge from './OwnershipBadge.vue'
@@ -21,7 +22,7 @@ const ui = useUiStore()
 const activeRarities = ref<Record<string, string>>({})
 
 function getActiveRarity(card: Card): string {
-  return activeRarities.value[card.card_id] ?? card.variants[0]?.rarity ?? ''
+  return activeRarities.value[card.card_id] ?? (card.variants[0] ? variantKey(card.variants[0]) : '')
 }
 
 function setActiveRarity(cardId: string, rarity: string) {
@@ -29,8 +30,8 @@ function setActiveRarity(cardId: string, rarity: string) {
 }
 
 function getActiveVariant(card: Card) {
-  const rarity = getActiveRarity(card)
-  return card.variants.find(v => v.rarity === rarity) ?? card.variants[0]
+  const key = getActiveRarity(card)
+  return card.variants.find(v => variantKey(v) === key) ?? card.variants[0]
 }
 
 function openDetail(card: Card) {
@@ -39,12 +40,12 @@ function openDetail(card: Card) {
 
 function shortId(cardId: string): string {
   const parts = cardId.split('-')
-  return parts.length > 1 ? parts[parts.length - 1] : cardId
+  return parts.length > 1 ? (parts[parts.length - 1] ?? cardId) : cardId
 }
 
-async function onOwnershipUpdate(cardId: string, rarity: string, count: number, card: Card) {
-  await updateOwnership(cardId, rarity, count)
-  const v = card.variants.find(v => v.card_id === cardId && v.rarity === rarity)
+async function onOwnershipUpdate(cardId: string, rarityKey: string, count: number, card: Card) {
+  await updateOwnership(cardId, rarityKey, count)
+  const v = card.variants.find(v => v.card_id === cardId && variantKey(v) === rarityKey)
   if (v) v.owned_count = count
   emit('ownershipChanged')
 }

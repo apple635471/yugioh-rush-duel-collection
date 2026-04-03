@@ -4,6 +4,7 @@ import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
 import { fetchCard } from '@/api/cards'
 import type { Card } from '@/types/card'
+import { variantKey } from '@/types/card'
 import CardDetailPanel from './CardDetailPanel.vue'
 import CardCreatePanel from './CardCreatePanel.vue'
 import Button from 'primevue/button'
@@ -83,7 +84,7 @@ const cardLabel = computed(() =>
         <CardDetailPanel
           v-else-if="card"
           :card="card"
-          :active-rarity="ui.sidebarRarity || card.variants[0]?.rarity || ''"
+          :active-rarity="ui.sidebarRarity || (card.variants[0] ? variantKey(card.variants[0]) : '')"
           @card-updated="loadCard"
         />
 

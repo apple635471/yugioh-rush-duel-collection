@@ -27,6 +27,7 @@ from ..schemas import (
     VariantCreate,
     VariantRarityUpdate,
 )
+from ..utils import parse_rarity_key
 
 router = APIRouter(prefix="/api/cards", tags=["cards"])
 
@@ -115,6 +116,7 @@ def create_card(body: CardCreate, db: Session = Depends(get_db)):
     variant = CardVariantModel(
         card_id=body.card_id,
         rarity=body.rarity,
+        is_alternate_art=False,
         sort_order=0,
         image_source=None,
         image_path=None,
@@ -139,131 +141,160 @@ def get_card(card_id: str, db: Session = Depends(get_db)):
     return card
 
 
-@router.patch("/{card_id:path}/variants/{rarity}", response_model=CardOut)
-def edit_variant_rarity(card_id: str, rarity: str, body: VariantRarityUpdate, db: Session = Depends(get_db)):
+@router.patch("/{card_id:path}/variants/{rarity_key}", response_model=CardOut)
+def edit_variant_rarity(card_id: str, rarity_key: str, body: VariantRarityUpdate, db: Session = Depends(get_db)):
     """Change the rarity of an existing variant.
 
-    Creates/updates a card_variant_override so that reimport maps the old
-    scraper rarity to the new rarity and never reverts the change.
+    rarity_key is either "SR" (normal) or "SR-alt" (alternate art).
+    The alternate-art flag is preserved — only the base rarity changes.
+
+    For non-alternate-art variants, creates/updates a card_variant_override
+    so that reimport maps the old scraper rarity to the new rarity.
     """
+    actual_rarity, is_alt = parse_rarity_key(rarity_key)
+
     card = db.query(CardModel).filter_by(card_id=card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail=f"Card {card_id} not found")
 
-    variant = db.query(CardVariantModel).filter_by(card_id=card_id, rarity=rarity).first()
+    variant = (
+        db.query(CardVariantModel)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
+        .first()
+    )
     if not variant:
-        raise HTTPException(status_code=404, detail=f"Variant {card_id} ({rarity}) not found")
+        raise HTTPException(status_code=404, detail=f"Variant {card_id} ({rarity_key}) not found")
 
-    if rarity == body.new_rarity:
+    if actual_rarity == body.new_rarity:
         db.refresh(card)
         return card
 
-    if db.query(CardVariantModel).filter_by(card_id=card_id, rarity=body.new_rarity).first():
-        raise HTTPException(status_code=409, detail=f"Variant {card_id} ({body.new_rarity}) already exists")
+    # Check that (new_rarity, same alt flag) doesn't already exist
+    if (
+        db.query(CardVariantModel)
+        .filter_by(card_id=card_id, rarity=body.new_rarity, is_alternate_art=is_alt)
+        .first()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Variant {card_id} ({body.new_rarity}{'(異圖)' if is_alt else ''}) already exists",
+        )
 
     now = datetime.now(timezone.utc).isoformat()
 
-    # Find the scraper_rarity that ultimately maps to the current rarity.
-    # If a previous remap (A→rarity) exists, update it to (A→new_rarity).
-    chained = (
-        db.query(CardVariantOverrideModel)
-        .filter_by(card_id=card_id, action="remap")
-        .filter(CardVariantOverrideModel.target_rarity == rarity)
-        .first()
-    )
-    if chained:
-        chained.target_rarity = body.new_rarity
-        chained.updated_at = now
-    else:
-        # Check for an existing override keyed on the current rarity (e.g. a
-        # previous delete that we're overriding again).
-        existing = (
+    # Maintain card_variant_overrides only for non-alt variants (scraper only
+    # produces normal variants).
+    if not is_alt:
+        chained = (
             db.query(CardVariantOverrideModel)
-            .filter_by(card_id=card_id, scraper_rarity=rarity)
+            .filter_by(card_id=card_id, action="remap")
+            .filter(CardVariantOverrideModel.target_rarity == actual_rarity)
             .first()
         )
-        if existing:
-            existing.action = "remap"
-            existing.target_rarity = body.new_rarity
-            existing.updated_at = now
+        if chained:
+            chained.target_rarity = body.new_rarity
+            chained.updated_at = now
         else:
-            db.add(CardVariantOverrideModel(
-                card_id=card_id,
-                scraper_rarity=rarity,
-                action="remap",
-                target_rarity=body.new_rarity,
-            ))
+            existing = (
+                db.query(CardVariantOverrideModel)
+                .filter_by(card_id=card_id, scraper_rarity=actual_rarity)
+                .first()
+            )
+            if existing:
+                existing.action = "remap"
+                existing.target_rarity = body.new_rarity
+                existing.updated_at = now
+            else:
+                db.add(CardVariantOverrideModel(
+                    card_id=card_id,
+                    scraper_rarity=actual_rarity,
+                    action="remap",
+                    target_rarity=body.new_rarity,
+                ))
 
     # Rename the variant in the DB
     variant.rarity = body.new_rarity
 
-    # Keep original_rarity_string in sync
-    rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip()]
-    if rarity in rarities:
-        rarities[rarities.index(rarity)] = body.new_rarity
-    card.original_rarity_string = "/".join(rarities)
+    # Keep original_rarity_string in sync (only for non-alt variants)
+    if not is_alt:
+        rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip()]
+        if actual_rarity in rarities:
+            rarities[rarities.index(actual_rarity)] = body.new_rarity
+        card.original_rarity_string = "/".join(rarities)
 
     db.commit()
     db.refresh(card)
     return card
 
 
-@router.delete("/{card_id:path}/variants/{rarity}", status_code=204)
-def delete_variant(card_id: str, rarity: str, db: Session = Depends(get_db)):
+@router.delete("/{card_id:path}/variants/{rarity_key}", status_code=204)
+def delete_variant(card_id: str, rarity_key: str, db: Session = Depends(get_db)):
     """Delete a rarity variant.
 
-    Creates a deletion override so reimport does not recreate the variant from
-    scraper data. Cannot delete the last remaining variant.
+    rarity_key is either "SR" (normal) or "SR-alt" (alternate art).
+    For non-alternate-art variants, creates a deletion override so reimport
+    does not recreate the variant from scraper data.
+    Cannot delete the last remaining variant.
     """
+    actual_rarity, is_alt = parse_rarity_key(rarity_key)
+
     card = db.query(CardModel).filter_by(card_id=card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail=f"Card {card_id} not found")
 
-    variant = db.query(CardVariantModel).filter_by(card_id=card_id, rarity=rarity).first()
+    variant = (
+        db.query(CardVariantModel)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
+        .first()
+    )
     if not variant:
-        raise HTTPException(status_code=404, detail=f"Variant {card_id} ({rarity}) not found")
+        raise HTTPException(status_code=404, detail=f"Variant {card_id} ({rarity_key}) not found")
 
     if db.query(CardVariantModel).filter_by(card_id=card_id).count() <= 1:
         raise HTTPException(status_code=400, detail="Cannot delete the only variant of a card")
 
     now = datetime.now(timezone.utc).isoformat()
 
-    # Determine the scraper_rarity for the override (handle remap chains).
-    # If this rarity was previously remapped from a scraper rarity, mark that
-    # original scraper rarity as "delete" instead.
-    chained = (
-        db.query(CardVariantOverrideModel)
-        .filter_by(card_id=card_id, action="remap")
-        .filter(CardVariantOverrideModel.target_rarity == rarity)
-        .first()
-    )
-    if chained:
-        chained.action = "delete"
-        chained.target_rarity = None
-        chained.updated_at = now
-    else:
-        existing = (
+    # Maintain card_variant_overrides only for non-alt variants.
+    if not is_alt:
+        chained = (
             db.query(CardVariantOverrideModel)
-            .filter_by(card_id=card_id, scraper_rarity=rarity)
+            .filter_by(card_id=card_id, action="remap")
+            .filter(CardVariantOverrideModel.target_rarity == actual_rarity)
             .first()
         )
-        if existing:
-            existing.action = "delete"
-            existing.target_rarity = None
-            existing.updated_at = now
+        if chained:
+            chained.action = "delete"
+            chained.target_rarity = None
+            chained.updated_at = now
         else:
-            db.add(CardVariantOverrideModel(
-                card_id=card_id,
-                scraper_rarity=rarity,
-                action="delete",
-                target_rarity=None,
-            ))
+            existing = (
+                db.query(CardVariantOverrideModel)
+                .filter_by(card_id=card_id, scraper_rarity=actual_rarity)
+                .first()
+            )
+            if existing:
+                existing.action = "delete"
+                existing.target_rarity = None
+                existing.updated_at = now
+            else:
+                db.add(CardVariantOverrideModel(
+                    card_id=card_id,
+                    scraper_rarity=actual_rarity,
+                    action="delete",
+                    target_rarity=None,
+                ))
 
     db.delete(variant)
 
-    # Keep original_rarity_string in sync
-    rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip() and r.strip() != rarity]
-    card.original_rarity_string = "/".join(rarities)
+    # Keep original_rarity_string in sync (only for non-alt variants)
+    if not is_alt:
+        rarities = [
+            r.strip()
+            for r in card.original_rarity_string.split("/")
+            if r.strip() and r.strip() != actual_rarity
+        ]
+        card.original_rarity_string = "/".join(rarities)
 
     db.commit()
 
@@ -316,20 +347,39 @@ def update_card(card_id: str, body: CardUpdate, db: Session = Depends(get_db)):
 
 @router.post("/{card_id:path}/variants", response_model=CardVariantOut, status_code=201)
 def add_variant(card_id: str, body: VariantCreate, db: Session = Depends(get_db)):
-    """Add a new rarity variant to an existing card."""
+    """Add a new rarity variant to an existing card.
+
+    If is_alternate_art is False but a normal variant with the same rarity
+    already exists, the request is automatically upgraded to alternate art
+    (backend safety net — the frontend already enforces this).
+    """
     card = db.query(CardModel).filter_by(card_id=card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail=f"Card {card_id} not found")
 
-    existing = (
+    is_alt = body.is_alternate_art
+
+    # Auto-upgrade: if a normal variant exists and caller didn't request alt,
+    # treat this as an alternate-art addition.
+    normal_exists = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=body.rarity)
+        .filter_by(card_id=card_id, rarity=body.rarity, is_alternate_art=False)
         .first()
+        is not None
     )
-    if existing:
+    if normal_exists and not is_alt:
+        is_alt = True
+
+    # Check the exact (rarity, is_alt) slot is not already taken
+    if (
+        db.query(CardVariantModel)
+        .filter_by(card_id=card_id, rarity=body.rarity, is_alternate_art=is_alt)
+        .first()
+    ):
+        label = f"{body.rarity}(異圖)" if is_alt else body.rarity
         raise HTTPException(
             status_code=409,
-            detail=f"Variant {card_id} ({body.rarity}) already exists",
+            detail=f"Variant {card_id} ({label}) already exists",
         )
 
     max_sort = (
@@ -342,6 +392,7 @@ def add_variant(card_id: str, body: VariantCreate, db: Session = Depends(get_db)
     variant = CardVariantModel(
         card_id=card_id,
         rarity=body.rarity,
+        is_alternate_art=is_alt,
         sort_order=sort_order,
         image_source=None,
         image_path=None,
@@ -350,11 +401,13 @@ def add_variant(card_id: str, body: VariantCreate, db: Session = Depends(get_db)
     )
     db.add(variant)
 
-    # Update original_rarity_string
-    existing_rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip()]
-    if body.rarity not in existing_rarities:
-        existing_rarities.append(body.rarity)
-        card.original_rarity_string = "/".join(existing_rarities)
+    # Update original_rarity_string (only for non-alt — alt art doesn't add
+    # a new rarity entry, it's a second copy of the same rarity)
+    if not is_alt:
+        existing_rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip()]
+        if body.rarity not in existing_rarities:
+            existing_rarities.append(body.rarity)
+            card.original_rarity_string = "/".join(existing_rarities)
 
     db.commit()
     db.refresh(variant)

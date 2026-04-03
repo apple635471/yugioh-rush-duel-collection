@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import CardVariantModel
+from ..utils import parse_rarity_key
 from ..schemas import (
     CardVariantOut,
     OwnershipBatchUpdate,
@@ -25,10 +26,14 @@ def update_ownership(
     body: OwnershipUpdate,
     db: Session = Depends(get_db),
 ):
-    """Update owned_count for a specific card variant."""
+    """Update owned_count for a specific card variant.
+
+    rarity is a rarity key: "SR" for normal, "SR-alt" for alternate art.
+    """
+    actual_rarity, is_alt = parse_rarity_key(rarity)
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=rarity)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
         .first()
     )
     if not variant:
@@ -51,9 +56,10 @@ def batch_update_ownership(
     """Batch update ownership for multiple variants."""
     results = []
     for item in body.updates:
+        actual_rarity, is_alt = parse_rarity_key(item.rarity)
         variant = (
             db.query(CardVariantModel)
-            .filter_by(card_id=item.card_id, rarity=item.rarity)
+            .filter_by(card_id=item.card_id, rarity=actual_rarity, is_alternate_art=is_alt)
             .first()
         )
         if variant:

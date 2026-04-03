@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, watch } from 'vue'
 import type { Card, CardUpdate, ScanResult } from '@/types/card'
+import { variantKey, parseRarityKey } from '@/types/card'
 import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, fetchKonamiImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
@@ -10,6 +11,7 @@ import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
 import Button from 'primevue/button'
+import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
@@ -130,7 +132,7 @@ async function saveEdit() {
 }
 
 const activeVariant = computed(() =>
-  props.card.variants.find(v => v.rarity === currentRarity.value) ?? props.card.variants[0]
+  props.card.variants.find(v => variantKey(v) === currentRarity.value) ?? props.card.variants[0]
 )
 
 // Image cache buster — set after upload/revert to force browser reload
@@ -138,7 +140,7 @@ const imageCacheBuster = ref(0)
 
 const imageUrl = computed(() => {
   if (!activeVariant.value) return ''
-  const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
+  const base = getCardImageUrl(props.card.card_id, currentRarity.value)
   // Always bust cache for user uploads (image can change at same URL)
   if (imageCacheBuster.value) return `${base}?t=${imageCacheBuster.value}`
   if (activeVariant.value.image_source === 'user_upload') return `${base}?t=1`
@@ -253,11 +255,11 @@ async function triggerScan() {
   }
 }
 
-async function onOwnershipUpdate(cardId: string, rarity: string, count: number) {
-  await updateOwnership(cardId, rarity, count)
-  const v = props.card.variants.find(v => v.card_id === cardId && v.rarity === rarity)
+async function onOwnershipUpdate(cardId: string, rarityKey: string, count: number) {
+  await updateOwnership(cardId, rarityKey, count)
+  const v = props.card.variants.find(v => v.card_id === cardId && variantKey(v) === rarityKey)
   if (v) v.owned_count = count
-  cardSetsStore.patchVariantOwnership(cardId, rarity, count)
+  cardSetsStore.patchVariantOwnership(cardId, rarityKey, count)
 }
 
 // Text section definitions for DRY rendering
@@ -286,18 +288,49 @@ function copyCardId() {
 }
 
 // ---- Variant management ----
+
+// Rarities where at least one slot (normal or alt) is still available
 const availableRarities = computed(() =>
-  RARITIES.filter(r => !props.card.variants.some(v => v.rarity === r.value))
+  RARITIES.filter(r => {
+    const hasNormal = props.card.variants.some(v => v.rarity === r.value && !v.is_alternate_art)
+    const hasAlt = props.card.variants.some(v => v.rarity === r.value && v.is_alternate_art)
+    return !hasNormal || !hasAlt
+  })
 )
 
 // ---- Add Variant ----
 const addingVariant = ref(false)
 const newVariantRarity = ref('')
+const newVariantIsAlt = ref(false)
 const savingVariant = ref(false)
 const variantError = ref('')
 
+// Whether the selected rarity forces alt art (normal slot already taken)
+const newVariantAltForced = computed(() =>
+  props.card.variants.some(v => v.rarity === newVariantRarity.value && !v.is_alternate_art)
+)
+
+// Watch: auto-adjust alt flag when user changes the rarity selection
+watch(newVariantRarity, (r) => {
+  const hasNormal = props.card.variants.some(v => v.rarity === r && !v.is_alternate_art)
+  const hasAlt = props.card.variants.some(v => v.rarity === r && v.is_alternate_art)
+  if (hasNormal && !hasAlt) {
+    // Normal exists, alt doesn't → must be alt
+    newVariantIsAlt.value = true
+  } else if (!hasNormal) {
+    // Normal doesn't exist → default to normal
+    newVariantIsAlt.value = false
+  }
+  // If only alt exists → default to normal (add the missing normal slot)
+})
+
 function startAddVariant() {
-  newVariantRarity.value = availableRarities.value[0]?.value ?? ''
+  const first = availableRarities.value[0]
+  if (!first) return
+  newVariantRarity.value = first.value
+  // Trigger the watch logic for initial selection
+  const hasNormal = props.card.variants.some(v => v.rarity === first.value && !v.is_alternate_art)
+  newVariantIsAlt.value = hasNormal
   variantError.value = ''
   addingVariant.value = true
   editingRarity.value = false
@@ -314,9 +347,14 @@ async function submitAddVariant() {
   savingVariant.value = true
   variantError.value = ''
   try {
-    await addVariant(props.card.card_id, { rarity: newVariantRarity.value })
+    await addVariant(props.card.card_id, {
+      rarity: newVariantRarity.value,
+      is_alternate_art: newVariantIsAlt.value,
+    })
     addingVariant.value = false
-    currentRarity.value = newVariantRarity.value
+    currentRarity.value = newVariantIsAlt.value
+      ? `${newVariantRarity.value}-alt`
+      : newVariantRarity.value
     emit('cardUpdated')
   } catch (e: any) {
     variantError.value = e?.response?.data?.detail ?? 'Failed to add variant'
@@ -331,10 +369,18 @@ const editRarityTarget = ref('')
 const savingRarityEdit = ref(false)
 const rarityEditError = ref('')
 
-const editableRarities = computed(() =>
-  RARITIES.filter(r => !props.card.variants.some(v => v.rarity === r.value) || r.value === currentRarity.value)
-    .filter(r => r.value !== currentRarity.value)
-)
+const editingIsAlt = computed(() => parseRarityKey(currentRarity.value).isAlt)
+
+const editableRarities = computed(() => {
+  const currentBase = parseRarityKey(currentRarity.value).rarity
+  return RARITIES.filter(r => {
+    if (r.value === currentBase) return false
+    // Exclude rarities where the same (rarity, alt flag) slot is already taken
+    return !props.card.variants.some(
+      v => v.rarity === r.value && v.is_alternate_art === editingIsAlt.value
+    )
+  })
+})
 
 function startEditRarity() {
   editRarityTarget.value = editableRarities.value[0]?.value ?? ''
@@ -390,8 +436,8 @@ async function submitDeleteVariant() {
     await deleteVariant(props.card.card_id, currentRarity.value)
     confirmingDelete.value = false
     emit('cardUpdated')
-    const remaining = props.card.variants.filter(v => v.rarity !== currentRarity.value)
-    if (remaining.length > 0 && remaining[0]) currentRarity.value = remaining[0].rarity
+    const remaining = props.card.variants.filter(v => variantKey(v) !== currentRarity.value)
+    if (remaining.length > 0 && remaining[0]) currentRarity.value = variantKey(remaining[0])
   } catch (e: any) {
     deleteError.value = e?.response?.data?.detail ?? 'Failed to delete variant'
   } finally {
@@ -611,6 +657,23 @@ async function submitDeleteVariant() {
             Cancel
           </Button>
         </div>
+        <!-- Alt-art checkbox row -->
+        <div class="flex items-center gap-2 pl-0.5">
+          <Checkbox
+            v-model="newVariantIsAlt"
+            :binary="true"
+            :disabled="newVariantAltForced"
+            inputId="new-variant-alt"
+          />
+          <label
+            for="new-variant-alt"
+            class="text-xs select-none"
+            :class="newVariantAltForced ? 'text-gray-500 cursor-default' : 'text-gray-300 cursor-pointer'"
+          >
+            異圖
+            <span v-if="newVariantAltForced" class="text-gray-500">（此貴罕度已有普通版，自動設為異圖）</span>
+          </label>
+        </div>
         <div v-if="variantError" class="text-red-400 text-xs">{{ variantError }}</div>
       </template>
 
@@ -644,7 +707,7 @@ async function submitDeleteVariant() {
       <!-- Delete confirm -->
       <template v-else-if="confirmingDelete">
         <div class="flex items-center gap-1.5">
-          <span class="text-xs text-gray-300">刪除 <strong>{{ currentRarity }}</strong>？</span>
+          <span class="text-xs text-gray-300">刪除 <strong>{{ activeVariant?.is_alternate_art ? `${activeVariant.rarity} ★` : currentRarity }}</strong>？</span>
           <Button
             @click="submitDeleteVariant"
             :disabled="deletingVariant"
