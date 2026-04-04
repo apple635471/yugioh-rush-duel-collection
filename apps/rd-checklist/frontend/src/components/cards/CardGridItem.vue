@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Card } from '@/types/card'
+import { variantKey } from '@/types/card'
 import { getCardImageUrl, updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
 
@@ -18,18 +19,19 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
-const activeRarity = ref(props.card.variants[0]?.rarity ?? '')
+const activeRarity = ref(props.card.variants[0] ? variantKey(props.card.variants[0]) : '')
 const cardEl = ref<HTMLElement | null>(null)
 const copied = ref(false)
 
 const activeVariant = computed(() =>
-  props.card.variants.find(v => v.rarity === activeRarity.value) ?? props.card.variants[0]
+  props.card.variants.find(v => variantKey(v) === activeRarity.value) ?? props.card.variants[0]
 )
 
 const imageUrl = computed(() => {
   if (!activeVariant.value) return ''
-  const base = getCardImageUrl(props.card.card_id, activeVariant.value.rarity)
-  const buster = ui.imageUpdates.get(`${props.card.card_id}/${activeVariant.value.rarity}`)
+  const key = variantKey(activeVariant.value)
+  const base = getCardImageUrl(props.card.card_id, key)
+  const buster = ui.imageUpdates.get(`${props.card.card_id}/${key}`)
   if (buster) return `${base}?t=${buster}`
   return activeVariant.value.image_source === 'user_upload' ? `${base}?t=1` : base
 })
@@ -44,9 +46,14 @@ const fullCardId = computed(() => {
 const isOwned = computed(() => (activeVariant.value?.owned_count ?? 0) > 0)
 const isSelected = computed(() => ui.sidebarCardId === props.card.card_id)
 
-// Sync rarity tab when sidebar switches rarity for this card
+// Sidebar → Grid: sync rarity when sidebar switches rarity for this card
 watch(() => ui.sidebarRarity, (r) => {
   if (isSelected.value && r) activeRarity.value = r
+})
+
+// Grid → Sidebar: sync rarity when user clicks a rarity tab while sidebar is open for this card
+watch(activeRarity, (r) => {
+  if (isSelected.value) ui.sidebarRarity = r
 })
 
 // Scroll selected card into view after the 500ms padding transition settles
@@ -69,9 +76,9 @@ async function copyCardNumber(e: Event) {
   setTimeout(() => { copied.value = false }, 1500)
 }
 
-async function onOwnershipUpdate(cardId: string, rarity: string, count: number) {
-  await updateOwnership(cardId, rarity, count)
-  const v = props.card.variants.find(v => v.card_id === cardId && v.rarity === rarity)
+async function onOwnershipUpdate(cardId: string, rarityKey: string, count: number) {
+  await updateOwnership(cardId, rarityKey, count)
+  const v = props.card.variants.find(v => v.card_id === cardId && variantKey(v) === rarityKey)
   if (v) v.owned_count = count
   emit('ownershipChanged')
 }
@@ -148,24 +155,27 @@ async function onOwnershipUpdate(cardId: string, rarity: string, count: number) 
       <!-- Card type -->
       <p class="text-xs text-gray-400 mt-0.5 leading-none">{{ card.card_type }}</p>
 
-      <!-- Rarity — own line, right-aligned, click.stop so it doesn't open sidebar -->
-      <div class="flex justify-end mt-1" @click.stop>
+      <!-- Rarity — own line, click.stop so it doesn't open sidebar -->
+      <div class="flex justify-end mt-2" @click.stop>
         <RarityTabs
           :variants="card.variants"
           :active-rarity="activeRarity"
           @select="activeRarity = $event"
         />
       </div>
+    </div>
 
-      <!-- Ownership control -->
-      <div class="mt-1 flex justify-center">
-        <OwnershipControl
-          :card-id="card.card_id"
-          :rarity="activeRarity"
-          :owned-count="activeVariant?.owned_count ?? 0"
-          @update="onOwnershipUpdate"
-        />
-      </div>
+    <!-- Ownership control — separated footer -->
+    <div
+      class="px-2 py-2 flex justify-center border-t border-white/[0.06] bg-black/20"
+      @click.stop
+    >
+      <OwnershipControl
+        :card-id="card.card_id"
+        :rarity="activeRarity"
+        :owned-count="activeVariant?.owned_count ?? 0"
+        @update="onOwnershipUpdate"
+      />
     </div>
   </div>
 </template>

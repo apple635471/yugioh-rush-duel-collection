@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.9.6 (2026-04-05)
+
+### 新增
+
+- **RarityTabs +N 下拉選單**：標籤列空間不足時，溢出的貴罕度改以可點擊的 `+N` badge 呈現，展開 Popover 選單後可直接選取隱藏的貴罕度
+- **RarityTabs `align` prop**：新增 `'start'` / `'end'` 對齊選項；sidebar 使用 `start`（靠左），Grid view 使用 `end`（靠右）
+- **CardDetailPanel 外部 rarity 同步**：新增 `watch(() => props.activeRarity, ...)`，Grid / Table 點選貴罕度 tab 時，sidebar 正在顯示同一張卡的 `currentRarity` 會同步更新
+
+### 改善
+
+- **RarityTabs 量測機制重寫**：改用兩段式量測（phase-1 不可見渲染取得真實 Button 寬度 → phase-2 顯示），修正舊版用 `<span>` probe 量出寬度不準確的問題；加入 `measuring` flag 防止 concurrent 呼叫，以及 grandparent-width 追蹤避免 ResizeObserver loop
+- **貴罕度配色全面更新**：完整對應所有 Rush Duel 貴罕度，包含 N（灰）、NPR（亮灰）、R（藍）、SR（橘）、SPR（琥珀）、UR（金）、PUR（亮金）、RUR（玫瑰紅）、SER（紅）、RR（翠綠）、ORR（紫）、ORRPBV（暗銀）、FORR（藍綠）
+- **CardGridItem footer 重設計**：數量調節器獨立為底部 footer 區塊，加上 `border-t` 與半透明背景作視覺分隔；rarity 與卡片類型、數量調節器之間行距加大
+
+### 修正
+
+- **Sidebar rarity row 佈局**：wrapper 改為 `max-w-[40%] min-w-0`，讓 action buttons 自然貼近 tabs，移除造成異常空白的 `grow-[3]`
+- **單一貴罕度顯示**：`<span>` 補上 `border` + `bg-white/15`，與多貴罕度選中狀態視覺保持一致
+
+---
+
 ## v0.9.5 (2026-03-24)
 
 ### 修正

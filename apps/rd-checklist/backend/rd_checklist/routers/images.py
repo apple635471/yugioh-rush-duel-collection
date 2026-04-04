@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import CardModel, CardVariantModel
 from ..schemas import CardVariantOut
+from ..utils import parse_rarity_key
 from ..services.image_service import (
     delete_user_image,
     fetch_konami_image,
@@ -37,17 +38,19 @@ def serve_card_image(
 ):
     """Serve the image for a specific card variant.
 
+    rarity is a rarity key: "SR" for normal, "SR-alt" for alternate art.
     Checks user uploads first, falls back to scraper image.
     """
+    actual_rarity, is_alt = parse_rarity_key(rarity)
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=rarity)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
         .first()
     )
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
 
-    # Try user upload first
+    # Try user upload first (use full rarity key for filename uniqueness)
     if variant.image_source == "user_upload":
         user_path = get_user_image_path(card_id, rarity)
         if user_path:
@@ -84,16 +87,21 @@ async def upload_image(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    """Upload a replacement image for a card variant."""
+    """Upload a replacement image for a card variant.
+
+    rarity is a rarity key: "SR" for normal, "SR-alt" for alternate art.
+    """
+    actual_rarity, is_alt = parse_rarity_key(rarity)
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=rarity)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
         .first()
     )
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
 
     content = await file.read()
+    # Use full rarity key in filename so normal and alt uploads don't collide
     rel_path = save_user_image(card_id, rarity, content)
 
     # Preserve scraper path before overwriting (one-time backfill for old data)
@@ -113,10 +121,15 @@ async def fetch_from_konami(
     rarity: str,
     db: Session = Depends(get_db),
 ):
-    """Fetch card image from Konami CDN and save as user upload."""
+    """Fetch card image from Konami CDN and save as user upload.
+
+    rarity is a rarity key: "SR" for normal, "SR-alt" for alternate art.
+    Konami CDN lookup uses the base rarity (the alt flag is irrelevant there).
+    """
+    actual_rarity, is_alt = parse_rarity_key(rarity)
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=rarity)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
         .first()
     )
     if not variant:
@@ -126,7 +139,8 @@ async def fetch_from_konami(
     card = db.query(CardModel).filter_by(card_id=card_id).first()
     set_id = card.set_id if card else None
 
-    content = await fetch_konami_image(card_id, rarity, set_id)
+    # Pass actual_rarity (not the key) for CDN URL construction
+    content = await fetch_konami_image(card_id, actual_rarity, set_id)
     if content is None:
         raise HTTPException(status_code=404, detail="Image not found on Konami CDN")
 
@@ -149,10 +163,14 @@ def revert_image(
     rarity: str,
     db: Session = Depends(get_db),
 ):
-    """Revert a card variant's image to the original scraper image."""
+    """Revert a card variant's image to the original scraper image.
+
+    rarity is a rarity key: "SR" for normal, "SR-alt" for alternate art.
+    """
+    actual_rarity, is_alt = parse_rarity_key(rarity)
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=rarity)
+        .filter_by(card_id=card_id, rarity=actual_rarity, is_alternate_art=is_alt)
         .first()
     )
     if not variant:

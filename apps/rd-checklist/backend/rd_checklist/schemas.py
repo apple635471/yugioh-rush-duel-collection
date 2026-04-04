@@ -13,6 +13,7 @@ class CardVariantOut(BaseModel):
     id: int
     card_id: str
     rarity: str
+    is_alternate_art: bool = False
     sort_order: int
     image_source: Optional[str] = None
     image_path: Optional[str] = None
@@ -83,6 +84,7 @@ class VariantCreate(BaseModel):
     """Add a new rarity variant to an existing card."""
 
     rarity: str
+    is_alternate_art: bool = False
 
 
 class VariantRarityUpdate(BaseModel):
