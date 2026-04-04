@@ -46,9 +46,14 @@ const fullCardId = computed(() => {
 const isOwned = computed(() => (activeVariant.value?.owned_count ?? 0) > 0)
 const isSelected = computed(() => ui.sidebarCardId === props.card.card_id)
 
-// Sync rarity tab when sidebar switches rarity for this card
+// Sidebar → Grid: sync rarity when sidebar switches rarity for this card
 watch(() => ui.sidebarRarity, (r) => {
   if (isSelected.value && r) activeRarity.value = r
+})
+
+// Grid → Sidebar: sync rarity when user clicks a rarity tab while sidebar is open for this card
+watch(activeRarity, (r) => {
+  if (isSelected.value) ui.sidebarRarity = r
 })
 
 // Scroll selected card into view after the 500ms padding transition settles
@@ -150,24 +155,27 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
       <!-- Card type -->
       <p class="text-xs text-gray-400 mt-0.5 leading-none">{{ card.card_type }}</p>
 
-      <!-- Rarity — own line, right-aligned, click.stop so it doesn't open sidebar -->
-      <div class="flex justify-end mt-1" @click.stop>
+      <!-- Rarity — own line, click.stop so it doesn't open sidebar -->
+      <div class="flex justify-end mt-2" @click.stop>
         <RarityTabs
           :variants="card.variants"
           :active-rarity="activeRarity"
           @select="activeRarity = $event"
         />
       </div>
+    </div>
 
-      <!-- Ownership control -->
-      <div class="mt-1 flex justify-center">
-        <OwnershipControl
-          :card-id="card.card_id"
-          :rarity="activeRarity"
-          :owned-count="activeVariant?.owned_count ?? 0"
-          @update="onOwnershipUpdate"
-        />
-      </div>
+    <!-- Ownership control — separated footer -->
+    <div
+      class="px-2 py-2 flex justify-center border-t border-white/[0.06] bg-black/20"
+      @click.stop
+    >
+      <OwnershipControl
+        :card-id="card.card_id"
+        :rarity="activeRarity"
+        :owned-count="activeVariant?.owned_count ?? 0"
+        @update="onOwnershipUpdate"
+      />
     </div>
   </div>
 </template>

@@ -27,6 +27,8 @@ function getActiveRarity(card: Card): string {
 
 function setActiveRarity(cardId: string, rarity: string) {
   activeRarities.value[cardId] = rarity
+  // Sync to sidebar if this card is currently open
+  if (ui.sidebarCardId === cardId) ui.sidebarRarity = rarity
 }
 
 function getActiveVariant(card: Card) {

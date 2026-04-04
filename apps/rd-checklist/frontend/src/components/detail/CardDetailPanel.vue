@@ -34,8 +34,10 @@ const router = useRouter()
 const isOnCardSet = computed(() => route.params.setId === props.card.set_id)
 
 const currentRarity = ref(props.activeRarity)
-// Keep ui.sidebarRarity in sync so CardGridItem can follow along
+// Sidebar → outside: keep ui.sidebarRarity in sync so CardGridItem/CardTable can follow
 watch(currentRarity, (r) => { ui.sidebarRarity = r })
+// Outside → sidebar: when grid/table changes rarity, prop updates and we follow
+watch(() => props.activeRarity, (r) => { currentRarity.value = r })
 const editing = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -564,12 +566,15 @@ async function submitDeleteVariant() {
 
     <!-- ── Rarity row ── -->
     <div class="flex items-center gap-1.5 pb-2.5 border-b border-white/[0.08] mb-3">
-      <!-- Rarity tabs (same style as card list) -->
-      <RarityTabs
-        :variants="card.variants"
-        :active-rarity="currentRarity"
-        @select="currentRarity = $event"
-      />
+      <!-- Rarity tabs: max-w-[40%] caps the area; natural width when fewer tabs fit -->
+      <div class="max-w-[40%] min-w-0">
+        <RarityTabs
+          align="start"
+          :variants="card.variants"
+          :active-rarity="currentRarity"
+          @select="currentRarity = $event"
+        />
+      </div>
 
       <!-- Vertical separator -->
       <div class="w-px h-4 bg-white/15 mx-0.5 shrink-0" />
