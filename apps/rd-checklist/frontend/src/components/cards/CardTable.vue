@@ -4,12 +4,14 @@ import type { Card } from '@/types/card'
 import { variantKey } from '@/types/card'
 import { updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
+import { pickDefaultVariantKey } from '@/constants/rarities'
 import OwnershipBadge from './OwnershipBadge.vue'
 import RarityTabs from './RarityTabs.vue'
 import OwnershipControl from './OwnershipControl.vue'
 
-defineProps<{
+const props = defineProps<{
   cards: Card[]
+  preferredRarity?: string
 }>()
 
 const emit = defineEmits<{
@@ -22,7 +24,7 @@ const ui = useUiStore()
 const activeRarities = ref<Record<string, string>>({})
 
 function getActiveRarity(card: Card): string {
-  return activeRarities.value[card.card_id] ?? (card.variants[0] ? variantKey(card.variants[0]) : '')
+  return activeRarities.value[card.card_id] ?? pickDefaultVariantKey(card.variants, props.preferredRarity)
 }
 
 function setActiveRarity(cardId: string, rarity: string) {

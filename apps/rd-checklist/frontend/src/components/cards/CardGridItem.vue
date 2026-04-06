@@ -4,6 +4,7 @@ import type { Card } from '@/types/card'
 import { variantKey } from '@/types/card'
 import { getCardImageUrl, updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
+import { pickDefaultVariantKey } from '@/constants/rarities'
 
 import OwnershipBadge from './OwnershipBadge.vue'
 import RarityTabs from './RarityTabs.vue'
@@ -12,6 +13,7 @@ import Button from 'primevue/button'
 
 const props = defineProps<{
   card: Card
+  preferredRarity?: string
 }>()
 
 const emit = defineEmits<{
@@ -19,7 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
-const activeRarity = ref(props.card.variants[0] ? variantKey(props.card.variants[0]) : '')
+const activeRarity = ref(pickDefaultVariantKey(props.card.variants, props.preferredRarity))
 const cardEl = ref<HTMLElement | null>(null)
 const copied = ref(false)
 

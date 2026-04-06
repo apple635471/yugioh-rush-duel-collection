@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### 新增
+
+- **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→PUR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
+  - 接受可選的 `preferredRarity` 參數：搜尋指定稀有度時強制選該稀有度，異圖仍優先
+
+### 改善
+
+- **RarityTabs badge 排序**：新增 `sortedVariants` computed，badge 排列改依稀有度順序（最稀有在前），視覺上更直觀
+- **卡片預設顯示稀有度改用 `pickDefaultVariantKey()`**：`CardGridItem` 與 `CardTable` 的預設 active rarity 不再固定取第一個 variant，改用工具函式依稀有度優先序決定
+- **搜尋稀有度篩選同步至卡片顯示**：`SearchView` 將 `filters.rarity` 透過 `preferredRarity` prop 傳遞給 `CardGrid` / `CardTable`，再透傳至 `CardGridItem`，使篩選特定稀有度時卡片直接以該稀有度圖面呈現
+
+---
+
 ## v0.9.6 (2026-04-05)
 
 ### 新增
