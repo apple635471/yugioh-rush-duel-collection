@@ -47,10 +47,11 @@ const fullCardId = computed(() => {
 
 const isOwned = computed(() => (activeVariant.value?.owned_count ?? 0) > 0)
 const isSelected = computed(() => ui.sidebarCardId === props.card.card_id)
-const isFullyCollected = computed(() =>
-  props.card.variants.length > 0 &&
-  props.card.variants.every(v => v.owned_count >= 1)
-)
+const collectionStatus = computed(() => {
+  const total = props.card.variants.length
+  const owned = props.card.variants.filter(v => v.owned_count >= 1).length
+  return { owned, total }
+})
 
 // Sidebar → Grid: sync rarity when sidebar switches rarity for this card
 watch(() => ui.sidebarRarity, (r) => {
@@ -154,7 +155,7 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
     <!-- Info (below image) -->
     <div class="px-2 pt-1.5 pb-2">
       <!-- Card name -->
-      <h4 class="text-base font-medium text-gray-100 leading-snug line-clamp-2 group-hover:text-gold transition-colors">
+      <h4 class="text-base font-medium text-gray-100 leading-snug truncate group-hover:text-gold transition-colors">
         {{ card.name_zh || card.name_jp }}
       </h4>
 
@@ -184,15 +185,26 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
         @update="onOwnershipUpdate"
       />
       <div class="flex justify-end pr-0.5">
+        <!-- 全收：綠色 ✓ -->
         <svg
-          v-if="isFullyCollected"
+          v-if="collectionStatus.owned === collectionStatus.total && collectionStatus.total > 0"
           class="w-4 h-4 text-emerald-400 shrink-0"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          title="全部稀有度已收集"
+          viewBox="0 0 20 20" fill="currentColor" title="全部稀有度已收集"
         >
           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clip-rule="evenodd" />
         </svg>
+        <!-- 部分收：黃色 X/N -->
+        <span
+          v-else-if="collectionStatus.owned > 0"
+          class="text-[10px] font-bold text-amber-400 leading-none"
+          :title="`已收集 ${collectionStatus.owned}/${collectionStatus.total} 種稀有度`"
+        >{{ collectionStatus.owned }}/{{ collectionStatus.total }}</span>
+        <!-- 全無：紅色 0/N -->
+        <span
+          v-else-if="collectionStatus.total > 0"
+          class="text-[10px] font-bold text-rose-500 leading-none"
+          :title="`尚未收集任何稀有度（共 ${collectionStatus.total} 種）`"
+        >0/{{ collectionStatus.total }}</span>
         <div v-else class="w-4 h-4" />
       </div>
     </div>
