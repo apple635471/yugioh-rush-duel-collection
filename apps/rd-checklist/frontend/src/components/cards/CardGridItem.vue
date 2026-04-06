@@ -47,6 +47,10 @@ const fullCardId = computed(() => {
 
 const isOwned = computed(() => (activeVariant.value?.owned_count ?? 0) > 0)
 const isSelected = computed(() => ui.sidebarCardId === props.card.card_id)
+const isFullyCollected = computed(() =>
+  props.card.variants.length > 0 &&
+  props.card.variants.every(v => v.owned_count >= 1)
+)
 
 // Sidebar → Grid: sync rarity when sidebar switches rarity for this card
 watch(() => ui.sidebarRarity, (r) => {
@@ -169,15 +173,28 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
 
     <!-- Ownership control — separated footer -->
     <div
-      class="px-2 py-2 flex justify-center border-t border-white/[0.06] bg-black/20"
+      class="px-2 py-2 grid grid-cols-[1fr_auto_1fr] items-center border-t border-white/[0.06] bg-black/20"
       @click.stop
     >
+      <div />
       <OwnershipControl
         :card-id="card.card_id"
         :rarity="activeRarity"
         :owned-count="activeVariant?.owned_count ?? 0"
         @update="onOwnershipUpdate"
       />
+      <div class="flex justify-end pr-0.5">
+        <svg
+          v-if="isFullyCollected"
+          class="w-4 h-4 text-emerald-400 shrink-0"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          title="全部稀有度已收集"
+        >
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clip-rule="evenodd" />
+        </svg>
+        <div v-else class="w-4 h-4" />
+      </div>
     </div>
   </div>
 </template>

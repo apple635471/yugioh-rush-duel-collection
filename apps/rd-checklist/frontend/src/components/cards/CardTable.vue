@@ -38,6 +38,10 @@ function getActiveVariant(card: Card) {
   return card.variants.find(v => variantKey(v) === key) ?? card.variants[0]
 }
 
+function isFullyCollected(card: Card): boolean {
+  return card.variants.length > 0 && card.variants.every(v => v.owned_count >= 1)
+}
+
 function openDetail(card: Card) {
   ui.openSidebar(card.card_id, getActiveRarity(card))
 }
@@ -68,6 +72,7 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
           <th class="py-2.5 px-3 w-20 text-center">DEF</th>
           <th class="py-2.5 px-3 w-32">Rarity</th>
           <th class="py-2.5 px-3 w-28 text-center">Owned</th>
+          <th class="py-2.5 px-3 w-10 text-center"></th>
         </tr>
       </thead>
       <tbody>
@@ -101,6 +106,7 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
             <RarityTabs
               :variants="card.variants"
               :active-rarity="getActiveRarity(card)"
+              align="start"
               @select="setActiveRarity(card.card_id, $event)"
             />
           </td>
@@ -113,6 +119,17 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
                 @update="(cid, r, cnt) => onOwnershipUpdate(cid, r, cnt, card)"
               />
             </div>
+          </td>
+          <td class="py-2.5 px-3 text-center">
+            <svg
+              v-if="isFullyCollected(card)"
+              class="w-4 h-4 text-emerald-400 inline-block"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              title="全部稀有度已收集"
+            >
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clip-rule="evenodd" />
+            </svg>
           </td>
         </tr>
       </tbody>
