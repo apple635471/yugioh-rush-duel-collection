@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import type { CardVariant } from '@/types/card'
 import { variantKey } from '@/types/card'
+import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
 import Popover from 'primevue/popover'
 
@@ -57,6 +58,16 @@ function getColor(rarity: string): string {
 function tabLabel(v: CardVariant): string {
   return v.is_alternate_art ? `${v.rarity} ★` : v.rarity
 }
+
+// ── Sorted variants: rarest first, alt-art before non-alt within same rarity ──
+const sortedVariants = computed<CardVariant[]>(() =>
+  [...props.variants].sort((a, b) => {
+    const aIdx = RARITY_VALUES.indexOf(a.rarity)
+    const bIdx = RARITY_VALUES.indexOf(b.rarity)
+    if (aIdx !== bIdx) return bIdx - aIdx
+    return (b.is_alternate_art ? 1 : 0) - (a.is_alternate_art ? 1 : 0)
+  })
+)
 
 // ── Overflow measurement ──────────────────────────────────────────────────
 const containerRef = ref<HTMLElement | null>(null)
@@ -122,20 +133,20 @@ async function measure() {
 // ── Visible / hidden split ───────────────────────────────────────────────
 const visibleVariants = computed<CardVariant[]>(() => {
   // Phase 1 or all-fit: show everything
-  if (cutoff.value === null) return props.variants
+  if (cutoff.value === null) return sortedVariants.value
 
-  const sliced    = props.variants.slice(0, cutoff.value)
-  const activeIdx = props.variants.findIndex(v => variantKey(v) === props.activeRarity)
+  const sliced    = sortedVariants.value.slice(0, cutoff.value)
+  const activeIdx = sortedVariants.value.findIndex(v => variantKey(v) === props.activeRarity)
 
   // If active tab would be hidden, swap it into the last visible slot
   if (activeIdx === -1 || activeIdx < cutoff.value) return sliced
-  return [...sliced.slice(0, -1), props.variants[activeIdx]!]
+  return [...sliced.slice(0, -1), sortedVariants.value[activeIdx]!]
 })
 
 const hiddenVariants = computed<CardVariant[]>(() => {
   if (cutoff.value === null) return []
   const visKeys = new Set(visibleVariants.value.map(v => variantKey(v)))
-  return props.variants.filter(v => !visKeys.has(variantKey(v)))
+  return sortedVariants.value.filter(v => !visKeys.has(variantKey(v)))
 })
 
 // ── Popover ──────────────────────────────────────────────────────────────
@@ -175,7 +186,7 @@ watch(() => [props.variants, props.activeRarity], measure, { deep: true })
 </script>
 
 <template>
-  <template v-if="variants.length > 1">
+  <template v-if="sortedVariants.length > 1">
     <!--
       Single container for both phases.
       Phase 1 (measured=false): opacity-0, all tabs visible, no overflow clipping → measure real widths.
@@ -218,7 +229,7 @@ watch(() => [props.variants, props.activeRarity], measure, { deep: true })
           // Phase 1: invisible placeholder for measurement; Phase 2: hide if not needed
           !measured || hiddenVariants.length > 0 ? '' : 'hidden',
         ]"
-      >+{{ measured ? hiddenVariants.length : variants.length }}</button>
+      >+{{ measured ? hiddenVariants.length : sortedVariants.length }}</button>
 
       <Popover ref="popoverRef">
         <div class="flex flex-col gap-0.5 p-1 min-w-[80px]">
@@ -240,8 +251,8 @@ watch(() => [props.variants, props.activeRarity], measure, { deep: true })
   </template>
 
   <span
-    v-else-if="variants.length === 1 && variants[0]"
+    v-else-if="sortedVariants.length === 1 && sortedVariants[0]"
     class="text-sm font-semibold px-2 py-0.5 rounded border bg-white/15"
-    :class="getColor(variants[0].rarity)"
-  >{{ tabLabel(variants[0]) }}</span>
+    :class="getColor(sortedVariants[0].rarity)"
+  >{{ tabLabel(sortedVariants[0]) }}</span>
 </template>

@@ -2,8 +2,9 @@
 import type { Card } from '@/types/card'
 import CardGridItem from './CardGridItem.vue'
 
-defineProps<{
+const props = defineProps<{
   cards: Card[]
+  preferredRarity?: string
 }>()
 
 const emit = defineEmits<{
@@ -21,6 +22,7 @@ const emit = defineEmits<{
       v-for="card in cards"
       :key="card.card_id"
       :card="card"
+      :preferred-rarity="props.preferredRarity"
       @ownership-changed="emit('ownershipChanged')"
     />
   </div>

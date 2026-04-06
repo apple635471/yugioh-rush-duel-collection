@@ -113,8 +113,8 @@ onMounted(doSearch)
 
     <!-- Results -->
     <template v-else>
-      <CardGrid v-if="ui.viewMode === 'grid'" :cards="cards" />
-      <CardTable v-else :cards="cards" />
+      <CardGrid v-if="ui.viewMode === 'grid'" :cards="cards" :preferred-rarity="filters.rarity || undefined" />
+      <CardTable v-else :cards="cards" :preferred-rarity="filters.rarity || undefined" />
     </template>
   </div>
 </template>
