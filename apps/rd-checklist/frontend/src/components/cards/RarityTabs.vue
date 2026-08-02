@@ -30,7 +30,7 @@ const rarityColors: Record<string, string> = {
 
   // ── Ultra Rare ──────────────────────────────────────────────────────────
   UR:          'text-gold border-gold',                // 金亮
-  PUR:         'text-gold-light border-gold-light',    // 金亮鑽（UR + 鑽石）
+  UPR:         'text-gold-light border-gold-light',    // 金亮鑽（UR + 鑽石）
   RUR:         'text-rose-400 border-rose-400',        // 紅亮（紅色 UR）
 
   // ── Secret Rare ─────────────────────────────────────────────────────────

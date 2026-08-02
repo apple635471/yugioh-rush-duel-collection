@@ -36,8 +36,17 @@ data/
 
 Scraper 輸出 `"rarity": "UR/SER"`，匯入時:
 1. `rarity.split("/")` → `["UR", "SER"]`
-2. 為每個稀有度建立獨立的 `card_variants` row
-3. `sort_order` = 拆分後的 index (0, 1, ...)
+2. 每個 token 經 `normalize_rarity()` 正規化（見下）
+3. 為每個稀有度建立獨立的 `card_variants` row
+4. `sort_order` = 拆分後的 index (0, 1, ...)
+
+## 貴罕度同義詞正規化
+
+`rd_checklist/rarities.py` 定義同義詞收斂：`SPR/SRP/PSR→SPR`、`NPR/NRP/PNR→NPR`、`UPR/URP/PUR→UPR`，其餘不變。
+
+- `_import_one_card()` 在拆分後對每個 token 及 `original_rarity_string` 套用正規化 → 既有 scraper JSON 不必重爬即自癒
+- 一次性遷移既有 DB：`uv run python -m rd_checklist.cli normalize-rarities`（idempotent；收斂 variants／字串／overrides，衝突時合併 `owned_count`，並改名 `user_uploads/*_PUR.jpg → *_UPR.jpg`）
+- Scraper 端也有一份對應的 `rd_card_scraper/rarities.py`，於 `parser.py` 爬取時就正規化
 
 ## ★ 安全規則
 

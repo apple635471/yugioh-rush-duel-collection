@@ -7,7 +7,7 @@ export const RARITIES: { value: string; label: string }[] = [
   { value: 'SR',     label: 'SR (亮面)' },
   { value: 'SPR',    label: 'SPR (亮鑽)' },
   { value: 'UR',     label: 'UR (金亮)' },
-  { value: 'PUR',    label: 'PUR (金亮鑽)' },
+  { value: 'UPR',    label: 'UPR (金亮鑽)' },
   { value: 'RUR',    label: 'RUR (紅亮)' },
   { value: 'SER',    label: 'SER (半鑽)' },
   { value: 'RR',     label: 'RR (超速貴罕)' },

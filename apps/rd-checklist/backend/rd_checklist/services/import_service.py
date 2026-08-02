@@ -9,6 +9,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel, CardVariantOverrideModel
+from ..rarities import normalize_rarity, normalize_rarity_string
 
 logger = logging.getLogger(__name__)
 
@@ -218,12 +219,15 @@ def _import_one_card(
     else:
         card.is_legend = bool(is_legend_val)
 
-    card.original_rarity_string = _val("original_rarity_string", rarity_string)
+    # Canonicalize synonym rarities (e.g. PUR→UPR) so the stored string and the
+    # variants derived from it always use canonical codes.
+    resolved_rarity_string = _val("original_rarity_string", rarity_string)
+    card.original_rarity_string = normalize_rarity_string(resolved_rarity_string)
     db.flush()
 
     # Split rarity string into individual variants (use resolved value with override)
     resolved_rarity = card.original_rarity_string or rarity_string
-    rarities = [r.strip() for r in resolved_rarity.split("/") if r.strip()]
+    rarities = [normalize_rarity(r) for r in resolved_rarity.split("/") if r.strip()]
     if not rarities:
         rarities = ["N"]
 

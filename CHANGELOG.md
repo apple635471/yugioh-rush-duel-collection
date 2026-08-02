@@ -4,8 +4,13 @@
 
 ### 新增
 
-- **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→PUR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
+- **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→UPR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
   - 接受可選的 `preferredRarity` 參數：搜尋指定稀有度時強制選該稀有度，異圖仍優先
+- **貴罕度同義詞正規化**：`SPR/SRP/PSR`、`NPR/NRP/PNR`、`UPR/URP/PUR` 三組拼法互為同義，一律收斂為正規名 `SPR` / `NPR` / `UPR`
+  - **Scraper**（`rarities.py` + `parser.py`）：爬取時即正規化，複合字串（如 `SR/PUR`）逐 token 轉換並去重
+  - **Backend import**（`import_service.py`）：匯入時再次正規化，既有 scraper JSON 不必重爬即自癒
+  - **一次性遷移 CLI**：`uv run python -m rd_checklist.cli normalize-rarities`（idempotent）——收斂既有 `card_variants`（衝突則合併 `owned_count`）、`cards.original_rarity_string`、`card_variant_overrides`，並改名 `user_uploads/*_PUR.jpg → *_UPR.jpg`
+  - **圖片抓取**（`image_service.py`）：`build_konami_image_urls()` 對 premium 貴罕度回傳多個候選尾綴（UPR→`_upr/_urp/_pur`、SPR→`_spr/_srp/_psr`、NPR→`_npr/_nrp/_pnr`）逐一嘗試，fallback 清單同步擴充
 - **收集進度三態標記**（`CardGrid` / `CardTable`）：卡片右下角（Grid）／最右欄（Table）顯示跨所有 variant 的持有狀態
   - 全部 variant 皆已持有（`owned_count >= 1`）→ 綠色 ✓
   - 部分 variant 已持有 → 黃色 X/N（例：1/2）
@@ -13,6 +18,7 @@
 
 ### 改善
 
+- **前端貴罕度統一為 `UPR`**：`constants/rarities.ts` 與 `RarityTabs.vue` 的「金亮鑽」正規名由 `PUR` 改為 `UPR`（篩選、顯示、設定皆同步；顏色 `gold-light` 不變）
 - **RarityTabs badge 排序**：新增 `sortedVariants` computed，badge 排列改依稀有度順序（最稀有在前），視覺上更直觀
 - **卡片預設顯示稀有度改用 `pickDefaultVariantKey()`**：`CardGridItem` 與 `CardTable` 的預設 active rarity 不再固定取第一個 variant，改用工具函式依稀有度優先序決定
 - **搜尋稀有度篩選同步至卡片顯示**：`SearchView` 將 `filters.rarity` 透過 `preferredRarity` prop 傳遞給 `CardGrid` / `CardTable`，再透傳至 `CardGridItem`，使篩選特定稀有度時卡片直接以該稀有度圖面呈現

@@ -9,18 +9,22 @@ import httpx
 
 from ..config import SCRAPER_DATA_DIR, USER_IMAGES_DIR
 
-# Rarity name mapping: app rarity → Konami CDN filename suffix (empty string = no suffix)
+# Rarity name mapping: app rarity → ordered tuple of Konami CDN filename suffixes
+# to try (empty string = no suffix). The premium rarities (SPR/NPR/UPR) appear on
+# the CDN under several letter-order spellings, so every candidate is tried in turn.
 # Rarities not listed here (e.g. erroneous "N"/"NR" entries) return None from .get(),
-# causing build_konami_image_url to return None and triggering the Rush DB fallback.
-_KONAMI_RARITY_MAP: dict[str, str] = {
-    "N":    "",      # Normal            → jp001.jpg  (no suffix)
-    "R":    "r",     # Rare              → jp001_r.jpg
-    "RR":   "rr",    # Rush Rare         → jp001_rr.jpg
-    "SR":   "sr",    # Super Rare        → jp001_sr.jpg
-    "UR":   "ur",    # Ultra Rare        → jp001_ur.jpg
-    "UPR":  "urp",   # Ultra Premium Rare
-    "SER":  "se",    # Secret Rare
-    "FORR": "for",   # Full Over Rush Rare
+# causing build_konami_image_urls to return [] and triggering the Rush DB fallback.
+_KONAMI_RARITY_MAP: dict[str, tuple[str, ...]] = {
+    "N":    ("",),                     # Normal            → jp001.jpg  (no suffix)
+    "R":    ("r",),                    # Rare              → jp001_r.jpg
+    "RR":   ("rr",),                   # Rush Rare         → jp001_rr.jpg
+    "SR":   ("sr",),                   # Super Rare        → jp001_sr.jpg
+    "SPR":  ("spr", "srp", "psr"),     # Super Premium Rare (亮鑽)
+    "NPR":  ("npr", "nrp", "pnr"),     # Normal Premium Rare (普鑽)
+    "UR":   ("ur",),                   # Ultra Rare        → jp001_ur.jpg
+    "UPR":  ("upr", "urp", "pur"),     # Ultra Premium Rare (金亮鑽)
+    "SER":  ("se",),                   # Secret Rare
+    "FORR": ("for",),                  # Full Over Rush Rare
 }
 
 
@@ -64,37 +68,39 @@ def delete_user_image(card_id: str, rarity: str) -> bool:
     return False
 
 
-def build_konami_image_url(
+def build_konami_image_urls(
     card_id: str, rarity: str, set_id: str | None = None
-) -> str | None:
-    """Build the Konami CDN URL for a card image.
+) -> list[str]:
+    """Build the candidate Konami CDN URLs for a card image.
 
     card_id can be the full form "RD/5TH1-JP005" or short form "JP005"
     (in which case set_id like "5TH1" is required).
+
+    A rarity may map to several suffix spellings (e.g. UPR → upr/urp/pur);
+    one URL is returned per candidate suffix, in priority order. Returns an
+    empty list when the URL can't be built (unknown rarity / bad id).
     """
     if "/" in card_id:
         after_slash = card_id.split("/", 1)[1]  # "5TH1-JP005"
     elif set_id:
         after_slash = f"{set_id}-{card_id}"  # "5TH1-JP005"
     else:
-        return None
+        return []
 
     if "-" not in after_slash:
-        return None
+        return []
 
     set_part, num_part = after_slash.split("-", 1)  # "5TH1", "JP005"
-    suffix = _KONAMI_RARITY_MAP.get(rarity.upper())
-    if suffix is None:
+    suffixes = _KONAMI_RARITY_MAP.get(rarity.upper())
+    if suffixes is None:
         # Unknown rarity - can't build a reliable URL
-        return None
-    if suffix == "":
-        filename = f"{num_part.lower()}.jpg"
-    else:
-        filename = f"{num_part.lower()}_{suffix}.jpg"
-    return (
+        return []
+
+    base = (
         f"https://img.konami.com/yugioh/rushduel/products/"
-        f"{set_part.lower()}/cards/{filename}"
+        f"{set_part.lower()}/cards/{num_part.lower()}"
     )
+    return [f"{base}.jpg" if s == "" else f"{base}_{s}.jpg" for s in suffixes]
 
 
 async def fetch_konami_image(
@@ -105,9 +111,8 @@ async def fetch_konami_image(
     Returns raw image bytes if found, None otherwise.
     """
     async with httpx.AsyncClient(follow_redirects=False) as client:
-        # 1) Try the direct CDN URL first
-        url = build_konami_image_url(card_id, rarity, set_id)
-        if url:
+        # 1) Try the direct CDN URLs first (every candidate suffix for the rarity)
+        for url in build_konami_image_urls(card_id, rarity, set_id):
             resp = await client.get(url, timeout=10.0)
             if resp.status_code == 200:
                 return resp.content
@@ -116,7 +121,11 @@ async def fetch_konami_image(
         return await _fetch_from_rushdb(client, card_id, rarity)
 
 
-_CDN_SUFFIXES_FALLBACK = ("", "_sp", "_r", "_rr", "_sr", "_ur", "_urp", "_se", "_for")
+_CDN_SUFFIXES_FALLBACK = (
+    "", "_sp", "_r", "_rr", "_sr", "_ur", "_se", "_for",
+    # premium-rarity spellings (SPR/NPR/UPR)
+    "_spr", "_srp", "_psr", "_npr", "_nrp", "_pnr", "_upr", "_urp", "_pur",
+)
 
 
 async def _fetch_from_rushdb(
@@ -154,11 +163,13 @@ async def _fetch_from_rushdb(
             f"https://img.konami.com/yugioh/rushduel/products/"
             f"{set_part.lower()}/cards/{num_part.lower()}"
         )
-        # 把 rarity 對應的尾綴排到第一個，其餘補在後面
-        rarity_suffix = _KONAMI_RARITY_MAP.get(rarity.upper())
-        if rarity_suffix is not None:
-            rarity_cdn = f"_{rarity_suffix}" if rarity_suffix else ""
-            ordered = [rarity_cdn] + [s for s in _CDN_SUFFIXES_FALLBACK if s != rarity_cdn]
+        # 把 rarity 對應的所有尾綴排到最前面優先試，其餘補在後面
+        rarity_suffixes = _KONAMI_RARITY_MAP.get(rarity.upper())
+        if rarity_suffixes is not None:
+            rarity_cdns = ["" if s == "" else f"_{s}" for s in rarity_suffixes]
+            ordered = rarity_cdns + [
+                s for s in _CDN_SUFFIXES_FALLBACK if s not in rarity_cdns
+            ]
         else:
             ordered = list(_CDN_SUFFIXES_FALLBACK)
 
