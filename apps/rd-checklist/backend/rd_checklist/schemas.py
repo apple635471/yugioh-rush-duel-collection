@@ -112,6 +112,7 @@ class CardUpdate(BaseModel):
     condition: Optional[str] = None
     effect: Optional[str] = None
     continuous_effect: Optional[str] = None
+    is_legend: Optional[bool] = None
 
 
 # ── Card Set ──

@@ -11,6 +11,10 @@
   - **Backend import**（`import_service.py`）：匯入時再次正規化，既有 scraper JSON 不必重爬即自癒
   - **一次性遷移 CLI**：`uv run python -m rd_checklist.cli normalize-rarities`（idempotent）——收斂既有 `card_variants`（衝突則合併 `owned_count`）、`cards.original_rarity_string`、`card_variant_overrides`，並改名 `user_uploads/*_PUR.jpg → *_UPR.jpg`
   - **圖片抓取**（`image_service.py`）：`build_konami_image_urls()` 對 premium 貴罕度回傳多個候選尾綴（UPR→`_upr/_urp/_pur`、SPR→`_spr/_srp/_psr`、NPR→`_npr/_nrp/_pnr`）逐一嘗試，fallback 清單同步擴充
+- **Legend 卡篩選與編輯**
+  - Search 新增 Legend 篩選下拉（`SearchFilters`）：全部／只看 Legend／非 Legend，透過 `GET /api/search?is_legend=true|false` 過濾
+  - 編輯卡牌時可切換 Legend（`CardDetailPanel` 編輯模式新增 checkbox）：`CardUpdate` schema 加 `is_legend`，沿用泛用 update endpoint 的 override 保護，reimport 不覆蓋
+  - （新增卡牌的 Legend checkbox 原已存在於 `CardCreatePanel`）
 - **收集進度三態標記**（`CardGrid` / `CardTable`）：卡片右下角（Grid）／最右欄（Table）顯示跨所有 variant 的持有狀態
   - 全部 variant 皆已持有（`owned_count >= 1`）→ 綠色 ✓
   - 部分 variant 已持有 → 黃色 X/N（例：1/2）

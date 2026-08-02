@@ -12,6 +12,7 @@ interface FilterState {
   attribute: string
   level: string
   rarity: string
+  is_legend: string
   owned: string
 }
 
@@ -20,6 +21,7 @@ const filters = reactive<FilterState>({
   attribute: '',
   level: '',
   rarity: '',
+  is_legend: '',
   owned: '',
 })
 
@@ -54,6 +56,12 @@ const levelOptions = [
 const rarityOptions = [
   { label: 'All Rarities', value: '' },
   ...RARITIES,
+]
+
+const legendOptions = [
+  { label: 'All Cards', value: '' },
+  { label: 'Legend 卡', value: 'true' },
+  { label: '非 Legend', value: 'false' },
 ]
 
 const ownedOptions = [
@@ -92,6 +100,14 @@ const ownedOptions = [
     <Select
       v-model="filters.rarity"
       :options="rarityOptions"
+      option-label="label"
+      option-value="value"
+      size="small"
+    />
+
+    <Select
+      v-model="filters.is_legend"
+      :options="legendOptions"
       option-label="label"
       option-value="value"
       size="small"

@@ -21,6 +21,7 @@ def search_cards(
     level: int | None = Query(None, description="Filter by level"),
     set_id: str | None = Query(None, description="Filter by set"),
     rarity: str | None = Query(None, description="Filter by rarity"),
+    is_legend: bool | None = Query(None, description="Filter by Legend flag"),
     owned: str | None = Query(None, description="all, owned, or missing"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -53,6 +54,9 @@ def search_cards(
 
     if set_id:
         query = query.filter(CardModel.set_id == set_id)
+
+    if is_legend is not None:
+        query = query.filter(CardModel.is_legend == is_legend)
 
     # Rarity filter: check card_variants
     if rarity:
