@@ -32,6 +32,10 @@
 - **CardTable Name 欄收窄為 `w-40` 並以 `truncate` 單行截斷**超長卡名，避免版面撐開
 - **CardGridItem 卡名改為單行 `truncate`**（原本 `line-clamp-2`），版面更緊湊一致
 
+### 修正
+
+- **新增卡牌時 `description` 未被儲存**：`create_card` endpoint 建立 `CardModel` 時漏傳 `body.description`（其餘欄位皆有傳），導致手動新增卡片填入的 Description 儲存後遺失。補上 `description=body.description`（編輯路徑用泛用 setattr 迴圈，不受影響）
+
 ---
 
 ## v0.9.6 (2026-04-05)

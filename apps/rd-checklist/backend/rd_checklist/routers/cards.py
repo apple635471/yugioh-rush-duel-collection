@@ -102,6 +102,7 @@ def create_card(body: CardCreate, db: Session = Depends(get_db)):
         atk=body.atk,
         defense=body.defense,
         maximum_atk=body.maximum_atk,
+        description=body.description,
         summon_condition=body.summon_condition,
         condition=body.condition,
         effect=body.effect,
