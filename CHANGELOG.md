@@ -6,12 +6,21 @@
 
 - **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→PUR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
   - 接受可選的 `preferredRarity` 參數：搜尋指定稀有度時強制選該稀有度，異圖仍優先
+- **收集進度三態標記**（`CardGrid` / `CardTable`）：卡片右下角（Grid）／最右欄（Table）顯示跨所有 variant 的持有狀態
+  - 全部 variant 皆已持有（`owned_count >= 1`）→ 綠色 ✓
+  - 部分 variant 已持有 → 黃色 X/N（例：1/2）
+  - 全部 variant 未持有 → 紅色 0/N
 
 ### 改善
 
 - **RarityTabs badge 排序**：新增 `sortedVariants` computed，badge 排列改依稀有度順序（最稀有在前），視覺上更直觀
 - **卡片預設顯示稀有度改用 `pickDefaultVariantKey()`**：`CardGridItem` 與 `CardTable` 的預設 active rarity 不再固定取第一個 variant，改用工具函式依稀有度優先序決定
 - **搜尋稀有度篩選同步至卡片顯示**：`SearchView` 將 `filters.rarity` 透過 `preferredRarity` prop 傳遞給 `CardGrid` / `CardTable`，再透傳至 `CardGridItem`，使篩選特定稀有度時卡片直接以該稀有度圖面呈現
+- **CardTable Rarity 欄自動展開**：移除固定 `w-32`，改為自動寬度，給稀有度 badge 更多空間
+- **CardTable RarityTabs overflow 折疊修正**：在 `<td>` 外層加 flex wrapper 並設 `max-w-[16rem]`，使 `+N more` overflow 折疊得以正確觸發（原先 `<td>` 缺少 flex context 導致 overflow 不生效）
+- **CardTable RarityTabs 改為靠左對齊**（`align="start"`）
+- **CardTable Name 欄收窄為 `w-40` 並以 `truncate` 單行截斷**超長卡名，避免版面撐開
+- **CardGridItem 卡名改為單行 `truncate`**（原本 `line-clamp-2`），版面更緊湊一致
 
 ---
 

@@ -67,12 +67,12 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
       <thead>
         <tr class="border-b border-[rgba(201,168,76,0.2)] text-left text-xs text-gold/60 uppercase tracking-widest font-orbitron">
           <th class="py-2.5 px-3 w-24">ID</th>
-          <th class="py-2.5 px-3 w-40">Name</th>
+          <th class="py-2.5 px-3">Name</th>
           <th class="py-2.5 px-3 w-32">Type</th>
           <th class="py-2.5 px-3 w-16 text-center">LV</th>
           <th class="py-2.5 px-3 w-20 text-center">ATK</th>
           <th class="py-2.5 px-3 w-20 text-center">DEF</th>
-          <th class="py-2.5 px-3 w-32">Rarity</th>
+          <th class="py-2.5 px-3">Rarity</th>
           <th class="py-2.5 px-3 w-28 text-center">Owned</th>
           <th class="py-2.5 px-3 w-10 text-center"></th>
         </tr>
@@ -89,7 +89,7 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
           }"
         >
           <td class="py-2.5 px-3 font-orbitron text-xs text-gold/60">{{ shortId(card.card_id) }}</td>
-          <td class="py-2.5 px-3 w-40 max-w-[10rem]">
+          <td class="py-2.5 px-3 min-w-0 overflow-hidden">
             <div class="flex items-center gap-2 min-w-0">
               <span
                 v-if="card.is_legend"
@@ -104,9 +104,9 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
           <td class="py-2.5 px-3 text-sm text-gray-200 text-center">{{ card.level ?? '-' }}</td>
           <td class="py-2.5 px-3 text-sm text-gray-200 text-center font-medium">{{ card.atk ?? '-' }}</td>
           <td class="py-2.5 px-3 text-sm text-gray-200 text-center font-medium">{{ card.defense ?? '-' }}</td>
-          <td class="py-2.5 px-3 w-36" @click.stop>
+          <td class="py-2.5 px-3" @click.stop>
             <!-- flex wrapper 提供 flex context，讓 RarityTabs 內的 flex-1 能正確量測寬度 -->
-            <div class="flex min-w-0 max-w-[9rem]">
+            <div class="flex min-w-0 max-w-[16rem]">
               <RarityTabs
                 :variants="card.variants"
                 :active-rarity="getActiveRarity(card)"
