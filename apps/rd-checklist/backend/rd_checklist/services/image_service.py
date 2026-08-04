@@ -23,8 +23,12 @@ _KONAMI_RARITY_MAP: dict[str, tuple[str, ...]] = {
     "NPR":  ("npr", "nrp", "pnr"),     # Normal Premium Rare (普鑽)
     "UR":   ("ur",),                   # Ultra Rare        → jp001_ur.jpg
     "UPR":  ("upr", "urp", "pur"),     # Ultra Premium Rare (金亮鑽)
+    "RUR":  ("rur",),                  # Red Ultra Rare (紅亮)
     "SER":  ("se",),                   # Secret Rare
-    "FORR": ("for",),                  # Full Over Rush Rare
+    # Over-rush rarities use the rarity code, fully lower-cased, as the suffix.
+    "ORR":  ("orr",),                  # Over Rush Rare (超越超速貴罕) → jp146_orr.jpg
+    "ORRPBV": ("orrpbv",),             # 黑鑽超越超速 → jp001_orrpbv.jpg
+    "FORR": ("forr", "for"),           # Full Over Rush Rare — "forr" per rule; "for" kept as legacy fallback
 }
 
 
@@ -125,6 +129,8 @@ _CDN_SUFFIXES_FALLBACK = (
     "", "_sp", "_r", "_rr", "_sr", "_ur", "_se", "_for",
     # premium-rarity spellings (SPR/NPR/UPR)
     "_spr", "_srp", "_psr", "_npr", "_nrp", "_pnr", "_upr", "_urp", "_pur",
+    # over-rush / red rarities (rarity code, fully lower-cased)
+    "_rur", "_orr", "_orrpbv", "_forr",
 )
 
 

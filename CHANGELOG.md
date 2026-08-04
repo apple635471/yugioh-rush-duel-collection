@@ -35,6 +35,7 @@
 ### 修正
 
 - **新增卡牌時 `description` 未被儲存**：`create_card` endpoint 建立 `CardModel` 時漏傳 `body.description`（其餘欄位皆有傳），導致手動新增卡片填入的 Description 儲存後遺失。補上 `description=body.description`（編輯路徑用泛用 setattr 迴圈，不受影響）
+- **over-rush 貴罕度抓不到官網卡圖**：`ORR` / `ORRPBV` 未在 `_KONAMI_RARITY_MAP`，`FORR` 尾綴用舊的 `for`，導致主路徑組不出正確 CDN URL（例：`RD/5TH1-JP146` ORR 抓不到）。改為以「rarity 全小寫」作尾綴：`ORR→orr`、`ORRPBV→orrpbv`、`FORR→forr`（保留 `for` 為 legacy fallback）、`RUR→rur`；fallback 尾綴清單同步補上 `_orr/_orrpbv/_forr/_rur`
 
 ---
 
