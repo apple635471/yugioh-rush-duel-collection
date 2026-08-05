@@ -38,87 +38,63 @@ const cardTypes = [
 
 const attributes = ['光', '暗', '炎', '水', '風', '地']
 
-const cardTypeOptions = [
-  { label: 'All Types', value: '' },
+type Option = { label: string; value: string }
+
+const cardTypeOptions: Option[] = [
+  { label: '全部種類', value: '' },
   ...cardTypes.map(t => ({ label: t, value: t })),
 ]
 
-const attributeOptions = [
-  { label: 'All Attributes', value: '' },
+const attributeOptions: Option[] = [
+  { label: '全部屬性', value: '' },
   ...attributes.map(a => ({ label: a, value: a })),
 ]
 
-const levelOptions = [
-  { label: 'All Levels', value: '' },
+const levelOptions: Option[] = [
+  { label: '全部等級', value: '' },
   ...Array.from({ length: 12 }, (_, i) => ({ label: `Lv.${i + 1}`, value: String(i + 1) })),
 ]
 
-const rarityOptions = [
-  { label: 'All Rarities', value: '' },
+const rarityOptions: Option[] = [
+  { label: '全部貴罕度', value: '' },
   ...RARITIES,
 ]
 
-const legendOptions = [
-  { label: 'All Cards', value: '' },
+const legendOptions: Option[] = [
+  { label: '全部', value: '' },
   { label: 'Legend 卡', value: 'true' },
   { label: '非 Legend', value: 'false' },
 ]
 
-const ownedOptions = [
-  { label: 'All Cards', value: '' },
-  { label: 'Owned', value: 'owned' },
-  { label: 'Missing', value: 'missing' },
+const ownedOptions: Option[] = [
+  { label: '全部', value: '' },
+  { label: '已持有', value: 'owned' },
+  { label: '未持有', value: 'missing' },
+]
+
+// Each filter carries its own visible title so the row of dropdowns is legible.
+const filterConfigs: { key: keyof FilterState; title: string; options: Option[] }[] = [
+  { key: 'card_type', title: '種類', options: cardTypeOptions },
+  { key: 'attribute', title: '屬性', options: attributeOptions },
+  { key: 'level', title: '等級', options: levelOptions },
+  { key: 'rarity', title: '貴罕度', options: rarityOptions },
+  { key: 'is_legend', title: 'Legend', options: legendOptions },
+  { key: 'owned', title: '持有', options: ownedOptions },
 ]
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-2">
-    <Select
-      v-model="filters.card_type"
-      :options="cardTypeOptions"
-      option-label="label"
-      option-value="value"
-      size="small"
-    />
-
-    <Select
-      v-model="filters.attribute"
-      :options="attributeOptions"
-      option-label="label"
-      option-value="value"
-      size="small"
-    />
-
-    <Select
-      v-model="filters.level"
-      :options="levelOptions"
-      option-label="label"
-      option-value="value"
-      size="small"
-    />
-
-    <Select
-      v-model="filters.rarity"
-      :options="rarityOptions"
-      option-label="label"
-      option-value="value"
-      size="small"
-    />
-
-    <Select
-      v-model="filters.is_legend"
-      :options="legendOptions"
-      option-label="label"
-      option-value="value"
-      size="small"
-    />
-
-    <Select
-      v-model="filters.owned"
-      :options="ownedOptions"
-      option-label="label"
-      option-value="value"
-      size="small"
-    />
+  <div class="flex flex-wrap gap-x-3 gap-y-2">
+    <div v-for="cfg in filterConfigs" :key="cfg.key" class="flex items-center gap-1.5">
+      <label class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase whitespace-nowrap">{{ cfg.title }}</label>
+      <Select
+        v-model="filters[cfg.key]"
+        :options="cfg.options"
+        option-label="label"
+        option-value="value"
+        :placeholder="cfg.options[0]?.label"
+        size="small"
+      />
+    </div>
   </div>
 </template>

@@ -201,21 +201,29 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
             </div>
           </div>
 
-          <div class="flex items-center gap-2 ml-auto">
-            <Select
-              v-model="filterRarity"
-              :options="rarityOptions"
-              option-label="label"
-              option-value="value"
-              size="small"
-            />
-            <Select
-              v-model="filterCardType"
-              :options="cardTypeOptions"
-              option-label="label"
-              option-value="value"
-              size="small"
-            />
+          <div class="flex items-center gap-3 ml-auto">
+            <div class="flex items-center gap-1.5">
+              <label class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase whitespace-nowrap">貴罕度</label>
+              <Select
+                v-model="filterRarity"
+                :options="rarityOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="全部貴罕度"
+                size="small"
+              />
+            </div>
+            <div class="flex items-center gap-1.5">
+              <label class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase whitespace-nowrap">卡種</label>
+              <Select
+                v-model="filterCardType"
+                :options="cardTypeOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="全部種類"
+                size="small"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -228,11 +236,13 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         v-else-if="ui.viewMode === 'grid'"
         :cards="filteredCards"
         :display-mode="ui.displayMode"
+        :preferred-rarity="filterRarity || undefined"
       />
       <CardTable
         v-else
         :cards="filteredCards"
         :display-mode="ui.displayMode"
+        :preferred-rarity="filterRarity || undefined"
       />
     </template>
   </div>
