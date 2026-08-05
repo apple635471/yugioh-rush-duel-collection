@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { Card } from '@/types/card'
+import type { VariantDisplayMode } from '@/constants/rarities'
 import CardGridItem from './CardGridItem.vue'
 
 const props = defineProps<{
   cards: Card[]
   preferredRarity?: string
+  displayMode?: VariantDisplayMode
 }>()
 
 const emit = defineEmits<{
@@ -23,6 +25,7 @@ const emit = defineEmits<{
       :key="card.card_id"
       :card="card"
       :preferred-rarity="props.preferredRarity"
+      :display-mode="props.displayMode"
       @ownership-changed="emit('ownershipChanged')"
     />
   </div>

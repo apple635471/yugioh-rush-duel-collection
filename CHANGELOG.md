@@ -20,8 +20,15 @@
   - 部分 variant 已持有 → 黃色 X/N（例：1/2）
   - 全部 variant 未持有 → 紅色 0/N
 
+- **卡組頁（SetView）顯示模式、篩選、雙模式進度條**
+  - **顯示模式切換**：`擁有優先`（預設，顯示你擁有的最高貴罕度，都沒有則顯示最高）／`最高貴罕度`（一律顯示最高）。狀態存於 `ui.displayMode`，透過 `displayMode` prop 傳入 `CardGrid` / `CardTable`
+  - **兩種維度篩選**：貴罕度 + 卡種下拉，選項只列該 set 內實際出現的值，貴罕度依顯示順序（最稀有在前）排列
+  - **雙模式進度條**（單一條、可切換）：`淨收集`（預設，排除異圖 + 排除 SER，但該卡只有 SER 時保留）／`標準`（全部 variant）。兩者皆由前端 `cards` 即時計算，隨 `owned_count` 變動即時更新
+  - **SER 一律視為最低貴罕度、同貴罕度異圖排在原版之後**：新增 `displayRarityRank()` / `compareVariantsForDisplay()` / `orderVariantsForDisplay()`（`constants/rarities.ts`）
+
 ### 改善
 
+- **貴罕度顯示排序統一**：`pickDefaultVariantKey()` 與 `RarityTabs` 改用 `compareVariantsForDisplay()`（SER 最低、原版優先於異圖）；預設選取的異圖偏好由「異圖優先」改為「原版優先」，tab badge 排序一併調整（search 頁 tab 也適用）
 - **前端貴罕度統一為 `UPR`**：`constants/rarities.ts` 與 `RarityTabs.vue` 的「金亮鑽」正規名由 `PUR` 改為 `UPR`（篩選、顯示、設定皆同步；顏色 `gold-light` 不變）
 - **RarityTabs badge 排序**：新增 `sortedVariants` computed，badge 排列改依稀有度順序（最稀有在前），視覺上更直觀
 - **卡片預設顯示稀有度改用 `pickDefaultVariantKey()`**：`CardGridItem` 與 `CardTable` 的預設 active rarity 不再固定取第一個 variant，改用工具函式依稀有度優先序決定

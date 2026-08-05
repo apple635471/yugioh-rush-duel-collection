@@ -28,7 +28,7 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 |------|------|------|
 | `/` | HomeView | 全部卡組列表 |
 | `/sets/:productType` | HomeView (same) | 依產品類型篩選 |
-| `/set/:setId` | SetView (lazy) | 卡組內的卡片列表 |
+| `/set/:setId` | SetView (lazy) | 卡組內的卡片列表；含顯示模式/進度模式切換、貴罕度+卡種篩選（選項僅列該 set 實際出現者）、雙模式進度條（前端由 `cards` 即時計算，隨 owned_count 變動更新）|
 | `/search?q=&...` | SearchView (lazy) | 搜尋結果 |
 
 ## Pinia Stores
@@ -41,6 +41,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 
 **useUiStore** — UI 狀態
 - `viewMode: 'grid' | 'table'` — Grid/Table 切換
+- `displayMode: 'owned' | 'highest'` — SetView 預設 variant 選取模式（`owned`=擁有優先、`highest`=一律最高；預設 `owned`）
+- `progressMode: 'standard' | 'net'` — SetView 進度條模式（`standard`=全部 variant、`net`=排除異圖與 SER；預設 `net`）
 - `sidebarOpen`, `sidebarCardId`, `sidebarRarity` — 側邊欄
 - `sidebarMode: 'detail' | 'create'` — 側邊欄模式 (檢視/建立)
 - `sidebarCreateSetId: string | null` — 建立模式的目標 set_id
