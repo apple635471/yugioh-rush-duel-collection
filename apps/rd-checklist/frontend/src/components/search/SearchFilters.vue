@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import { RARITIES } from '@/constants/rarities'
 import Select from 'primevue/select'
+import IftaLabel from 'primevue/iftalabel'
+import Button from 'primevue/button'
 
 const emit = defineEmits<{
   change: [filters: FilterState]
@@ -41,22 +43,22 @@ const attributes = ['光', '暗', '炎', '水', '風', '地']
 type Option = { label: string; value: string }
 
 const cardTypeOptions: Option[] = [
-  { label: '全部種類', value: '' },
+  { label: '全部', value: '' },
   ...cardTypes.map(t => ({ label: t, value: t })),
 ]
 
 const attributeOptions: Option[] = [
-  { label: '全部屬性', value: '' },
+  { label: '全部', value: '' },
   ...attributes.map(a => ({ label: a, value: a })),
 ]
 
 const levelOptions: Option[] = [
-  { label: '全部等級', value: '' },
+  { label: '全部', value: '' },
   ...Array.from({ length: 12 }, (_, i) => ({ label: `Lv.${i + 1}`, value: String(i + 1) })),
 ]
 
 const rarityOptions: Option[] = [
-  { label: '全部貴罕度', value: '' },
+  { label: '全部', value: '' },
   ...RARITIES,
 ]
 
@@ -72,7 +74,6 @@ const ownedOptions: Option[] = [
   { label: '未持有', value: 'missing' },
 ]
 
-// Each filter carries its own visible title so the row of dropdowns is legible.
 const filterConfigs: { key: keyof FilterState; title: string; options: Option[] }[] = [
   { key: 'card_type', title: '種類', options: cardTypeOptions },
   { key: 'attribute', title: '屬性', options: attributeOptions },
@@ -81,20 +82,54 @@ const filterConfigs: { key: keyof FilterState; title: string; options: Option[] 
   { key: 'is_legend', title: 'Legend', options: legendOptions },
   { key: 'owned', title: '持有', options: ownedOptions },
 ]
+
+const hasActiveFilters = computed(() =>
+  (Object.keys(filters) as (keyof FilterState)[]).some(k => filters[k] !== ''),
+)
+
+function clearFilters() {
+  ;(Object.keys(filters) as (keyof FilterState)[]).forEach(k => { filters[k] = '' })
+}
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-x-3 gap-y-2">
-    <div v-for="cfg in filterConfigs" :key="cfg.key" class="flex items-center gap-1.5">
-      <label class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase whitespace-nowrap">{{ cfg.title }}</label>
-      <Select
-        v-model="filters[cfg.key]"
-        :options="cfg.options"
-        option-label="label"
-        option-value="value"
-        :placeholder="cfg.options[0]?.label"
+  <div class="rounded-xl border border-[rgba(201,168,76,0.16)] bg-dark-2/70 px-3 py-3">
+    <div class="flex flex-wrap items-center gap-2.5">
+      <IftaLabel v-for="cfg in filterConfigs" :key="cfg.key" class="w-[9.5rem]">
+        <Select
+          :input-id="`filter-${cfg.key}`"
+          v-model="filters[cfg.key]"
+          :options="cfg.options"
+          option-label="label"
+          option-value="value"
+          placeholder="全部"
+          class="w-full"
+          :class="{ 'filter-active': filters[cfg.key] }"
+        />
+        <label :for="`filter-${cfg.key}`">{{ cfg.title }}</label>
+      </IftaLabel>
+
+      <Button
+        v-if="hasActiveFilters"
+        @click="clearFilters"
         size="small"
-      />
+        severity="secondary"
+        variant="text"
+        class="ml-auto shrink-0 !text-xs"
+      >
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        清除篩選
+      </Button>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Highlight a dropdown when it holds a non-default value */
+.filter-active {
+  border-color: rgba(201, 168, 76, 0.7);
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.35);
+}
+</style>

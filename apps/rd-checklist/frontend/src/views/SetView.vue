@@ -12,6 +12,8 @@ import CardGrid from '@/components/cards/CardGrid.vue'
 import CardTable from '@/components/cards/CardTable.vue'
 import SetMetadataEditor from '@/components/detail/SetMetadataEditor.vue'
 import Select from 'primevue/select'
+import IftaLabel from 'primevue/iftalabel'
+import Button from 'primevue/button'
 
 const route = useRoute()
 const store = useCardSetsStore()
@@ -42,14 +44,14 @@ const rarityOptions = computed(() => {
   const opts = [...present]
     .sort((a, b) => displayRarityRank(b) - displayRarityRank(a))
     .map(r => ({ label: label(r), value: r }))
-  return [{ label: '全部貴罕度', value: '' }, ...opts]
+  return [{ label: '全部', value: '' }, ...opts]
 })
 
 const cardTypeOptions = computed(() => {
   const present = new Set<string>()
   for (const c of cards.value) if (c.card_type) present.add(c.card_type)
   const opts = [...present].sort().map(t => ({ label: t, value: t }))
-  return [{ label: '全部種類', value: '' }, ...opts]
+  return [{ label: '全部', value: '' }, ...opts]
 })
 
 const filteredCards = computed<Card[]>(() =>
@@ -201,29 +203,46 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
             </div>
           </div>
 
-          <div class="flex items-center gap-3 ml-auto">
-            <div class="flex items-center gap-1.5">
-              <label class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase whitespace-nowrap">貴罕度</label>
+          <div class="flex items-center gap-2.5 ml-auto">
+            <IftaLabel class="w-[9.5rem]">
               <Select
+                input-id="set-filter-rarity"
                 v-model="filterRarity"
                 :options="rarityOptions"
                 option-label="label"
                 option-value="value"
-                placeholder="全部貴罕度"
-                size="small"
+                placeholder="全部"
+                class="w-full"
+                :class="{ 'filter-active': filterRarity }"
               />
-            </div>
-            <div class="flex items-center gap-1.5">
-              <label class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase whitespace-nowrap">卡種</label>
+              <label for="set-filter-rarity">貴罕度</label>
+            </IftaLabel>
+            <IftaLabel class="w-[9.5rem]">
               <Select
+                input-id="set-filter-cardtype"
                 v-model="filterCardType"
                 :options="cardTypeOptions"
                 option-label="label"
                 option-value="value"
-                placeholder="全部種類"
-                size="small"
+                placeholder="全部"
+                class="w-full"
+                :class="{ 'filter-active': filterCardType }"
               />
-            </div>
+              <label for="set-filter-cardtype">卡種</label>
+            </IftaLabel>
+            <Button
+              v-if="filterRarity || filterCardType"
+              @click="filterRarity = ''; filterCardType = ''"
+              size="small"
+              severity="secondary"
+              variant="text"
+              class="shrink-0 !text-xs"
+            >
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              清除
+            </Button>
           </div>
         </div>
       </div>
@@ -247,3 +266,11 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
     </template>
   </div>
 </template>
+
+<style scoped>
+/* Highlight a filter dropdown when it holds a non-default value */
+.filter-active {
+  border-color: rgba(201, 168, 76, 0.7);
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.35);
+}
+</style>

@@ -29,7 +29,7 @@
 ### 改善
 
 - **篩選指定貴罕度時，卡片預設顯示該貴罕度**：SetView 將 `filterRarity` 以 `preferredRarity` prop 傳給 `CardGrid` / `CardTable`，篩選某貴罕度時卡片直接以該貴罕度圖面呈現（tab 排序仍依顯示順序，最稀有在前）。Search 頁原已如此
-- **篩選下拉可讀性**：每個下拉加上可見欄位標題（種類／屬性／等級／貴罕度／Legend／持有），並以 `placeholder` 顯示預設文字（`全部貴罕度` / `全部種類` …）；Search 頁預設選項由英文 `All X` 改為中文 `全部X`（修正 PrimeVue Select 對空值 `''` 顯示空白的問題）
+- **篩選 UI 重新設計（Search 頁 + SetView）**：改用 PrimeVue `IftaLabel` 把欄位名（種類／屬性／等級／貴罕度／Legend／持有；SetView 為貴罕度／卡種）收進欄位內頂端，外層包一層低調 panel；每個下拉以 `placeholder` 顯示預設「全部」（修正 PrimeVue Select 對空值 `''` 顯示空白）；有值的篩選以金色外框高亮，並提供「清除篩選」按鈕。Search 頁預設選項由英文 `All X` 改為中文
 - **貴罕度顯示排序統一**：`pickDefaultVariantKey()` 與 `RarityTabs` 改用 `compareVariantsForDisplay()`（SER 最低、原版優先於異圖）；預設選取的異圖偏好由「異圖優先」改為「原版優先」，tab badge 排序一併調整（search 頁 tab 也適用）
 - **前端貴罕度統一為 `UPR`**：`constants/rarities.ts` 與 `RarityTabs.vue` 的「金亮鑽」正規名由 `PUR` 改為 `UPR`（篩選、顯示、設定皆同步；顏色 `gold-light` 不變）
 - **RarityTabs badge 排序**：新增 `sortedVariants` computed，badge 排列改依稀有度順序（最稀有在前），視覺上更直觀
