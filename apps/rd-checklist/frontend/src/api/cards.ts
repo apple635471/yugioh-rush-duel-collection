@@ -30,6 +30,7 @@ export async function searchCards(params: {
   level?: number
   set_id?: string
   rarity?: string
+  is_legend?: boolean
   owned?: string
   limit?: number
   offset?: number

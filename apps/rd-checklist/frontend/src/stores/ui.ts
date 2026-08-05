@@ -3,6 +3,16 @@ import { ref } from 'vue'
 
 export const useUiStore = defineStore('ui', () => {
   const viewMode = ref<'grid' | 'table'>('grid')
+
+  // Set-page default-variant display mode:
+  //   'owned'   → show the rarest rarity you own (fallback: rarest overall)
+  //   'highest' → always show the rarest rarity
+  const displayMode = ref<'owned' | 'highest'>('owned')
+
+  // Set-page progress-bar mode:
+  //   'standard' → every variant counts
+  //   'net'      → exclude alt-art, and exclude SER unless SER is the card's only rarity
+  const progressMode = ref<'standard' | 'net'>('net')
   const sidebarOpen = ref(false)
   const sidebarMinimized = ref(false)
   const sidebarCardId = ref<string | null>(null)
@@ -57,7 +67,8 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   return {
-    viewMode, sidebarOpen, sidebarMinimized, sidebarCardId, sidebarRarity,
+    viewMode, displayMode, progressMode,
+    sidebarOpen, sidebarMinimized, sidebarCardId, sidebarRarity,
     sidebarMode, sidebarCreateSetId, imageUpdates,
     toggleView, openSidebar, openCreateSidebar, closeSidebar,
     minimizeSidebar, expandSidebar, markImageUpdated,

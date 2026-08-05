@@ -94,6 +94,7 @@ function startEdit() {
     condition: c.condition,
     effect: c.effect,
     continuous_effect: c.continuous_effect,
+    is_legend: c.is_legend,
   })
   // Expand sections that already have content
   expandedSections.description = !!c.description
@@ -734,6 +735,10 @@ async function submitDeleteVariant() {
       <div class="mb-4 space-y-1.5">
         <InputText v-model="form.name_zh" placeholder="Chinese Name" fluid size="small" />
         <InputText v-model="form.name_jp" placeholder="Japanese Name" fluid size="small" />
+        <label class="flex items-center gap-2 text-xs text-gray-300 pt-0.5 cursor-pointer">
+          <Checkbox v-model="form.is_legend" :binary="true" input-id="legend-edit" />
+          <span>Legend 卡</span>
+        </label>
       </div>
     </template>
     <template v-else>

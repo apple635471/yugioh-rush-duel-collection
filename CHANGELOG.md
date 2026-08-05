@@ -4,15 +4,34 @@
 
 ### 新增
 
-- **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→PUR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
+- **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→UPR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
   - 接受可選的 `preferredRarity` 參數：搜尋指定稀有度時強制選該稀有度，異圖仍優先
+- **貴罕度同義詞正規化**：`SPR/SRP/PSR`、`NPR/NRP/PNR`、`UPR/URP/PUR` 三組拼法互為同義，一律收斂為正規名 `SPR` / `NPR` / `UPR`
+  - **Scraper**（`rarities.py` + `parser.py`）：爬取時即正規化，複合字串（如 `SR/PUR`）逐 token 轉換並去重
+  - **Backend import**（`import_service.py`）：匯入時再次正規化，既有 scraper JSON 不必重爬即自癒
+  - **一次性遷移 CLI**：`uv run python -m rd_checklist.cli normalize-rarities`（idempotent）——收斂既有 `card_variants`（衝突則合併 `owned_count`）、`cards.original_rarity_string`、`card_variant_overrides`，並改名 `user_uploads/*_PUR.jpg → *_UPR.jpg`
+  - **圖片抓取**（`image_service.py`）：`build_konami_image_urls()` 對 premium 貴罕度回傳多個候選尾綴（UPR→`_upr/_urp/_pur`、SPR→`_spr/_srp/_psr`、NPR→`_npr/_nrp/_pnr`）逐一嘗試，fallback 清單同步擴充
+- **Legend 卡篩選與編輯**
+  - Search 新增 Legend 篩選下拉（`SearchFilters`）：全部／只看 Legend／非 Legend，透過 `GET /api/search?is_legend=true|false` 過濾
+  - 編輯卡牌時可切換 Legend（`CardDetailPanel` 編輯模式新增 checkbox）：`CardUpdate` schema 加 `is_legend`，沿用泛用 update endpoint 的 override 保護，reimport 不覆蓋
+  - （新增卡牌的 Legend checkbox 原已存在於 `CardCreatePanel`）
 - **收集進度三態標記**（`CardGrid` / `CardTable`）：卡片右下角（Grid）／最右欄（Table）顯示跨所有 variant 的持有狀態
   - 全部 variant 皆已持有（`owned_count >= 1`）→ 綠色 ✓
   - 部分 variant 已持有 → 黃色 X/N（例：1/2）
   - 全部 variant 未持有 → 紅色 0/N
 
+- **卡組頁（SetView）顯示模式、篩選、雙模式進度條**
+  - **顯示模式切換**：`擁有優先`（預設，顯示你擁有的最高貴罕度，都沒有則顯示最高）／`最高貴罕度`（一律顯示最高）。狀態存於 `ui.displayMode`，透過 `displayMode` prop 傳入 `CardGrid` / `CardTable`
+  - **兩種維度篩選**：貴罕度 + 卡種下拉，選項只列該 set 內實際出現的值，貴罕度依顯示順序（最稀有在前）排列
+  - **雙模式進度條**（單一條、可切換）：`淨收集`（預設，排除異圖 + 排除 SER，但該卡只有 SER 時保留）／`標準`（全部 variant）。兩者皆由前端 `cards` 即時計算，隨 `owned_count` 變動即時更新
+  - **SER 一律視為最低貴罕度、同貴罕度異圖排在原版之後**：新增 `displayRarityRank()` / `compareVariantsForDisplay()` / `orderVariantsForDisplay()`（`constants/rarities.ts`）
+
 ### 改善
 
+- **篩選指定貴罕度時，卡片預設顯示該貴罕度**：SetView 將 `filterRarity` 以 `preferredRarity` prop 傳給 `CardGrid` / `CardTable`，篩選某貴罕度時卡片直接以該貴罕度圖面呈現（tab 排序仍依顯示順序，最稀有在前）。Search 頁原已如此
+- **篩選 UI 重新設計（Search 頁 + SetView）**：改用 PrimeVue `IftaLabel` 把欄位名（種類／屬性／等級／貴罕度／Legend／持有；SetView 為貴罕度／卡種）收進欄位內頂端，外層包一層低調 panel；每個下拉以 `placeholder` 顯示預設「全部」（修正 PrimeVue Select 對空值 `''` 顯示空白）；有值的篩選以金色外框高亮，並提供「清除篩選」按鈕。Search 頁預設選項由英文 `All X` 改為中文
+- **貴罕度顯示排序統一**：`pickDefaultVariantKey()` 與 `RarityTabs` 改用 `compareVariantsForDisplay()`（SER 最低、原版優先於異圖）；預設選取的異圖偏好由「異圖優先」改為「原版優先」，tab badge 排序一併調整（search 頁 tab 也適用）
+- **前端貴罕度統一為 `UPR`**：`constants/rarities.ts` 與 `RarityTabs.vue` 的「金亮鑽」正規名由 `PUR` 改為 `UPR`（篩選、顯示、設定皆同步；顏色 `gold-light` 不變）
 - **RarityTabs badge 排序**：新增 `sortedVariants` computed，badge 排列改依稀有度順序（最稀有在前），視覺上更直觀
 - **卡片預設顯示稀有度改用 `pickDefaultVariantKey()`**：`CardGridItem` 與 `CardTable` 的預設 active rarity 不再固定取第一個 variant，改用工具函式依稀有度優先序決定
 - **搜尋稀有度篩選同步至卡片顯示**：`SearchView` 將 `filters.rarity` 透過 `preferredRarity` prop 傳遞給 `CardGrid` / `CardTable`，再透傳至 `CardGridItem`，使篩選特定稀有度時卡片直接以該稀有度圖面呈現
@@ -21,6 +40,11 @@
 - **CardTable RarityTabs 改為靠左對齊**（`align="start"`）
 - **CardTable Name 欄收窄為 `w-40` 並以 `truncate` 單行截斷**超長卡名，避免版面撐開
 - **CardGridItem 卡名改為單行 `truncate`**（原本 `line-clamp-2`），版面更緊湊一致
+
+### 修正
+
+- **新增卡牌時 `description` 未被儲存**：`create_card` endpoint 建立 `CardModel` 時漏傳 `body.description`（其餘欄位皆有傳），導致手動新增卡片填入的 Description 儲存後遺失。補上 `description=body.description`（編輯路徑用泛用 setattr 迴圈，不受影響）
+- **over-rush 貴罕度抓不到官網卡圖**：`ORR` / `ORRPBV` 未在 `_KONAMI_RARITY_MAP`，`FORR` 尾綴用舊的 `for`，導致主路徑組不出正確 CDN URL（例：`RD/5TH1-JP146` ORR 抓不到）。改為以「rarity 全小寫」作尾綴：`ORR→orr`、`ORRPBV→orrpbv`、`FORR→forr`（保留 `for` 為 legacy fallback）、`RUR→rur`；fallback 尾綴清單同步補上 `_orr/_orrpbv/_forr/_rur`
 
 ---
 

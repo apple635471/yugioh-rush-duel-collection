@@ -5,6 +5,7 @@ import { variantKey } from '@/types/card'
 import { getCardImageUrl, updateOwnership } from '@/api/cards'
 import { useUiStore } from '@/stores/ui'
 import { pickDefaultVariantKey } from '@/constants/rarities'
+import type { VariantDisplayMode } from '@/constants/rarities'
 
 import OwnershipBadge from './OwnershipBadge.vue'
 import RarityTabs from './RarityTabs.vue'
@@ -14,6 +15,7 @@ import Button from 'primevue/button'
 const props = defineProps<{
   card: Card
   preferredRarity?: string
+  displayMode?: VariantDisplayMode
 }>()
 
 const emit = defineEmits<{
@@ -21,7 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
-const activeRarity = ref(pickDefaultVariantKey(props.card.variants, props.preferredRarity))
+const activeRarity = ref(pickDefaultVariantKey(props.card.variants, props.preferredRarity, props.displayMode))
 const cardEl = ref<HTMLElement | null>(null)
 const copied = ref(false)
 
@@ -51,6 +53,11 @@ const collectionStatus = computed(() => {
   const total = props.card.variants.length
   const owned = props.card.variants.filter(v => v.owned_count >= 1).length
   return { owned, total }
+})
+
+// Display-mode / preferred-rarity change → re-pick the default variant
+watch(() => [props.displayMode, props.preferredRarity], () => {
+  activeRarity.value = pickDefaultVariantKey(props.card.variants, props.preferredRarity, props.displayMode)
 })
 
 // Sidebar → Grid: sync rarity when sidebar switches rarity for this card

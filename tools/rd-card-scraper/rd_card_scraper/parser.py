@@ -42,6 +42,7 @@ from typing import Optional
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 from .models import Card, CardSet
+from .rarities import normalize_rarity_string
 
 logger = logging.getLogger(__name__)
 
@@ -513,7 +514,8 @@ def _parse_card_header(header_text: str, card_id: str) -> Card:
     rarity = "N"
     rarity_match = RARITY_RE.search(header_text)
     if rarity_match:
-        rarity = rarity_match.group(1)
+        # Canonicalize synonym spellings (e.g. SR/PUR → SR/UPR) at the source.
+        rarity = normalize_rarity_string(rarity_match.group(1))
 
     # Remove card ID
     name_part = header_text.replace(card_id, "").strip()

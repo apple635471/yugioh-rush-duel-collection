@@ -24,6 +24,7 @@ const filters = ref({
   attribute: '',
   level: '',
   rarity: '',
+  is_legend: '',
   owned: '',
 })
 
@@ -38,6 +39,7 @@ async function doSearch() {
     if (filters.value.attribute) params.attribute = filters.value.attribute
     if (filters.value.level) params.level = Number(filters.value.level)
     if (filters.value.rarity) params.rarity = filters.value.rarity
+    if (filters.value.is_legend) params.is_legend = filters.value.is_legend === 'true'
     if (filters.value.owned) params.owned = filters.value.owned
     params.limit = 200
 

@@ -46,12 +46,14 @@ DELETE /api/images/card/{card_id}/{rarity}/upload
 
 POST /api/images/card/{card_id}/{rarity}/fetch-konami
   → 三段式抓圖流程（image_service.py）：
-  1. 主路徑：依 rarity 組出 CDN URL 直接試
-     - N→無尾綴, R→_r, RR→_rr, SR→_sr, UR→_ur, UPR→_urp, SER→_se, FORR→_for
+  1. 主路徑：依 rarity 組出 CDN URL 直接試（`build_konami_image_urls` 回傳「多個」候選 URL）
+     - N→無尾綴, R→_r, RR→_rr, SR→_sr, UR→_ur, SER→_se, FORR→_for
+     - premium 貴罕度一個 rarity 對應多個尾綴拼法，逐一試：
+       - SPR→(_spr, _srp, _psr)、NPR→(_npr, _nrp, _pnr)、UPR→(_upr, _urp, _pur)
      - rarity 不在 map 裡（如 DB 誤植的 NR）→ 跳過主路徑，直接進備案
   2. 備案（CDN 404 或 rarity 未知）：打 Rush DB card number 搜尋
      - stype=4&keyword={card_num} 取得 cid/ciid/enc
-     - 依 rarity 對應尾綴優先，再嘗試所有已知尾綴（"", _sp, _r, _rr, _sr, _ur, _urp, _se, _for）
+     - 依 rarity 對應的「所有」尾綴優先，再嘗試所有已知尾綴（"", _sp, _r, _rr, _sr, _ur, _se, _for, _spr/_srp/_psr, _npr/_nrp/_pnr, _upr/_urp/_pur）
      - 找到 CDN 200 → 使用 CDN 圖（高畫質）
   3. 最終手段：Rush DB get_image.action（低畫質 SAMPLE，盡量避免）
   → 取得圖片後存到 user_uploads，更新 DB (同 upload)

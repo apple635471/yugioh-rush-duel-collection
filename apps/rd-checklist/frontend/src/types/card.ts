@@ -94,6 +94,7 @@ export interface CardUpdate {
   condition?: string | null
   effect?: string | null
   continuous_effect?: string | null
+  is_legend?: boolean
 }
 
 /** Phase 1 OCR result — raw Japanese text, no translation. */

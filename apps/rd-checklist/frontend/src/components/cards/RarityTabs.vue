@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import type { CardVariant } from '@/types/card'
 import { variantKey } from '@/types/card'
-import { RARITY_VALUES } from '@/constants/rarities'
+import { compareVariantsForDisplay } from '@/constants/rarities'
 import Button from 'primevue/button'
 import Popover from 'primevue/popover'
 
@@ -30,7 +30,7 @@ const rarityColors: Record<string, string> = {
 
   // ── Ultra Rare ──────────────────────────────────────────────────────────
   UR:          'text-gold border-gold',                // 金亮
-  PUR:         'text-gold-light border-gold-light',    // 金亮鑽（UR + 鑽石）
+  UPR:         'text-gold-light border-gold-light',    // 金亮鑽（UR + 鑽石）
   RUR:         'text-rose-400 border-rose-400',        // 紅亮（紅色 UR）
 
   // ── Secret Rare ─────────────────────────────────────────────────────────
@@ -59,14 +59,9 @@ function tabLabel(v: CardVariant): string {
   return v.is_alternate_art ? `${v.rarity} ★` : v.rarity
 }
 
-// ── Sorted variants: rarest first, alt-art before non-alt within same rarity ──
+// ── Sorted variants: rarest first (SER lowest), original art before its alt ──
 const sortedVariants = computed<CardVariant[]>(() =>
-  [...props.variants].sort((a, b) => {
-    const aIdx = RARITY_VALUES.indexOf(a.rarity)
-    const bIdx = RARITY_VALUES.indexOf(b.rarity)
-    if (aIdx !== bIdx) return bIdx - aIdx
-    return (b.is_alternate_art ? 1 : 0) - (a.is_alternate_art ? 1 : 0)
-  })
+  [...props.variants].sort(compareVariantsForDisplay)
 )
 
 // ── Overflow measurement ──────────────────────────────────────────────────

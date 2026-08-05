@@ -10,6 +10,7 @@ from pathlib import Path
 from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
+from .services.rarity_migration import migrate_rarities
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -46,6 +47,13 @@ def main(argv: list[str] | None = None) -> None:
         help="Force overwrite (but never overwrites owned_count)",
     )
 
+    # normalize-rarities
+    sub.add_parser(
+        "normalize-rarities",
+        help="Collapse synonym rarities (SRP/PSR→SPR, NRP/PNR→NPR, URP/PUR→UPR) "
+        "in existing DB rows and user-uploaded images (idempotent)",
+    )
+
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
 
@@ -72,6 +80,21 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  Sets:     {stats['sets_imported']}")
             print(f"  Cards:    {stats['cards_imported']}")
             print(f"  Variants: {stats['variants_created']}")
+        finally:
+            db.close()
+
+    elif args.command == "normalize-rarities":
+        init_db()
+        db = SessionLocal()
+        try:
+            stats = migrate_rarities(db)
+            print("\nRarity normalization complete:")
+            print(f"  Variants renamed:  {stats['variants_renamed']}")
+            print(f"  Variants merged:   {stats['variants_merged']}")
+            print(f"  Card strings:      {stats['cards_string_updated']}")
+            print(f"  Overrides updated: {stats['overrides_updated']}")
+            print(f"  Images renamed:    {stats['images_renamed']}")
+            print(f"  Images de-duped:   {stats['images_skipped_conflict']}")
         finally:
             db.close()
 
