@@ -7,8 +7,12 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
+import Slider from 'primevue/slider'
 import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
+import StatInput from '@/components/detail/StatInput.vue'
+import { MONSTER_TYPES } from '@/constants/monsterTypes'
+import { isStatValid, isLevelValid } from '@/utils/cardFields'
 
 const props = defineProps<{
   setId: string
@@ -55,6 +59,12 @@ const form = reactive<CardCreate>({
 const isMonster = computed(() => (form.card_type ?? '').includes('怪獸'))
 const isMaximum = computed(() => (form.card_type ?? '').includes('巨極'))
 
+// Slider needs a plain number; bridge the nullable form.level
+const levelModel = computed<number | undefined>({
+  get: () => form.level ?? undefined,
+  set: (v) => { form.level = v ?? null },
+})
+
 // Text section expand toggles (same pattern as CardDetailPanel)
 const expandedSections = reactive<Record<string, boolean>>({
   description: false,
@@ -93,6 +103,16 @@ async function onSubmit() {
   if (!form.card_id || !form.set_id) {
     error.value = 'Card ID and Set ID are required'
     return
+  }
+  if (isMonster.value) {
+    if (!isLevelValid(form.level)) {
+      error.value = 'Level 需為 1–12 的整數'
+      return
+    }
+    if (!isStatValid(form.atk) || !isStatValid(form.defense) || !isStatValid(form.maximum_atk)) {
+      error.value = 'ATK / DEF 只能填數字或 ?'
+      return
+    }
   }
   saving.value = true
   error.value = ''
@@ -186,56 +206,53 @@ async function onSubmit() {
 
         <div class="flex items-center px-3 py-2 border-b border-gray-700">
           <span class="w-20 text-xs text-gray-400 shrink-0">Race</span>
-          <InputText
+          <Select
             v-model="form.monster_type"
-            placeholder="e.g. 龍族"
-            fluid
+            :options="MONSTER_TYPES"
+            editable
+            placeholder="選擇或輸入種族"
             size="small"
             class="flex-1"
           />
         </div>
 
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">Level</span>
-          <InputNumber
-            v-model="form.level"
-            :min="1"
-            :max="12"
-            :use-grouping="false"
-            fluid
-            size="small"
-            class="flex-1"
-          />
+        <div class="flex items-start px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0 pt-1.5">Level</span>
+          <div class="flex-1 space-y-2">
+            <InputNumber
+              v-model="form.level"
+              :min="1"
+              :max="12"
+              :step="1"
+              :max-fraction-digits="0"
+              :use-grouping="false"
+              show-buttons
+              fluid
+              size="small"
+            />
+            <Slider v-model="levelModel" :min="1" :max="12" :step="1" />
+          </div>
         </div>
 
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">ATK</span>
-          <InputText
-            v-model="form.atk"
-            fluid
-            size="small"
-            class="flex-1"
-          />
+        <div class="flex items-start px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0 pt-1.5">ATK</span>
+          <div class="flex-1">
+            <StatInput v-model="form.atk" />
+          </div>
         </div>
 
-        <div class="flex items-center px-3 py-2 border-b border-gray-700">
-          <span class="w-20 text-xs text-gray-400 shrink-0">DEF</span>
-          <InputText
-            v-model="form.defense"
-            fluid
-            size="small"
-            class="flex-1"
-          />
+        <div class="flex items-start px-3 py-2 border-b border-gray-700">
+          <span class="w-20 text-xs text-gray-400 shrink-0 pt-1.5">DEF</span>
+          <div class="flex-1">
+            <StatInput v-model="form.defense" />
+          </div>
         </div>
 
-        <div v-if="isMaximum" class="flex items-center px-3 py-2 border-b border-gray-700 last:border-b-0">
-          <span class="w-20 text-xs text-gold shrink-0">MAX ATK</span>
-          <InputText
-            v-model="form.maximum_atk"
-            fluid
-            size="small"
-            class="flex-1"
-          />
+        <div v-if="isMaximum" class="flex items-start px-3 py-2 border-b border-gray-700 last:border-b-0">
+          <span class="w-20 text-xs text-gold shrink-0 pt-1.5">MAX ATK</span>
+          <div class="flex-1">
+            <StatInput v-model="form.maximum_atk" />
+          </div>
         </div>
       </template>
     </div>

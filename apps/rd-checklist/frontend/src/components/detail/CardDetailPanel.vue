@@ -15,7 +15,11 @@ import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
+import Slider from 'primevue/slider'
 import Textarea from 'primevue/textarea'
+import StatInput from '@/components/detail/StatInput.vue'
+import { MONSTER_TYPES } from '@/constants/monsterTypes'
+import { isStatValid, isLevelValid } from '@/utils/cardFields'
 
 const props = defineProps<{
   card: Card
@@ -58,6 +62,12 @@ const attributeOptions = [
   { label: '-', value: null },
   ...attributes.map(a => ({ label: a, value: a })),
 ]
+
+// Slider needs a plain number; bridge the nullable form.level
+const levelModel = computed<number | undefined>({
+  get: () => form.level ?? undefined,
+  set: (v) => { form.level = v ?? null },
+})
 
 const isMonster = computed(() => {
   const ct = editing.value ? (form.card_type ?? props.card.card_type) : props.card.card_type
@@ -111,6 +121,18 @@ function cancelEdit() {
 }
 
 async function saveEdit() {
+  // Validate monster stat fields before saving
+  if (isMonster.value) {
+    if (!isLevelValid(form.level)) {
+      error.value = 'Level 需為 1–12 的整數'
+      return
+    }
+    if (!isStatValid(form.atk) || !isStatValid(form.defense) || !isStatValid(form.maximum_atk)) {
+      error.value = 'ATK / DEF 只能填數字或 ?'
+      return
+    }
+  }
+
   saving.value = true
   error.value = ''
   try {
@@ -865,51 +887,57 @@ async function submitDeleteVariant() {
           </div>
         </div>
 
-        <!-- Monster Type -->
+        <!-- Monster Type (種族): pick from common races or type a new one -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">種族</span>
           <div class="px-3 py-2 flex-1">
-            <InputText
+            <Select
               v-model="form.monster_type"
-              placeholder="e.g. 龍族"
-              fluid
+              :options="MONSTER_TYPES"
+              editable
+              placeholder="選擇或輸入種族"
               size="small"
+              class="w-full"
             />
           </div>
         </div>
 
-        <!-- Level -->
+        <!-- Level: number input + 1–12 slider -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Level</span>
-          <div class="px-3 py-2 flex-1">
+          <div class="px-3 py-2 flex-1 space-y-2">
             <InputNumber
               v-model="form.level"
               :min="1"
               :max="12"
+              :step="1"
+              :max-fraction-digits="0"
               :use-grouping="false"
+              show-buttons
               fluid
               size="small"
             />
+            <Slider v-model="levelModel" :min="1" :max="12" :step="1" />
           </div>
         </div>
 
-        <!-- ATK / DEF / MAX ATK -->
+        <!-- ATK / DEF / MAX ATK: "?" or number, keyboard + step-100 slider -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">ATK</span>
           <div class="px-3 py-2 flex-1">
-            <InputText v-model="form.atk" fluid size="small" />
+            <StatInput v-model="form.atk" />
           </div>
         </div>
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">DEF</span>
           <div class="px-3 py-2 flex-1">
-            <InputText v-model="form.defense" fluid size="small" />
+            <StatInput v-model="form.defense" />
           </div>
         </div>
         <div v-if="isMaximum" class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
           <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">MAX ATK</span>
           <div class="px-3 py-2 flex-1">
-            <InputText v-model="form.maximum_atk" fluid size="small" />
+            <StatInput v-model="form.maximum_atk" />
           </div>
         </div>
       </template>

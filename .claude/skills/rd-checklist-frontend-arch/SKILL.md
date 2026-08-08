@@ -16,7 +16,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 - `darkModeSelector: ':root'` — 全域強制深色，不依賴系統設定
 - CSS layer 順序 (main.css)：`@layer tailwind-base, primevue, tailwind-utilities`
   - Tailwind utilities 永遠覆蓋 PrimeVue 預設樣式
-- 使用元件：`Button`、`InputText`、`InputNumber`、`Select`、`Textarea`、`Checkbox`、`SelectButton`、`IftaLabel`（篩選下拉的欄位內頂端標籤）
+- 使用元件：`Button`、`InputText`、`InputNumber`、`Select`（種族用 `editable`）、`Slider`（Level / ATK / DEF 拉桿）、`Textarea`、`Checkbox`、`SelectButton`、`IftaLabel`（篩選下拉的欄位內頂端標籤）
+- 卡片 stat 欄位共用元件 `components/detail/StatInput.vue`（ATK/DEF/MAX：允許 `?` 的文字輸入 + step-100 拉桿）；驗證工具 `utils/cardFields.ts`（`isStatValid` / `isLevelValid`）
 - Button severity 規範：`warn` = 主要操作（amber）、`secondary` = 次要、`danger` = 刪除、`success` = 完成
 - Button variant 規範：(無) = 實心、`outlined` = 外框、`text` = 無背景
 
