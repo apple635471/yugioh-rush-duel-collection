@@ -58,6 +58,20 @@ watch([visible, () => props.name], async ([open]) => {
 
       <!-- right: selected card -->
       <div class="flex-1 min-w-0 max-h-[70vh] overflow-y-auto pr-1">
+        <div v-if="selected" class="mb-2 flex justify-end">
+          <a
+            :href="`/set/${selected.set_id}`"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-1 text-[11px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-2 py-1 transition-colors"
+            :title="`在新分頁開啟 ${selected.set_id} 卡組`"
+          >
+            前往 {{ selected.set_id }} 卡組
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5m0-5l-7 7M9 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-3" />
+            </svg>
+          </a>
+        </div>
         <CardBasicInfo v-if="selected" :card="selected" />
       </div>
     </div>
