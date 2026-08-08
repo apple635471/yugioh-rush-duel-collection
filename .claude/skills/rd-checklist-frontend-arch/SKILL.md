@@ -18,6 +18,7 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
   - Tailwind utilities 永遠覆蓋 PrimeVue 預設樣式
 - 使用元件：`Button`、`InputText`、`InputNumber`、`Select`（種族用 `editable`）、`Slider`（Level / ATK / DEF 拉桿）、`Textarea`、`Checkbox`、`SelectButton`、`IftaLabel`（篩選下拉的欄位內頂端標籤）
 - 卡片 stat 欄位共用元件 `components/detail/StatInput.vue`（ATK/DEF/MAX：允許 `?` 的文字輸入 + step-100 拉桿）；驗證工具 `utils/cardFields.ts`（`isStatValid` / `isLevelValid`）
+- 效果文字內卡名引用：`CardRefText`（解析「」/『』→ hover 浮動預覽 + 點擊開 modal）、`CardBasicInfo`（唯讀卡片摘要，共用於預覽與 modal）、`CardRefModal`（Dialog，左側同名卡編號清單）；查詢用 `searchCardsByName()`（`api/cards.ts`，走 `exact`）
 - Button severity 規範：`warn` = 主要操作（amber）、`secondary` = 次要、`danger` = 刪除、`success` = 完成
 - Button variant 規範：(無) = 實心、`outlined` = 外框、`text` = 無背景
 

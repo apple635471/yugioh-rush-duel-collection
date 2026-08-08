@@ -9,12 +9,14 @@ import ViewToggle from '@/components/layout/ViewToggle.vue'
 import SearchFilters from '@/components/search/SearchFilters.vue'
 import CardGrid from '@/components/cards/CardGrid.vue'
 import CardTable from '@/components/cards/CardTable.vue'
+import Checkbox from 'primevue/checkbox'
 
 const route = useRoute()
 const router = useRouter()
 const ui = useUiStore()
 
 const query = ref((route.query.q as string) || '')
+const exactName = ref(false)
 const cards = ref<Card[]>([])
 const loading = ref(false)
 const totalResults = ref(0)
@@ -34,7 +36,10 @@ async function doSearch() {
   loading.value = true
   try {
     const params: Record<string, any> = {}
-    if (query.value.trim()) params.q = query.value.trim()
+    if (query.value.trim()) {
+      params.q = query.value.trim()
+      if (exactName.value) params.exact = true
+    }
     if (filters.value.card_type) params.card_type = filters.value.card_type
     if (filters.value.attribute) params.attribute = filters.value.attribute
     if (filters.value.level) params.level = Number(filters.value.level)
@@ -72,6 +77,9 @@ watch(() => route.query.q, (newQ) => {
   }
 })
 
+// Re-run when the exact-name toggle changes (only matters with a query)
+watch(exactName, () => { if (query.value.trim()) doSearch() })
+
 onMounted(doSearch)
 </script>
 
@@ -89,6 +97,10 @@ onMounted(doSearch)
         class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-gray-100 placeholder-gray-400 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
         autofocus
       />
+      <label class="mt-2 flex items-center gap-2 text-xs text-gray-400 cursor-pointer w-fit">
+        <Checkbox v-model="exactName" :binary="true" input-id="exact-name" />
+        <span>名稱完全符合（否則只要包含即可）</span>
+      </label>
     </div>
 
     <!-- Filters -->

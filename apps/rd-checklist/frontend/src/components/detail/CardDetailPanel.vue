@@ -18,6 +18,7 @@ import Select from 'primevue/select'
 import Slider from 'primevue/slider'
 import Textarea from 'primevue/textarea'
 import StatInput from '@/components/detail/StatInput.vue'
+import CardRefText from '@/components/detail/CardRefText.vue'
 import { MONSTER_TYPES } from '@/constants/monsterTypes'
 import { isStatValid, isLevelValid } from '@/utils/cardFields'
 
@@ -949,7 +950,9 @@ async function submitDeleteVariant() {
         <!-- View mode: only show if value exists -->
         <div v-if="!editing && (card as any)[section.key]" class="mb-3">
           <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold-dim uppercase mb-1.5">{{ section.label }}</div>
-          <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded-md px-3 py-2">{{ (card as any)[section.key] }}</p>
+          <p class="text-sm text-gray-300 leading-relaxed bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded-md px-3 py-2">
+            <CardRefText :text="(card as any)[section.key]" />
+          </p>
         </div>
 
         <!-- Edit mode: show expanded or show + button -->
