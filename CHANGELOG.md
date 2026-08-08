@@ -4,6 +4,10 @@
 
 ### 新增
 
+- **卡片編輯／新增欄位改善**（`CardDetailPanel` / `CardCreatePanel`）
+  - **種族**：改用可編輯的 `Select`（`constants/monsterTypes.ts` 提供常見種族清單），但仍允許直接輸入新種族
+  - **Level**：數字輸入 + `Slider`（1–12、step 1），存檔前驗證為 1–12 整數
+  - **ATK / DEF / MAX ATK**：新增共用 `StatInput` 元件——文字輸入（允許 `?`）+ `Slider`（step 100，值為 `?` 時停用）；存檔前驗證「`?` 或純數字」，不合法擋下並提示（`utils/cardFields.ts`）
 - **`pickDefaultVariantKey()` 工具函式**（`src/constants/rarities.ts`）：依稀有度順序（N→NPR→R→SR→SPR→UR→UPR→RUR→SER→RR→ORR→ORRPBV→FORR，越後越稀有）自動選出最稀有 variant 作為預設顯示；同稀有度下異圖（`is_alternate_art`）優先於正圖
   - 接受可選的 `preferredRarity` 參數：搜尋指定稀有度時強制選該稀有度，異圖仍優先
 - **貴罕度同義詞正規化**：`SPR/SRP/PSR`、`NPR/NRP/PNR`、`UPR/URP/PUR` 三組拼法互為同義，一律收斂為正規名 `SPR` / `NPR` / `UPR`
