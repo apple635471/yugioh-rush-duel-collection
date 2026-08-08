@@ -2,7 +2,7 @@
 import { ref, computed, reactive, watch } from 'vue'
 import type { Card, CardUpdate, ScanResult } from '@/types/card'
 import { variantKey, parseRarityKey } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, fetchKonamiImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, fetchKonamiImage, addVariant, editVariantRarity, deleteVariant, scanCard, searchCardsByName } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
@@ -19,6 +19,7 @@ import Slider from 'primevue/slider'
 import Textarea from 'primevue/textarea'
 import StatInput from '@/components/detail/StatInput.vue'
 import CardRefText from '@/components/detail/CardRefText.vue'
+import CardRefModal from '@/components/detail/CardRefModal.vue'
 import { MONSTER_TYPES } from '@/constants/monsterTypes'
 import { isStatValid, isLevelValid } from '@/utils/cardFields'
 
@@ -312,6 +313,21 @@ function copyCardId() {
   copiedId.value = true
   setTimeout(() => { copiedId.value = false }, 1500)
 }
+
+// ── Same-name cards (different card numbers) ──────────────────────────────────
+const sameNameCount = ref(0) // total cards sharing this full name (incl. this one)
+const refModalVisible = ref(false)
+const refModalName = computed(() => props.card.name_jp || props.card.name_zh || '')
+
+watch(() => props.card.card_id, async () => {
+  sameNameCount.value = 0
+  const name = refModalName.value
+  if (!name) return
+  const list = await searchCardsByName(name)
+  // guard against a newer card having loaded while awaiting
+  if (refModalName.value !== name) return
+  sameNameCount.value = list.length
+}, { immediate: true })
 
 // ---- Variant management ----
 
@@ -796,6 +812,21 @@ async function submitDeleteVariant() {
         </Button>
       </div>
 
+      <!-- Same-name cards (other card numbers with the same name) -->
+      <div v-if="sameNameCount > 1" class="flex justify-end mb-1.5">
+        <button
+          @click="refModalVisible = true"
+          class="inline-flex items-center gap-1 text-[10px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
+          :title="'查看其他同名卡片'"
+        >
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+          同名卡片 ({{ sameNameCount }})
+        </button>
+      </div>
+
       <!-- Card name -->
       <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug mb-0.5">
         {{ card.name_zh || card.name_jp }}
@@ -1007,5 +1038,8 @@ async function submitDeleteVariant() {
     <Button v-else @click="startEdit" variant="outlined" severity="secondary" fluid>
       Edit Card Info
     </Button>
+
+    <!-- Same-name cards modal (opened by the 同名卡片 button) -->
+    <CardRefModal v-model:visible="refModalVisible" :name="refModalName" />
   </div>
 </template>

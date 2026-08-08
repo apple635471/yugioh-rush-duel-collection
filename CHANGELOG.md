@@ -7,6 +7,7 @@
 - **卡片文字中的「卡名引用」hover 預覽**：description / summon_condition / condition / effect / continuous_effect 內以「」/『』包住的卡名，會被解析成可互動引用（`CardRefText`）
   - hover → 浮動小視窗顯示該卡基本資料（`CardBasicInfo`，唯讀），移出即消失；以引號內名稱當**完整卡名精確搜尋**（`name_jp` 或 `name_zh` 完全相等）
   - 點「更多」→ modal（鎖背景，`CardRefModal`）：左側以卡牌編號列出所有完全同名卡片，可點擊切換右側顯示；右側提供「前往 {set_id} 卡組」連結，於新分頁開啟該卡所屬卡組頁
+  - 詳情面板（`CardDetailPanel`）：當該卡有其他不同編號但同卡名的卡時，複製編號 icon 下方顯示「同名卡片 (N)」按鈕，點擊開同一個 modal；無同名卡則不顯示
 - **搜尋「名稱完全符合」checkbox**（`SearchView`）：勾選則卡名需完全相等，否則沿用「包含」比對；後端 `/api/search` 新增 `exact` 參數
 - **卡片編輯／新增欄位改善**（`CardDetailPanel` / `CardCreatePanel`）
   - **種族**：改用可編輯的 `Select`（`constants/monsterTypes.ts` 提供常見種族清單），但仍允許直接輸入新種族
