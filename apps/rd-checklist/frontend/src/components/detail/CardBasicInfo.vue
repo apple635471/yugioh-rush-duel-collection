@@ -6,18 +6,30 @@
  */
 import { computed } from 'vue'
 import type { Card } from '@/types/card'
+import { variantKey } from '@/types/card'
 import { getCardImageUrl } from '@/api/cards'
 import { pickDefaultVariantKey } from '@/constants/rarities'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{ card: Card; compact?: boolean }>()
+
+const ui = useUiStore()
 
 const isMonster = computed(() => props.card.card_type.includes('怪獸'))
 const isMaximum = computed(() => props.card.card_type.includes('巨極'))
 
 const imageKey = computed(() => pickDefaultVariantKey(props.card.variants))
-const imageUrl = computed(() =>
-  imageKey.value ? getCardImageUrl(props.card.card_id, imageKey.value) : '',
+const activeVariant = computed(() =>
+  props.card.variants.find(v => variantKey(v) === imageKey.value),
 )
+const imageUrl = computed(() => {
+  if (!imageKey.value) return ''
+  const base = getCardImageUrl(props.card.card_id, imageKey.value)
+  // Mirror CardGridItem: bust cache for freshly-updated / user-uploaded images
+  const buster = ui.imageUpdates.get(`${props.card.card_id}/${imageKey.value}`)
+  if (buster) return `${base}?t=${buster}`
+  return activeVariant.value?.image_source === 'user_upload' ? `${base}?t=1` : base
+})
 
 const textSections = [
   { key: 'summon_condition', label: '召喚條件' },
@@ -26,6 +38,12 @@ const textSections = [
   { key: 'continuous_effect', label: '永續效果' },
   { key: 'description', label: '描述' },
 ] as const
+
+// Only the sections this card actually has — filtered via a computed so it
+// re-evaluates correctly when the card prop changes (v-for + v-show did not).
+const visibleTextSections = computed(() =>
+  textSections.filter(s => !!(props.card as any)[s.key]),
+)
 </script>
 
 <template>
@@ -62,8 +80,8 @@ const textSections = [
       </div>
     </div>
 
-    <div v-if="!compact" class="mt-3 space-y-2">
-      <div v-for="s in textSections" :key="s.key" v-show="(card as any)[s.key]">
+    <div v-if="!compact && visibleTextSections.length" class="mt-3 space-y-2">
+      <div v-for="s in visibleTextSections" :key="s.key">
         <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold-dim uppercase mb-1">{{ s.label }}</div>
         <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-line bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded px-2.5 py-1.5">{{ (card as any)[s.key] }}</p>
       </div>
