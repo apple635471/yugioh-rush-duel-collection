@@ -783,7 +783,7 @@ async function submitDeleteVariant() {
     <template v-else>
       <!-- Card ID row -->
       <div class="flex items-center gap-1.5 mb-1">
-        <span class="font-mono text-xs text-white/40 tracking-[0.03em] flex-1">{{ card.card_id }}</span>
+        <span class="font-mono text-xs text-white/40 tracking-[0.03em] flex-1 min-w-0 truncate">{{ card.card_id }}</span>
         <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
         <Button
           v-if="!isOnCardSet"
@@ -812,12 +812,16 @@ async function submitDeleteVariant() {
         </Button>
       </div>
 
-      <!-- Same-name cards (other card numbers with the same name) -->
-      <div v-if="sameNameCount > 1" class="flex justify-end mb-1.5">
+      <!-- Card name (with same-name-cards button on the same row) -->
+      <div class="flex items-start gap-2 mb-0.5">
+        <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug flex-1 min-w-0">
+          {{ card.name_zh || card.name_jp }}
+        </h2>
         <button
+          v-if="sameNameCount > 1"
           @click="refModalVisible = true"
-          class="inline-flex items-center gap-1 text-[10px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
-          :title="'查看其他同名卡片'"
+          class="shrink-0 mt-0.5 inline-flex items-center gap-1 text-[10px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
+          title="查看其他同名卡片"
         >
           <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -826,11 +830,6 @@ async function submitDeleteVariant() {
           同名卡片 ({{ sameNameCount }})
         </button>
       </div>
-
-      <!-- Card name -->
-      <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug mb-0.5">
-        {{ card.name_zh || card.name_jp }}
-      </h2>
       <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-500 font-orbitron tracking-wide mb-4">
         {{ card.name_jp }}
       </p>
