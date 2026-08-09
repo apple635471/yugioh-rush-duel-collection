@@ -40,9 +40,10 @@ export async function searchCards(params: {
   return data
 }
 
-/** Find every card whose full name (JP or ZH) exactly equals `name`. */
+/** Find every card whose full name (JP or ZH) exactly equals `name`.
+ *  Trimmed so stray leading/trailing whitespace never breaks the exact match. */
 export async function searchCardsByName(name: string): Promise<Card[]> {
-  return searchCards({ q: name, exact: true, limit: 50 })
+  return searchCards({ q: name.trim(), exact: true, limit: 50 })
 }
 
 export function getCardImageUrl(cardId: string, rarity: string): string {

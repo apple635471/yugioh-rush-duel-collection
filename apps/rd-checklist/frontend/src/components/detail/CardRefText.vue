@@ -23,7 +23,11 @@ const segments = computed<Segment[]>(() => {
   let m: RegExpExecArray | null
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) out.push({ ref: false, value: text.slice(last, m.index) })
-    out.push({ ref: true, value: m[1]! })
+    // Names occasionally carry stray leading/trailing whitespace (incl. full-width
+    // spaces) — trim so both the display and the exact-name search are clean.
+    const name = m[1]!.trim()
+    if (name) out.push({ ref: true, value: name })
+    else out.push({ ref: false, value: m[0] }) // all-whitespace: keep as plain text
     last = m.index + m[0].length
   }
   if (last < text.length) out.push({ ref: false, value: text.slice(last) })
