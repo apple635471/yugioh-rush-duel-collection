@@ -24,6 +24,7 @@ const totalResults = ref(0)
 const filters = ref({
   card_type: '',
   attribute: '',
+  monster_type: '',
   level: '',
   rarity: '',
   is_legend: '',
@@ -42,6 +43,7 @@ async function doSearch() {
     }
     if (filters.value.card_type) params.card_type = filters.value.card_type
     if (filters.value.attribute) params.attribute = filters.value.attribute
+    if (filters.value.monster_type) params.monster_type = filters.value.monster_type
     if (filters.value.level) params.level = Number(filters.value.level)
     if (filters.value.rarity) params.rarity = filters.value.rarity
     if (filters.value.is_legend) params.is_legend = filters.value.is_legend === 'true'

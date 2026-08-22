@@ -31,7 +31,7 @@ App.vue
 │   │   └── CardTable      # Table 模式 (同樣的子元件)
 │   │
 │   └── SearchView         # /search?q=
-│       ├── SearchFilters  # 類型/屬性/等級/稀有度/持有 下拉 (清除篩選 → AppButton)
+│       ├── SearchFilters  # 卡種/屬性/種族/等級/貴罕度/Legend/持有 下拉 (清除篩選 → AppButton)
 │       ├── ViewToggle
 │       └── CardGrid / CardTable
 │

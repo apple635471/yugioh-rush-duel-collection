@@ -28,6 +28,7 @@ export async function searchCards(params: {
   exact?: boolean
   card_type?: string
   attribute?: string
+  monster_type?: string
   level?: number
   set_id?: string
   rarity?: string

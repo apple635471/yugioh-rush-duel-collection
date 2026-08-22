@@ -37,6 +37,9 @@
 
 ### 改善
 
+- **搜尋頁新增「種族」篩選**（`SearchFilters`）：選項用 `constants/monsterTypes.ts`，與編輯卡牌時同一份清單；後端 `/api/search` 新增 `monster_type` 參數（完全相等比對）
+- **搜尋頁「種類」改名為「卡種」**，與卡組頁的篩選用語一致
+
 - **共用 action 按鈕元件 `AppButton`**（`components/ui/AppButton.vue`）：包一層 PrimeVue `Button`，把高度、水平 padding、字級、icon 間距固定住，各處不再自刻原生 `<button>` 或各自指定 `size`
   - `size`：`sm`=24px（密集列表／輔助）、`md`=32px（工具列預設）、`lg`=40px（主要 CTA）；另有 `icon-only`（正方形）與 `fluid`（撐滿寬度）
   - `#icon` slot：svg 依 size 自動統一為 12/14/16px，呼叫端不用再標 `w-3.5 h-3.5`
