@@ -27,6 +27,7 @@ from ..schemas import (
 )
 from ..services.card_service import delete_card_and_variants
 from ..services.set_list_compare import compare_with_yugipedia
+from ..services.variant_service import delete_variant as delete_variant_row
 from ..services.yugipedia import YugipediaError
 
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
@@ -352,8 +353,9 @@ def apply_set_list_diff(
                 deleted = delete_card_and_variants(db, item.card_id)
                 variants_deleted += deleted
                 cards_deleted += 1
-            else:
-                db.delete(variant)
+            elif delete_variant_row(
+                db, item.card_id, item.rarity, item.is_alternate_art
+            ):
                 variants_deleted += 1
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{item.card_id} {item.rarity}: {exc}")

@@ -76,6 +76,11 @@ yugipedia 跑的是舊版 MediaWiki：`rvslots` 參數不支援，內容直接�
 - `POST /api/card-sets/{set_id}/compare` — 唯讀，回傳 missing / extra
 - `POST /api/card-sets/{set_id}/compare/apply` — 套用勾選的項目
 
+刪除走 `services/variant_service.delete_variant()`——與單筆刪除端點同一份邏輯，會寫入
+`card_variant_overrides` 的刪除記錄並同步 `original_rarity_string`。**少了這步，下次匯入
+會把刪掉的貴罕度復活**：爬蟲判錯貴罕度（記成 N，實際是 SR/SER）時，補上 SR/SER 再刪掉 N，
+匯入一次 N 就回來了。
+
 比對單位是 **(卡號, 貴罕度, 是否異圖)**，因為收藏要收的就是這個。建立時只填卡號、日文名、貴罕度（`is_manual=True`），其餘欄位留給爬蟲或使用者。刪除時若那是該卡最後一個 variant，連卡片一起刪——沒有任何 variant 的卡在 UI 上顯示不出來。
 
 ## 驗證過的案例

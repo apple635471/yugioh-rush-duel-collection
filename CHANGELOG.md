@@ -11,6 +11,7 @@
   - 日文名自動從卡片頁補上：處理 furigana（`{{Ruby|連|れん}}` → `連`）、`(Rush Duel)` 頁面沿用本傳名稱、`[L]`/`[R]` 共用頁面
   - 貴罕度縮寫與全名雙軌對照（`ScR` / `Secret Rare` → `SER`）；對不到的字串會回報給前端而不是安靜丟掉
   - 後端：`services/yugipedia.py`（抓取解析）、`services/set_list_compare.py`（比對）、`POST /api/card-sets/{set_id}/compare` 與 `.../compare/apply`
+  - 刪除走與單筆刪除端點相同的邏輯（抽成 `services/variant_service.py`）：寫入 `card_variant_overrides` 刪除記錄並同步 `original_rarity_string`，否則下次匯入會把爬蟲判錯的貴罕度復活
   - 驗證：HC01 154 種印刷與資料庫完全一致、KP20 106 種一致（含 5 個異圖）、GRP1 抓出 20 種缺漏
 
 - **卡片文字中的「卡名引用」hover 預覽**：description / summon_condition / condition / effect / continuous_effect 內以「」/『』包住的卡名，會被解析成可互動引用（`CardRefText`）
