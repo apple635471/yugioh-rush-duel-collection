@@ -17,6 +17,14 @@ const currentProductType = computed(() =>
   (route.params.productType as string) || undefined
 )
 
+/** 標題用：英文名 + 中文名（Promo / Other 沒有中文名就只顯示英文） */
+const currentProductTypeLabel = computed(() => {
+  if (!currentProductType.value) return '全部套牌包'
+  const pt = store.productTypes.find(p => p.product_type === currentProductType.value)
+  if (!pt) return currentProductType.value
+  return pt.display_name_zh ? `${pt.display_name} (${pt.display_name_zh})` : pt.display_name
+})
+
 const globalStats = ref<OwnershipStats | null>(null)
 const allSetStats = ref<Record<string, OwnershipStats>>({})
 
@@ -59,11 +67,7 @@ watch(currentProductType, async (pt) => {
           </div>
           <h1 class="font-cinzel text-2xl font-bold text-gray-100 leading-snug">
             卡牌收集圖鑑<br>
-            <em class="not-italic text-gold-light">
-              {{ currentProductType
-                ? (store.productTypes.find(p => p.product_type === currentProductType)?.display_name ?? currentProductType)
-                : '全部套牌包' }}
-            </em>
+            <em class="not-italic text-gold-light">{{ currentProductTypeLabel }}</em>
           </h1>
         </div>
 

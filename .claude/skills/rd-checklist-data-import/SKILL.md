@@ -61,9 +61,29 @@ overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filte
 ```
 
 可被 override 的欄位: `set_name_jp`, `set_name_zh`, `product_type`, `release_date`, `total_cards`, `rarity_distribution`
+
+**例外：`product_type` 不直接用 scraper 值**——匯入時一律過 `canonical_product_type(set_id, scraper值)`
+（`rd_checklist/product_types.py`）：set_id 有推導規則就用規則，否則把退役類型往前對應，
+再不行落 `other`。所以重新匯入舊 JSON 會**修正**分類而不是把它還原。詳見 `rd-product-types`。
 不可被 override 的欄位: `post_url` (永遠用 scraper 值)
 
 Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。
+
+### 卡片歸屬的兩種人工介入
+
+| 機制 | 位置 | 適用 |
+|------|------|------|
+| `SET_ID_HOMES` | `services/set_service.py`（程式碼常數） | **針對卡號的規則**：`{"21CC": "PROMO"}` — 該卡號永不獨立成 set，之後匯入的同卡號卡片一樣適用 |
+| `set_id` 釘選 | `card_overrides` 資料列 | **針對單張卡的一次性決定**，由 `merge-set` 寫入 |
+
+兩者 `resplit-set` 都會遵守。
+
+### `set_id` 釘選（card_overrides 的特例）
+
+`card_overrides` 裡 `field_name='set_id'` 的紀錄不是拿來覆寫欄位的（匯入不會套用它），
+而是一個**記號**：這張卡放在哪個 set 是人工決定的。由 `merge-set` 寫入，`resplit-set`
+掃到會跳過。用途是把 `21CC` 這種只有一張卡的雜項編號併進 `PROMO`，而不會被下一次
+resplit 拆回去。
 
 ### Card Override 保護 (卡片層級)
 

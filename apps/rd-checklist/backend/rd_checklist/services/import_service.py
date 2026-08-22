@@ -9,47 +9,10 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel, CardVariantOverrideModel
+from ..product_types import canonical_product_type
 from ..rarities import normalize_rarity, normalize_rarity_string
 
 logger = logging.getLogger(__name__)
-
-# Mirrors PRODUCT_TYPE_MAP in the scraper's parser.py.
-# Used to re-derive product_type when legacy JSON files contain "unknown".
-# Longer prefixes (SBD) must appear before shorter ones (SD) would,
-# but since startswith() is used and "SBD".startswith("SD") is False,
-# insertion order doesn't affect correctness — it's kept for readability.
-_SET_PREFIX_TO_PRODUCT_TYPE: dict[str, str] = {
-    "KP": "booster",
-    "SD": "structure_deck",
-    "SBD": "structure_deck",
-    "ST": "structure_deck",
-    "GRD": "structure_deck",
-    "CP": "character_pack",
-    "GRC": "go_rush_character",
-    "B0": "battle_pack",
-    "B2": "battle_pack",
-    "MAX": "maximum_pack",
-    "EXT": "extra_pack",
-    "LGP": "legend_pack",
-    "VSP": "vs_pack",
-    "TB": "tournament_pack",
-    "AP": "advanced_pack",
-    "ORP": "over_rush_pack",
-}
-
-
-def _derive_product_type(set_id: str) -> str:
-    """Derive product type from set_id prefix.
-
-    Fallback for legacy scraper data where product_type was stored as
-    'unknown' because the prefix was not yet mapped at scrape time.
-    Returns 'unknown' when no prefix matches.
-    """
-    for prefix, ptype in _SET_PREFIX_TO_PRODUCT_TYPE.items():
-        if set_id.startswith(prefix):
-            return ptype
-    return "unknown"
-
 
 def import_scraper_data(
     db: Session,
@@ -133,11 +96,10 @@ def _import_one_set(db: Session, data: dict, force: bool) -> None:
 
     card_set.set_name_jp = _val("set_name_jp", data.get("set_name_jp", ""))
     card_set.set_name_zh = _val("set_name_zh", data.get("set_name_zh", ""))
-    scraper_product_type = data.get("product_type", "unknown")
-    # Re-derive from set_id prefix when legacy JSON has "unknown", so that
-    # re-importing old scraper files automatically corrects the DB.
-    if scraper_product_type == "unknown":
-        scraper_product_type = _derive_product_type(set_id)
+    # The scraper's product_type is only a hint: canonical_product_type()
+    # re-derives from the set_id and maps retired types forward, so
+    # re-importing old JSON corrects the DB instead of undoing it.
+    scraper_product_type = canonical_product_type(set_id, data.get("product_type"))
     card_set.product_type = _val("product_type", scraper_product_type)
     card_set.release_date = _val("release_date", data.get("release_date"))
     card_set.post_url = data.get("post_url", "")  # post_url 不需要 override

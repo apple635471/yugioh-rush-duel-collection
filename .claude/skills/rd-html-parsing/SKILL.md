@@ -69,3 +69,48 @@ _LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：
 - `#741b47` (紫) = 融合/儀式怪獸
 - `#38761d` (綠) = 魔法卡
 - `#cc0000` (紅) = 陷阱卡
+
+## 一篇文章多個卡組
+
+**卡號決定 set，沒有白名單。** 卡號格式是 `RD/{set_id}-{編號}`，`parse_post_multi()`
+一律依卡號裡的 set id 分組，一組產生一個 `CardSet`：
+
+- 一般文章只有一種卡號 → 一個 CardSet（跟以前一樣）
+- 整年份活動包、結構卡組合輯 → 依卡號拆成多個（B261/S261/B262/S262/26S1…）
+- 戰鬥包文章裡夾帶的特典卡（`RD/S23P-*`）→ 自己成一個 set，不會被歸到那期戰鬥包
+
+同一篇拆出來的 set 共用文章的名稱、發行日、post_url；`total_cards` 各算各的。
+
+> 以前這件事是靠 `MULTI_DECK_URLS` 白名單控制的（已移除）。白名單的問題是只擋得住
+> 已知的文章，新的一篇又要再加一次；而且它只處理「整篇有多個卡包」，處理不了
+> 「一張特典卡混在單一卡包文章裡」。
+
+**既有 DB 的補救**：重新匯入**不會**把舊卡搬家（`_import_one_card` 刻意不改既有卡的
+`set_id`）。用 checklist backend 掃一遍：
+
+```bash
+uv run python -m rd_checklist.cli resplit-set --all --dry-run   # 先看會搬什麼
+uv run python -m rd_checklist.cli resplit-set --all             # 實際搬
+```
+
+依卡號搬過去，缺的 set 會自動建立（沿用來源 set 的名稱／日期／post_url），
+override / 編輯紀錄 / 上傳圖 / 持有數都跟著卡片走。
+
+**例外一：某個卡號永遠不該獨立成 set** —— 寫在 `set_service.SET_ID_HOMES`：
+
+```python
+SET_ID_HOMES = {"21CC": "PROMO"}   # 卡號 → 它該待的 set
+```
+
+這是**針對卡號的規則**，之後匯入進來的同卡號卡片也一樣：`resplit-set` 不會幫它建
+set，而是把卡放進指定的 set（該 set 不存在時就原地不動）。
+
+**例外二：只針對某一張卡的一次性決定**：
+
+```bash
+uv run python -m rd_checklist.cli merge-set 21CC --into PROMO
+```
+
+卡片搬進目標 set，並在 `card_overrides` 寫一筆 `set_id` 記號**釘住**——之後
+`resplit-set` 掃到會跳過，重新匯入也不會動（`_import_one_card` 本來就不改既有卡的
+set_id）。搬空的來源 set 會刪掉（手動建立的除外）。

@@ -62,6 +62,11 @@ card_edits (歷史記錄)
 uv sync
 uv run python -m rd_checklist.cli init-db
 uv run python -m rd_checklist.cli import --scraper-data ../../../tools/rd-card-scraper/data
+uv run python -m rd_checklist.cli reclassify-product-types   # 既有資料重新分類 (idempotent)
+uv run python -m rd_checklist.cli resplit-set --all --dry-run  # 掃出卡號與 set 不符的卡
+uv run python -m rd_checklist.cli resplit-set --all          # 依卡號搬到正確的 set (缺的 set 自動建立)
+uv run python -m rd_checklist.cli merge-set 21CC --into PROMO # 把某個 set 併進另一個並釘住 (resplit 不會拆回去)
+uv run python -m rd_checklist.cli delete-set S254            # 刪除整個 set (含卡片/variant/override)
 uv run uvicorn rd_checklist.main:app --reload --port 8000
 ```
 
@@ -69,7 +74,7 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 
 | Method | Path | 用途 |
 |--------|------|------|
-| GET | `/api/card-sets/product-types` | 產品類型 + 數量 |
+| GET | `/api/card-sets/product-types` | 產品類型 + 中英標籤 + 數量 |
 | GET | `/api/card-sets?product_type=` | 卡組列表 |
 | GET | `/api/card-sets/{set_id}` | 卡組 + 所有卡片 (eager load variants) |
 | PATCH | `/api/card-sets/{set_id}` | 編輯卡組 metadata (自動建立 override) |

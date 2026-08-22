@@ -53,6 +53,35 @@
   - 9px 小標 → 10px、字距 `0.22em`/`0.25em` → `0.16em`（該字級配中文太緊）
   - `AppButton` 的 `tone="gold"` 文字色同樣由 `gold-dim` 改為 `gold`
   - 驗證：首頁／卡組頁／搜尋頁全頁掃描，除 `disabled` 控制項（WCAG 豁免）外已無低於 4.5:1 的文字
+- **`SET_ID_HOMES` 排除名單**（`services/set_service.py`）：`{"21CC": "PROMO"}` — 列在這裡的卡號永遠不會獨立成 set，`resplit-set` 會直接把卡放進指定的 set。與 `merge-set` 的釘選不同，這是針對**卡號**的規則，之後匯入的同卡號卡片也適用
+- **`merge-set`：把指定 set 併進另一個並釘住**（`uv run python -m rd_checklist.cli merge-set 21CC --into PROMO`）
+  - 卡片搬進目標 set，並在 `card_overrides` 寫一筆 `set_id` 記號；`resplit-set` 掃到會跳過，重新匯入也不會動
+  - 用於 `21CC` 這種只有一張卡、不需要獨立成 set 的雜項編號；搬空的來源 set 會刪掉（手動建立的除外）
+  - `resplit-set` 建立新 set 時不再繼承來源的 `is_manual`（由爬取資料衍生出來的 set 不算手動建立）
+- **卡號決定 set：爬蟲一律依卡號拆分，不再靠白名單**
+  - 卡號格式是 `RD/{set_id}-{編號}`，`parse_post_multi()` 改為**無條件**依卡號裡的 set id 分組，一組一個 `CardSet`；`MULTI_DECK_URLS` 白名單移除
+  - 解決白名單擋不住的情況：戰鬥包文章裡夾帶的特典卡（`RD/S23P-*`）以前會被歸進那期戰鬥包，現在自己成一個 set
+  - 戰鬥包的 S 半（`S241`/`S251`…）同樣獨立成 set，不再併進 B 半
+  - `resplit-set` 新增 `--all`（掃全部）與 `--dry-run`，缺的目標 set 會自動建立（沿用來源 set 的名稱／日期／post_url，`product_type` 依新 set id 推導）
+  - 本機資料已套用：32 張卡搬家，新增 `S23P`(8) / `S251`~`S254`(各5) / `S241` / `S243` / `S244` / `21CC` 等 set；手動建立的 set 即使搬空也會保留
+- **2025 活動包拆成 B251~B254**：`S254` 這個 set 其實是「Rush Duel 2025活動包 全卡表」整篇文章，裡面混了 B251/S251/B252/S252/B253/S253/B254 七種卡號
+  - Scraper：該篇加入 `MULTI_DECK_URLS`，依卡號拆成四個 set；新增 `_split_group_id()` 把戰鬥包的 S 半併進 B 半（B241 這個 set 本來就放著 `RD/S241` 的卡）
+  - 新增 CLI `resplit-set <SET_ID>`：依卡號把既有 set 的卡搬到正確的 set（重新匯入不會搬——`_import_one_card` 刻意不改既有卡的 set_id），override / 編輯紀錄 / 上傳圖 / 持有數都跟著走；搬空後自動刪除來源 set
+  - 新增 CLI `delete-set <SET_ID>`：刪除卡組與其卡片/variant/override，會先要求輸入 set ID 確認
+  - 本機資料已套用：24 張卡搬到 B251(3) / B252(9) / B253(7) / B254(5)，`S254` 移除
+
+- **產品類型分類整理**：側邊欄的分組、命名與實際 `product_type` 全面校正
+  - **命名**：Advanced Pack →「上級包」、Maximum Pack →「巨極包」、Over Rush Pack →「超越超速包」、Tournament Pack →「Triple Build Pack (三重構築包)」（原本是誤譯）
+  - **分組**（`ProductTypeSidebar` 的 `SECTIONS` 改用 `product_type` 明列，不再比對 display_name）
+    - `補充包系列`：Booster / Advanced / Maximum / Over Rush / Legend / Triple Build
+    - `預組`（原「構築 / 預組」）：只放 Structure Deck
+    - `其他`（原「活動 / 限定」取消）：Battle Pack / Promo / Other
+  - **收掉單一產品線的獨立項目**：Character Pack (CP)、Go Rush Character (GRC)、Extra Pack (EXT)、VS Pack (VSP) 併入 `other`，側邊欄不再各佔一列
+  - **修正錯置的類型值**：Promo 實際存的是 `other` → 改 `promo`；Other 實際存的是 `unknown` → 改 `other`；標籤去掉多餘的括號（`Promo (Promo)` → `Promo`）
+  - **新增推導規則**：`\d{2}PR`（23PR/24PR/25PR/26PR）→ `promo`；`S2` → `battle_pack`（戰鬥包成對發行，S254 裝的是 `RD/B252-*` 的卡）；比對改長前綴優先
+  - **顯示**：`ProductTypeOut` 新增 `display_name_zh`，中文名在側邊欄另起一行呈現
+  - **新模組** `rd_checklist/product_types.py`：推導規則、退役類型對應、標籤集中一處；匯入改走 `canonical_product_type()`，重新匯入舊 JSON 會修正分類而非還原
+  - **遷移指令** `uv run python -m rd_checklist.cli reclassify-product-types`（idempotent）：一併改寫 `card_set_overrides` 的 `product_type`，避免下次匯入把舊值還原
 
 - **篩選指定貴罕度時，卡片預設顯示該貴罕度**：SetView 將 `filterRarity` 以 `preferredRarity` prop 傳給 `CardGrid` / `CardTable`，篩選某貴罕度時卡片直接以該貴罕度圖面呈現（tab 排序仍依顯示順序，最稀有在前）。Search 頁原已如此
 - **篩選 UI 重新設計（Search 頁 + SetView）**：改用 PrimeVue `IftaLabel` 把欄位名（種類／屬性／等級／貴罕度／Legend／持有；SetView 為貴罕度／卡種）收進欄位內頂端，外層包一層低調 panel；每個下拉以 `placeholder` 顯示預設「全部」（修正 PrimeVue Select 對空值 `''` 顯示空白）；有值的篩選以金色外框高亮，並提供「清除篩選」按鈕。Search 頁預設選項由英文 `All X` 改為中文

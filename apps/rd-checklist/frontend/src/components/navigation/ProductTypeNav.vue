@@ -33,7 +33,7 @@ function isActive(pt: ProductType): boolean {
         ? 'border-gold/50 bg-gold/10 text-gold'
         : 'border-[rgba(201,168,76,0.18)] text-gray-400 hover:border-gold/35 hover:text-gray-200'"
     >
-      {{ pt.display_name }}
+      {{ pt.display_name }}<span v-if="pt.display_name_zh"> ({{ pt.display_name_zh }})</span>
       <span class="ml-1 text-xs opacity-60">({{ pt.set_count }})</span>
     </router-link>
   </div>

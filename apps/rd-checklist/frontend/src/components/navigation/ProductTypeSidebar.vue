@@ -7,48 +7,51 @@ import Button from 'primevue/button'
 const route = useRoute()
 const collapsed = ref(false)
 
-defineProps<{
+const props = defineProps<{
   productTypes: ProductType[]
 }>()
 
-// Group product types into sections by display_name keywords
-const sections = computed(() => {
-  // Keep ordering consistent with how backend returns them
-  return [
-    {
-      label: '補充包系列',
-      test: (name: string) => /booster|advanced|maximum|over rush|go rush/i.test(name),
-    },
-    {
-      label: '構築 / 預組',
-      test: (name: string) => /starter|structure|character|預組|deck/i.test(name),
-    },
-    {
-      label: '活動 / 限定',
-      test: (name: string) => /battle|tournament|legend|extra/i.test(name),
-    },
-  ]
-})
+/**
+ * Sidebar sections, by product type. Listed explicitly (rather than matched
+ * on the display name) so renaming a label never reshuffles the nav, and the
+ * order within a section is the order here.
+ */
+const SECTIONS: { label: string; types: string[] }[] = [
+  {
+    label: '補充包系列',
+    types: ['booster', 'advanced_pack', 'maximum_pack', 'over_rush_pack', 'legend_pack', 'triple_build_pack'],
+  },
+  { label: '預組', types: ['structure_deck'] },
+  { label: '其他', types: ['battle_pack', 'promo', 'other'] },
+]
 
-function getSection(displayName: string): string {
-  for (const s of sections.value) {
-    if (s.test(displayName)) return s.label
-  }
-  return '其他'
+const PLACED = new Set(SECTIONS.flatMap(s => s.types))
+
+/** Types in this section, in SECTIONS order; unlisted types land in the last section. */
+function typesIn(section: { label: string; types: string[] }): ProductType[] {
+  const byType = new Map(props.productTypes.map(pt => [pt.product_type, pt]))
+  const listed = section.types.map(t => byType.get(t)).filter((pt): pt is ProductType => !!pt)
+
+  const isLast = section === SECTIONS[SECTIONS.length - 1]
+  if (!isLast) return listed
+  const unlisted = props.productTypes.filter(pt => !PLACED.has(pt.product_type))
+  return [...listed, ...unlisted]
 }
 
-function getSectionTypes(label: string, productTypes: ProductType[]) {
-  return productTypes.filter(pt => getSection(pt.display_name) === label)
-}
+const sections = computed(() =>
+  SECTIONS.map(s => ({ label: s.label, types: typesIn(s) })).filter(s => s.types.length > 0)
+)
 
-const allSectionLabels = computed(() => {
-  const s = ['總覽', ...sections.value.map(s => s.label), '其他']
-  return s
-})
+const totalSets = computed(() => props.productTypes.reduce((sum, pt) => sum + pt.set_count, 0))
 
 function isActive(pt: ProductType): boolean {
   return route.params.productType === pt.product_type
 }
+
+const ITEM_CLASS = 'flex items-center justify-between gap-1 px-4 py-1.5 text-xs border-l-2 transition-all'
+const ACTIVE_CLASS = 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
+const INACTIVE_CLASS = 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'
+const BADGE_CLASS = 'font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0'
 </script>
 
 <template>
@@ -101,76 +104,37 @@ function isActive(pt: ProductType): boolean {
     <div class="py-2">
       <router-link
         to="/"
-        class="flex items-center justify-between px-4 py-1.5 text-xs border-l-2 transition-all"
-        :class="!route.params.productType
-          ? 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
-          : 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
+        :class="[ITEM_CLASS, !route.params.productType ? ACTIVE_CLASS : INACTIVE_CLASS]"
       >
         <span>全部</span>
         <span
-          class="font-orbitron text-[10px] px-1 py-0.5 rounded"
-          :class="!route.params.productType
-            ? 'text-gold bg-[rgba(201,168,76,0.15)]'
-            : 'text-gray-400 bg-dark-3'"
+          :class="[BADGE_CLASS, !route.params.productType ? 'text-gold bg-[rgba(201,168,76,0.15)]' : 'text-gray-400 bg-dark-3']"
         >
-          {{ productTypes.reduce((sum, pt) => sum + pt.set_count, 0) }}
+          {{ totalSets }}
         </span>
       </router-link>
     </div>
 
     <!-- Grouped sections -->
     <template v-for="section in sections" :key="section.label">
-      <template v-if="getSectionTypes(section.label, productTypes).length > 0">
-        <div class="h-px bg-[rgba(201,168,76,0.08)] mx-4 my-1" />
-        <div class="pt-2 pb-1">
-          <div class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase px-4 mb-1">
-            {{ section.label }}
-          </div>
-          <router-link
-            v-for="pt in getSectionTypes(section.label, productTypes)"
-            :key="pt.product_type"
-            :to="`/sets/${pt.product_type}`"
-            class="flex items-center justify-between px-4 py-1.5 text-xs border-l-2 transition-all"
-            :class="isActive(pt)
-              ? 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
-              : 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
-          >
-            <span class="leading-snug">{{ pt.display_name }}</span>
-            <span
-              class="font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0 ml-1"
-              :class="isActive(pt)
-                ? 'text-gold bg-[rgba(201,168,76,0.15)]'
-                : 'text-gray-400 bg-dark-3'"
-            >
-              {{ pt.set_count }}
-            </span>
-          </router-link>
-        </div>
-      </template>
-    </template>
-
-    <!-- Ungrouped / 其他 -->
-    <template v-if="getSectionTypes('其他', productTypes).length > 0">
       <div class="h-px bg-[rgba(201,168,76,0.08)] mx-4 my-1" />
       <div class="pt-2 pb-1">
         <div class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase px-4 mb-1">
-          其他
+          {{ section.label }}
         </div>
         <router-link
-          v-for="pt in getSectionTypes('其他', productTypes)"
+          v-for="pt in section.types"
           :key="pt.product_type"
           :to="`/sets/${pt.product_type}`"
-          class="flex items-center justify-between px-4 py-1.5 text-xs border-l-2 transition-all"
-          :class="isActive(pt)
-            ? 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
-            : 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
+          :class="[ITEM_CLASS, isActive(pt) ? ACTIVE_CLASS : INACTIVE_CLASS]"
         >
-          <span>{{ pt.display_name }}</span>
+          <!-- English name, with the Chinese name on its own line -->
+          <span class="leading-snug min-w-0">
+            {{ pt.display_name }}
+            <span v-if="pt.display_name_zh" class="block">{{ pt.display_name_zh }}</span>
+          </span>
           <span
-            class="font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0 ml-1"
-            :class="isActive(pt)
-              ? 'text-gold bg-[rgba(201,168,76,0.15)]'
-              : 'text-gray-400 bg-dark-3'"
+            :class="[BADGE_CLASS, isActive(pt) ? 'text-gold bg-[rgba(201,168,76,0.15)]' : 'text-gray-400 bg-dark-3']"
           >
             {{ pt.set_count }}
           </span>
