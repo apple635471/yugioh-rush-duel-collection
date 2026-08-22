@@ -107,6 +107,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `OwnershipControl`: `[−] 0 [+]` 按鈕（縮小版 w-5 h-5），樂觀更新 + emit event
 
 ### Detail — 側邊欄 & 卡組編輯
+- `SetListCompareDialog`: 對照 yugipedia 卡表（`SetView` header 最左邊的按鈕開啟）。輸入卡組頁網址 → 比對 → 兩份可勾選清單（缺少 / 多出），一鍵建立或刪除；多出的項目會標示持有數與「刪掉整張卡」警告
+  - `SetMetadataEditor` 為此新增 `#actions-left` slot（Edit 按鈕左邊）
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉；根據 `ui.sidebarMode` 切換 detail/create 模式
   - **收起/展開 tab**: 兩個狀態皆固定在 `fixed top-1/2 right-0 z-[60]`（不在 aside 內部），位置不跳動
   - **Layout transition**: `main` 加 `sm:pr-[28rem]` transition 500ms ease-in-out

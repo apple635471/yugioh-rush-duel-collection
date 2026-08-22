@@ -21,6 +21,22 @@ _RARITY_SYNONYMS: dict[str, str] = {
 }
 
 
+# Least rare first. Mirrors RARITIES in the frontend's constants/rarities.ts
+# — used to pair up rarities deterministically, not for display.
+RARITY_ORDER: tuple[str, ...] = (
+    "N", "NPR", "R", "SR", "SPR", "UR", "UPR", "RUR",
+    "SER", "RR", "GRR", "ORR", "ORRPBV", "FORR",
+)
+
+
+def rarity_rank(rarity: str) -> int:
+    """Position in RARITY_ORDER; unknown rarities sort last."""
+    try:
+        return RARITY_ORDER.index(rarity)
+    except ValueError:
+        return len(RARITY_ORDER)
+
+
 def normalize_rarity(rarity: str) -> str:
     """Map a single rarity token to its canonical spelling.
 

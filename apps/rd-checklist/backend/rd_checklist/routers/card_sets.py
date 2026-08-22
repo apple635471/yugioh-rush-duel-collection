@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
@@ -19,7 +20,18 @@ from ..schemas import (
     CardSetUpdate,
     CardSetWithCardsOut,
     ProductTypeOut,
+    SetListApplyOut,
+    SetListApplyRequest,
+    SetListCompareOut,
+    SetListCompareRequest,
 )
+from ..services.card_service import delete_card_and_variants
+from ..services.set_list_compare import compare_with_yugipedia
+from ..services.variant_service import (
+    delete_variant as delete_variant_row,
+    remap_variant as remap_variant_row,
+)
+from ..services.yugipedia import YugipediaError
 
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
@@ -228,3 +240,158 @@ def delete_override(
     db.delete(override)
     db.commit()
     return {"detail": f"Override {set_id}.{field_name} deleted. Will revert on next import."}
+
+
+@router.post("/{set_id}/compare", response_model=SetListCompareOut)
+def compare_set_list(
+    set_id: str, body: SetListCompareRequest, db: Session = Depends(get_db)
+):
+    """Check this set against its card list on yugipedia.
+
+    Reports printings the list has that we don't, and ones we have that it
+    doesn't. Read-only — applying the differences is a separate call.
+    """
+    if not db.query(CardSetModel).filter_by(set_id=set_id).first():
+        raise HTTPException(status_code=404, detail=f"Set {set_id} not found")
+
+    try:
+        return compare_with_yugipedia(db, set_id, body.url)
+    except YugipediaError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502, detail=f"讀取 yugipedia 失敗：{exc}"
+        ) from exc
+
+
+@router.post("/{set_id}/compare/apply", response_model=SetListApplyOut)
+def apply_set_list_diff(
+    set_id: str, body: SetListApplyRequest, db: Session = Depends(get_db)
+):
+    """Create the missing printings and delete the extra ones.
+
+    Creating a printing of a card we already hold adds a variant; creating one
+    for an unknown card creates the card too, with just the id, Japanese name
+    and rarity — the rest is for the scraper or the user to fill in.
+
+    Deleting the last printing of a card deletes the card, since a card with no
+    printings is not something the checklist can show.
+    """
+    card_set = db.query(CardSetModel).filter_by(set_id=set_id).first()
+    if not card_set:
+        raise HTTPException(status_code=404, detail=f"Set {set_id} not found")
+
+    errors: list[str] = []
+    cards_created = variants_created = variants_deleted = cards_deleted = 0
+    variants_remapped = 0
+
+    # Remaps first: they free the old rarity and fill the new one, so a later
+    # create/delete in the same batch sees the corrected state.
+    for remap in body.remap:
+        try:
+            if remap_variant_row(
+                db,
+                remap.card_id,
+                remap.from_rarity,
+                remap.to_rarity,
+                remap.from_is_alternate_art,
+                remap.to_is_alternate_art,
+            ):
+                variants_remapped += 1
+            else:
+                errors.append(
+                    f"{remap.card_id} {remap.from_rarity} → {remap.to_rarity}: 無法改（來源不存在或目標已存在）"
+                )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{remap.card_id} {remap.from_rarity} → {remap.to_rarity}: {exc}")
+
+    db.flush()
+
+    for item in body.create:
+        try:
+            card = db.query(CardModel).filter_by(card_id=item.card_id).first()
+            if card is None:
+                card = CardModel(
+                    card_id=item.card_id,
+                    set_id=set_id,
+                    name_jp=item.name_jp,
+                    is_manual=True,
+                    original_rarity_string=item.rarity,
+                )
+                db.add(card)
+                db.flush()
+                cards_created += 1
+            elif card.set_id != set_id:
+                errors.append(f"{item.card_id} 屬於 {card.set_id}，未建立")
+                continue
+
+            exists = (
+                db.query(CardVariantModel)
+                .filter_by(
+                    card_id=item.card_id,
+                    rarity=item.rarity,
+                    is_alternate_art=item.is_alternate_art,
+                )
+                .first()
+            )
+            if exists:
+                continue
+
+            sort_order = (
+                db.query(func.count(CardVariantModel.id))
+                .filter_by(card_id=item.card_id)
+                .scalar()
+                or 0
+            )
+            db.add(
+                CardVariantModel(
+                    card_id=item.card_id,
+                    rarity=item.rarity,
+                    is_alternate_art=item.is_alternate_art,
+                    sort_order=sort_order,
+                    owned_count=0,
+                )
+            )
+            variants_created += 1
+        except Exception as exc:  # noqa: BLE001 - report and carry on
+            errors.append(f"{item.card_id} {item.rarity}: {exc}")
+
+    db.flush()
+
+    for item in body.delete:
+        try:
+            variant = (
+                db.query(CardVariantModel)
+                .filter_by(
+                    card_id=item.card_id,
+                    rarity=item.rarity,
+                    is_alternate_art=item.is_alternate_art,
+                )
+                .first()
+            )
+            if variant is None:
+                continue
+
+            remaining = (
+                db.query(CardVariantModel).filter_by(card_id=item.card_id).count()
+            )
+            if remaining <= 1:
+                deleted = delete_card_and_variants(db, item.card_id)
+                variants_deleted += deleted
+                cards_deleted += 1
+            elif delete_variant_row(
+                db, item.card_id, item.rarity, item.is_alternate_art
+            ):
+                variants_deleted += 1
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{item.card_id} {item.rarity}: {exc}")
+
+    db.commit()
+    return SetListApplyOut(
+        variants_remapped=variants_remapped,
+        cards_created=cards_created,
+        variants_created=variants_created,
+        variants_deleted=variants_deleted,
+        cards_deleted=cards_deleted,
+        errors=errors,
+    )

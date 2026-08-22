@@ -10,6 +10,7 @@ import type { BreadcrumbItem } from '@/components/layout/BreadcrumbBar.vue'
 import ViewToggle from '@/components/layout/ViewToggle.vue'
 import CardGrid from '@/components/cards/CardGrid.vue'
 import CardTable from '@/components/cards/CardTable.vue'
+import SetListCompareDialog from '@/components/detail/SetListCompareDialog.vue'
 import SetMetadataEditor from '@/components/detail/SetMetadataEditor.vue'
 import Select from 'primevue/select'
 import IftaLabel from 'primevue/iftalabel'
@@ -99,6 +100,8 @@ const progress = computed(() =>
   ui.progressMode === 'net' ? netProgress.value : standardProgress.value,
 )
 
+const compareDialog = ref<InstanceType<typeof SetListCompareDialog> | null>(null)
+
 async function loadAll() {
   await store.loadSet(setId.value)
 }
@@ -132,6 +135,19 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
           :card-set="store.currentSet"
           @updated="loadAll"
         >
+          <template #actions-left>
+            <AppButton
+              @click="compareDialog?.open()"
+              label="對照卡表"
+              title="用 yugipedia 的卡表檢查這個卡組有沒有缺漏"
+            >
+              <template #icon>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </template>
+            </AppButton>
+          </template>
           <template #view-toggle>
             <AppButton
               @click="ui.openCreateSidebar(setId)"
@@ -247,7 +263,9 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         </div>
       </div>
 
-      <!-- Card views -->
+      <SetListCompareDialog ref="compareDialog" :set-id="setId" @applied="loadAll" />
+
+    <!-- Card views -->
       <div v-if="filteredCards.length === 0" class="text-center text-gray-400 py-16 text-sm">
         沒有符合篩選條件的卡片。
       </div>

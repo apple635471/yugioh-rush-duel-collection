@@ -122,6 +122,7 @@ const fieldLabels: Record<string, string> = {
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        <slot name="actions-left" />
         <AppButton
           @click="startEdit"
           label="Edit"

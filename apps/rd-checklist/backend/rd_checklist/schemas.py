@@ -217,6 +217,88 @@ class SearchParams(BaseModel):
     offset: int = 0
 
 
+# ── Set list comparison (yugipedia) ──
+
+
+class SetListCompareRequest(BaseModel):
+    url: str
+
+
+class MissingPrintingOut(BaseModel):
+    card_id: str
+    rarity: str
+    is_alternate_art: bool
+    name_en: str
+    name_jp: str
+    card_exists: bool
+
+
+class ExtraPrintingOut(BaseModel):
+    card_id: str
+    rarity: str
+    is_alternate_art: bool
+    name_jp: str
+    name_zh: str
+    owned_count: int
+    is_only_variant: bool
+
+
+class RemapPrintingOut(BaseModel):
+    """We hold this printing at the wrong rarity — rename it rather than
+    delete-and-recreate, so owned_count and the uploaded image survive."""
+
+    card_id: str
+    from_rarity: str
+    to_rarity: str
+    from_is_alternate_art: bool
+    to_is_alternate_art: bool
+    name_jp: str
+    name_zh: str
+    owned_count: int
+
+
+class SetListCompareOut(BaseModel):
+    list_page: str
+    expected_count: int
+    actual_count: int
+    missing: list[MissingPrintingOut]
+    extra: list[ExtraPrintingOut]
+    remap: list[RemapPrintingOut]
+    unknown_rarities: list[str]
+
+
+class PrintingRef(BaseModel):
+    """One printing to create or delete."""
+
+    card_id: str
+    rarity: str
+    is_alternate_art: bool = False
+    name_jp: str = ""
+
+
+class PrintingRemap(BaseModel):
+    card_id: str
+    from_rarity: str
+    to_rarity: str
+    from_is_alternate_art: bool = False
+    to_is_alternate_art: bool = False
+
+
+class SetListApplyRequest(BaseModel):
+    remap: list[PrintingRemap] = []
+    create: list[PrintingRef] = []
+    delete: list[PrintingRef] = []
+
+
+class SetListApplyOut(BaseModel):
+    variants_remapped: int
+    cards_created: int
+    variants_created: int
+    variants_deleted: int
+    cards_deleted: int
+    errors: list[str]
+
+
 # ── Import ──
 
 
