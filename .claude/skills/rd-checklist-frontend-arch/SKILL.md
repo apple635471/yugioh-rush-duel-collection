@@ -70,7 +70,10 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `ViewToggle`: 直接讀寫 `ui.viewMode`
 
 ### Navigation — 首頁
-- `ProductTypeSidebar`: 可收合左側導覽欄（200px 展開 / 36px 收合），依 display_name 關鍵字分組（補充包系列/構築/活動/其他），使用 PrimeVue Button 切換
+- `ProductTypeSidebar`: 可收合左側導覽欄（200px 展開 / 36px 收合），使用 PrimeVue Button 切換
+  - 分組寫在元件內的 `SECTIONS` 常數，**用 `product_type` 明列**（不是比對 display_name）：`補充包系列` = booster / advanced_pack / maximum_pack / over_rush_pack / legend_pack / triple_build_pack；`預組` = structure_deck；`其他` = battle_pack / promo / other
+  - 組內順序就是 `SECTIONS` 裡的順序；沒列到的新類型自動落在最後一組，不會憑空消失
+  - 每個項目英文名一行、`display_name_zh` 另起一行（見 `rd-product-types`）
 - `ProductTypeNav`: pill 列（舊版，仍保留但 HomeView 已改用 Sidebar）
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
 

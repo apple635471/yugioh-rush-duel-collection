@@ -52,6 +52,7 @@ cd apps/rd-checklist/backend
 uv sync
 uv run python -m rd_checklist.cli init-db                           # 初始化資料庫
 uv run python -m rd_checklist.cli import --scraper-data ../../../tools/rd-card-scraper/data  # 匯入爬取資料
+uv run python -m rd_checklist.cli reclassify-product-types           # 既有卡組重新分類產品類型
 uv run uvicorn rd_checklist.main:app --reload --port 8000           # 啟動後端
 
 # Frontend

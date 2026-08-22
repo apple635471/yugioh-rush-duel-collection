@@ -9,6 +9,7 @@ from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..product_types import label_for
 from ..models import CardModel, CardSetModel, CardSetOverrideModel, CardVariantModel
 from ..schemas import (
     CardOut,
@@ -22,23 +23,6 @@ from ..schemas import (
 
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
-PRODUCT_TYPE_LABELS = {
-    "booster":           "Booster Pack (補充包)",
-    "structure_deck":    "Structure Deck (預組)",
-    "character_pack":    "Character Pack (角色包)",
-    "go_rush_character": "Go Rush Character (GRC 角色包)",
-    "battle_pack":       "Battle Pack (戰鬥包)",
-    "maximum_pack":      "Maximum Pack (Maximum 包)",
-    "extra_pack":        "Extra Pack (Extra 包)",
-    "legend_pack":       "Legend Pack (傳說包)",
-    "vs_pack":           "VS Pack (VS 包)",
-    "tournament_pack":   "Tournament Pack (大會包)",
-    "advanced_pack":     "Advanced Pack (進階包)",
-    "over_rush_pack":    "Over Rush Pack (Over Rush 包)",
-    "other":             "Promo (Promo)",
-    "unknown":           "Other (其他)",
-}
-
 
 @router.get("/product-types", response_model=list[ProductTypeOut])
 def list_product_types(db: Session = Depends(get_db)):
@@ -48,14 +32,18 @@ def list_product_types(db: Session = Depends(get_db)):
         .group_by(CardSetModel.product_type)
         .all()
     )
-    return [
-        ProductTypeOut(
-            product_type=pt,
-            display_name=PRODUCT_TYPE_LABELS.get(pt, pt),
-            set_count=count,
+    result = []
+    for pt, count in rows:
+        name_en, name_zh = label_for(pt)
+        result.append(
+            ProductTypeOut(
+                product_type=pt,
+                display_name=name_en,
+                display_name_zh=name_zh,
+                set_count=count,
+            )
         )
-        for pt, count in rows
-    ]
+    return result
 
 
 @router.get("", response_model=list[CardSetOut])

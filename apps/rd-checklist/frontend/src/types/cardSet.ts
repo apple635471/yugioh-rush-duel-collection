@@ -26,7 +26,10 @@ export interface CardSetWithCards extends CardSet {
 
 export interface ProductType {
   product_type: string
+  /** English name, e.g. "Booster Pack" */
   display_name: string
+  /** Chinese name shown on its own line; absent for Promo / Other */
+  display_name_zh?: string | null
   set_count: number
 }
 

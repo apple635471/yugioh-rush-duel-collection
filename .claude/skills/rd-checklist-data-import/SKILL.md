@@ -61,6 +61,10 @@ overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filte
 ```
 
 可被 override 的欄位: `set_name_jp`, `set_name_zh`, `product_type`, `release_date`, `total_cards`, `rarity_distribution`
+
+**例外：`product_type` 不直接用 scraper 值**——匯入時一律過 `canonical_product_type(set_id, scraper值)`
+（`rd_checklist/product_types.py`）：set_id 有推導規則就用規則，否則把退役類型往前對應，
+再不行落 `other`。所以重新匯入舊 JSON 會**修正**分類而不是把它還原。詳見 `rd-product-types`。
 不可被 override 的欄位: `post_url` (永遠用 scraper 值)
 
 Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。

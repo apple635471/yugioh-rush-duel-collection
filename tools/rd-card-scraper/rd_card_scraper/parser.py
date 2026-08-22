@@ -109,26 +109,39 @@ CONTINUOUS_EFFECT_RE = re.compile(r"永續效果[:：]\s*(.+)", re.DOTALL)
 # "永續效果:" — "永續效果" is matched as a whole unit instead.
 _LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：])")
 
-# Product type mapping from set ID prefix
+# Product type mapping from set ID prefix.
+# Mirrors rd_checklist/product_types.py in the checklist backend — keep both
+# in sync. One-off product lines (CP, GRC, EXT, VSP) are deliberately absent:
+# they fall through to "other" instead of each getting their own nav entry.
 PRODUCT_TYPE_MAP = {
     "KP": "booster",
+    "AP": "advanced_pack",
+    "MAX": "maximum_pack",
+    "ORP": "over_rush_pack",
+    "LGP": "legend_pack",
+    "TB": "triple_build_pack",
     # Structure decks: SD, SD0x, ST, SBD, GRD all map to structure_deck
-    "SD": "structure_deck",
     "SBD": "structure_deck",
+    "SD": "structure_deck",
     "ST": "structure_deck",
     "GRD": "structure_deck",
-    "CP": "character_pack",
-    "GRC": "go_rush_character",
     "B0": "battle_pack",
     "B2": "battle_pack",
-    "MAX": "maximum_pack",
-    "EXT": "extra_pack",
-    "LGP": "legend_pack",
-    "VSP": "vs_pack",
-    "TB": "tournament_pack",
-    "AP": "advanced_pack",
-    "ORP": "over_rush_pack",
+    # Battle packs ship as a B-half and an S-half (B241/S241); some posts are
+    # filed under the S-side set id, e.g. S254 carries the RD/B252 cards.
+    "S2": "battle_pack",
+    # Promos: convenience-store tie-ins, magazine inserts, gum, starter boosts
+    "711": "promo",
+    "ECG": "promo",
+    "SJMP": "promo",
+    "VJMP": "promo",
+    "WJMP": "promo",
+    "PROMO": "promo",
+    "P0": "promo",
 }
+
+# Jump Festa giveaways: 23PR, 24PR, 25PR, 26PR, … (two digits + PR)
+YEAR_PROMO_RE = re.compile(r"^\d{2}PR$", re.IGNORECASE)
 
 
 # Posts that contain multiple card sets in a single HTML page.
@@ -167,10 +180,13 @@ def extract_post_title(html: str) -> str:
 
 
 def guess_product_type(set_id: str) -> str:
-    for prefix, ptype in PRODUCT_TYPE_MAP.items():
+    """Product type from the set ID; "other" when no rule matches."""
+    if YEAR_PROMO_RE.match(set_id):
+        return "promo"
+    for prefix in sorted(PRODUCT_TYPE_MAP, key=len, reverse=True):
         if set_id.startswith(prefix):
-            return ptype
-    return "unknown"
+            return PRODUCT_TYPE_MAP[prefix]
+    return "other"
 
 
 def parse_post_multi(html: str, url: str = "") -> list[CardSet]:

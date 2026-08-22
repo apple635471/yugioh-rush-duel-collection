@@ -37,6 +37,19 @@
 
 ### 改善
 
+- **產品類型分類整理**：側邊欄的分組、命名與實際 `product_type` 全面校正
+  - **命名**：Advanced Pack →「上級包」、Maximum Pack →「巨極包」、Over Rush Pack →「超越超速包」、Tournament Pack →「Triple Build Pack (三重構築包)」（原本是誤譯）
+  - **分組**（`ProductTypeSidebar` 的 `SECTIONS` 改用 `product_type` 明列，不再比對 display_name）
+    - `補充包系列`：Booster / Advanced / Maximum / Over Rush / Legend / Triple Build
+    - `預組`（原「構築 / 預組」）：只放 Structure Deck
+    - `其他`（原「活動 / 限定」取消）：Battle Pack / Promo / Other
+  - **收掉單一產品線的獨立項目**：Character Pack (CP)、Go Rush Character (GRC)、Extra Pack (EXT)、VS Pack (VSP) 併入 `other`，側邊欄不再各佔一列
+  - **修正錯置的類型值**：Promo 實際存的是 `other` → 改 `promo`；Other 實際存的是 `unknown` → 改 `other`；標籤去掉多餘的括號（`Promo (Promo)` → `Promo`）
+  - **新增推導規則**：`\d{2}PR`（23PR/24PR/25PR/26PR）→ `promo`；`S2` → `battle_pack`（戰鬥包成對發行，S254 裝的是 `RD/B252-*` 的卡）；比對改長前綴優先
+  - **顯示**：`ProductTypeOut` 新增 `display_name_zh`，中文名在側邊欄另起一行呈現
+  - **新模組** `rd_checklist/product_types.py`：推導規則、退役類型對應、標籤集中一處；匯入改走 `canonical_product_type()`，重新匯入舊 JSON 會修正分類而非還原
+  - **遷移指令** `uv run python -m rd_checklist.cli reclassify-product-types`（idempotent）：一併改寫 `card_set_overrides` 的 `product_type`，避免下次匯入把舊值還原
+
 - **篩選指定貴罕度時，卡片預設顯示該貴罕度**：SetView 將 `filterRarity` 以 `preferredRarity` prop 傳給 `CardGrid` / `CardTable`，篩選某貴罕度時卡片直接以該貴罕度圖面呈現（tab 排序仍依顯示順序，最稀有在前）。Search 頁原已如此
 - **篩選 UI 重新設計（Search 頁 + SetView）**：改用 PrimeVue `IftaLabel` 把欄位名（種類／屬性／等級／貴罕度／Legend／持有；SetView 為貴罕度／卡種）收進欄位內頂端，外層包一層低調 panel；每個下拉以 `placeholder` 顯示預設「全部」（修正 PrimeVue Select 對空值 `''` 顯示空白）；有值的篩選以金色外框高亮，並提供「清除篩選」按鈕。Search 頁預設選項由英文 `All X` 改為中文
 - **貴罕度顯示排序統一**：`pickDefaultVariantKey()` 與 `RarityTabs` 改用 `compareVariantsForDisplay()`（SER 最低、原版優先於異圖）；預設選取的異圖偏好由「異圖優先」改為「原版優先」，tab badge 排序一併調整（search 頁 tab 也適用）

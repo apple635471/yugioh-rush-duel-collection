@@ -173,6 +173,9 @@ class CardSetWithCardsOut(CardSetOut):
 class ProductTypeOut(BaseModel):
     product_type: str
     display_name: str
+    # Chinese name, shown on its own line in the UI. None for types whose
+    # English name is already the whole name (Promo, Other).
+    display_name_zh: Optional[str] = None
     set_count: int
 
 

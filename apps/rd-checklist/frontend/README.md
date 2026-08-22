@@ -10,7 +10,9 @@ App.vue
 ├── <RouterView>
 │   ├── HomeView           # / 和 /sets/:productType
 │   │   ├── BreadcrumbBar
-│   │   ├── ProductTypeNav # 產品類型 pill 篩選列
+│   │   ├── ProductTypeSidebar # 左側導覽欄，SECTIONS 常數以 product_type 明列分組
+│   │   │                      #   (補充包系列 / 預組 / 其他)，中文名另起一行
+│   │   ├── ProductTypeNav # 產品類型 pill 篩選列 (舊版，仍保留)
 │   │   └── SetList        # 卡組 grid (set_id, 名稱, 日期, 卡數)
 │   │
 │   ├── SetView            # /set/:setId

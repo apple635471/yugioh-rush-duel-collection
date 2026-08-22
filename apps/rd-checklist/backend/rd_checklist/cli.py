@@ -10,6 +10,7 @@ from pathlib import Path
 from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
+from .services.product_type_migration import migrate_product_types
 from .services.rarity_migration import migrate_rarities
 
 
@@ -54,6 +55,14 @@ def main(argv: list[str] | None = None) -> None:
         "in existing DB rows and user-uploaded images (idempotent)",
     )
 
+    # reclassify-product-types
+    sub.add_parser(
+        "reclassify-product-types",
+        help="Re-classify existing sets onto the current product types "
+        "(retired types → other, tournament_pack → triple_build_pack, "
+        "old other → promo; user overrides are kept). Idempotent.",
+    )
+
     args = parser.parse_args(argv)
     setup_logging(args.verbose)
 
@@ -95,6 +104,19 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  Overrides updated: {stats['overrides_updated']}")
             print(f"  Images renamed:    {stats['images_renamed']}")
             print(f"  Images de-duped:   {stats['images_skipped_conflict']}")
+        finally:
+            db.close()
+
+    elif args.command == "reclassify-product-types":
+        init_db()
+        db = SessionLocal()
+        try:
+            stats = migrate_product_types(db)
+            print("\nProduct type re-classification complete:")
+            print(f"  Sets changed:        {stats['sets_changed']}")
+            print(f"  Overrides rewritten: {stats['overrides_rewritten']}")
+            for set_id, before, after in stats["changes"]:
+                print(f"    {set_id}: {before} → {after}")
         finally:
             db.close()
 

@@ -12,7 +12,7 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 ## 端點一覽
 
 ### 卡組 `/api/card-sets`
-- `GET /product-types` → `ProductTypeOut[]` — 產品類型 + display_name + set_count
+- `GET /product-types` → `ProductTypeOut[]` — 產品類型 + `display_name`（英文）+ `display_name_zh`（中文，`promo` / `other` 為 null）+ `set_count`；標籤來自 `product_types.PRODUCT_TYPE_LABELS`，前端把中文名另起一行顯示
 - `GET /?product_type=booster` → `CardSetOut[]` — 卡組列表 (order by release_date DESC)
 - `GET /{set_id}` → `CardSetWithCardsOut` — 含所有 cards + variants (eager loaded)
 - `PATCH /{set_id}` body: `CardSetUpdate` → `CardSetOut` — 編輯卡組 metadata，自動建立 override
