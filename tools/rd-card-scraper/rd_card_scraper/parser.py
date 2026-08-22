@@ -157,8 +157,22 @@ MULTI_DECK_URLS: frozenset[str] = frozenset({
     # GRD1 + GRD2
     "https://ntucgm.blogspot.com/2022/03/rdgrd1-rush-duel-go-rush-429.html",
     # SD01~SD05
-    "https://ntucgm.blogspot.com/2022/06/rush-duel-sd5-86.html"
+    "https://ntucgm.blogspot.com/2022/06/rush-duel-sd5-86.html",
+    # B251~B254 (2025 活動包全年卡表寫在同一篇)
+    "https://ntucgm.blogspot.com/2025/03/rush-duel-2025.html",
 })
+
+# Battle packs ship as a B-half and an S-half sharing one number (B251/S251).
+# They are one product, so when splitting a multi-deck post the S-half folds
+# into the B-half — matching how single-post battle packs are already stored
+# (the B241 set holds the RD/S241 cards).
+_BATTLE_PACK_S_HALF_RE = re.compile(r"^S(\d{3})$")
+
+
+def _split_group_id(set_id: str) -> str:
+    """Set id that a card's own set code belongs under when splitting a post."""
+    m = _BATTLE_PACK_S_HALF_RE.match(set_id)
+    return f"B{m.group(1)}" if m else set_id
 
 
 def compute_content_hash(html: str) -> str:
@@ -226,7 +240,7 @@ def parse_post_multi(html: str, url: str = "") -> list[CardSet]:
         for card in cards:
             m = SET_ID_RE.search(card.card_id)
             if m:
-                cards_by_set[m.group(1)].append(card)
+                cards_by_set[_split_group_id(m.group(1))].append(card)
 
         result: list[CardSet] = []
         for set_id, set_cards in cards_by_set.items():

@@ -37,6 +37,12 @@
 
 ### 改善
 
+- **2025 活動包拆成 B251~B254**：`S254` 這個 set 其實是「Rush Duel 2025活動包 全卡表」整篇文章，裡面混了 B251/S251/B252/S252/B253/S253/B254 七種卡號
+  - Scraper：該篇加入 `MULTI_DECK_URLS`，依卡號拆成四個 set；新增 `_split_group_id()` 把戰鬥包的 S 半併進 B 半（B241 這個 set 本來就放著 `RD/S241` 的卡）
+  - 新增 CLI `resplit-set <SET_ID>`：依卡號把既有 set 的卡搬到正確的 set（重新匯入不會搬——`_import_one_card` 刻意不改既有卡的 set_id），override / 編輯紀錄 / 上傳圖 / 持有數都跟著走；搬空後自動刪除來源 set
+  - 新增 CLI `delete-set <SET_ID>`：刪除卡組與其卡片/variant/override，會先要求輸入 set ID 確認
+  - 本機資料已套用：24 張卡搬到 B251(3) / B252(9) / B253(7) / B254(5)，`S254` 移除
+
 - **產品類型分類整理**：側邊欄的分組、命名與實際 `product_type` 全面校正
   - **命名**：Advanced Pack →「上級包」、Maximum Pack →「巨極包」、Over Rush Pack →「超越超速包」、Tournament Pack →「Triple Build Pack (三重構築包)」（原本是誤譯）
   - **分組**（`ProductTypeSidebar` 的 `SECTIONS` 改用 `product_type` 明列，不再比對 display_name）

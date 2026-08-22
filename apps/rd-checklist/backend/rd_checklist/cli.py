@@ -11,6 +11,7 @@ from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
 from .services.product_type_migration import migrate_product_types
+from .services.set_service import delete_card_set, resplit_set
 from .services.rarity_migration import migrate_rarities
 
 
@@ -61,6 +62,31 @@ def main(argv: list[str] | None = None) -> None:
         help="Re-classify existing sets onto the current product types "
         "(retired types → other, tournament_pack → triple_build_pack, "
         "old other → promo; user overrides are kept). Idempotent.",
+    )
+
+    # resplit-set
+    resp = sub.add_parser(
+        "resplit-set",
+        help="Move a set's cards to the sets their own card numbers point at "
+        "(for posts now split into several sets); deletes the source set when "
+        "it ends up empty",
+    )
+    resp.add_argument("set_id", help="Set ID to re-split, e.g. S254")
+    resp.add_argument(
+        "--keep-source",
+        action="store_true",
+        help="Keep the source set even when it ends up with no cards",
+    )
+
+    # delete-set
+    dele = sub.add_parser(
+        "delete-set",
+        help="Delete a card set and its cards/variants/overrides "
+        "(for sets that no longer exist upstream, e.g. after a post is split)",
+    )
+    dele.add_argument("set_id", help="Set ID to delete, e.g. S254")
+    dele.add_argument(
+        "--yes", action="store_true", help="Skip the confirmation prompt"
     )
 
     args = parser.parse_args(argv)
@@ -117,6 +143,58 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  Overrides rewritten: {stats['overrides_rewritten']}")
             for set_id, before, after in stats["changes"]:
                 print(f"    {set_id}: {before} → {after}")
+        finally:
+            db.close()
+
+    elif args.command == "resplit-set":
+        init_db()
+        db = SessionLocal()
+        try:
+            stats = resplit_set(db, args.set_id, delete_when_empty=not args.keep_source)
+            print(f"\nRe-split {stats['set_id']}:")
+            print(f"  Cards moved: {stats['moved']}")
+            for target, n in stats["by_target"].items():
+                print(f"    → {target}: {n}")
+            if stats["stayed"]:
+                print(f"  Left in place: {stats['stayed']}")
+            for target, n in stats["missing_targets"].items():
+                print(f"  ⚠ target set {target} does not exist yet — {n} card(s) not moved")
+            print(f"  Source set deleted: {'yes' if stats['source_deleted'] else 'no'}")
+        except LookupError as exc:
+            print(exc)
+            sys.exit(1)
+        finally:
+            db.close()
+
+    elif args.command == "delete-set":
+        init_db()
+        db = SessionLocal()
+        try:
+            from .models import CardModel, CardSetModel
+
+            card_set = db.get(CardSetModel, args.set_id)
+            if card_set is None:
+                print(f"Card set not found: {args.set_id}")
+                sys.exit(1)
+            card_count = db.query(CardModel).filter(CardModel.set_id == args.set_id).count()
+            print(f"{args.set_id}  {card_set.set_name_zh or card_set.set_name_jp}")
+            print(f"  {card_count} cards will be deleted along with their variants and overrides.")
+            if not args.yes:
+                if input("Type the set ID to confirm: ").strip() != args.set_id:
+                    print("Aborted.")
+                    sys.exit(1)
+
+            stats = delete_card_set(db, args.set_id)
+            print(f"\nDeleted {stats['set_id']}:")
+            print(f"  Cards:    {stats['cards']}")
+            print(f"  Variants: {stats['variants']}")
+            if stats["owned_count"]:
+                print(f"  ⚠ owned_count discarded: {stats['owned_count']}")
+            if stats["user_uploaded_images"]:
+                print(
+                    f"  ⚠ {stats['user_uploaded_images']} variant(s) had user-uploaded "
+                    "images; the files are left in data/images/user_uploads/"
+                )
         finally:
             db.close()
 

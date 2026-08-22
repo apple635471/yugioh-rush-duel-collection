@@ -69,3 +69,18 @@ _LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：
 - `#741b47` (紫) = 融合/儀式怪獸
 - `#38761d` (綠) = 魔法卡
 - `#cc0000` (紅) = 陷阱卡
+
+## 一篇文章多個卡組
+
+多數文章一篇一個 set，但少數把好幾個 set 寫在一起（結構卡組合輯、整年份的活動包）。
+這些 URL 列在 `parser.py` 的 `MULTI_DECK_URLS`，命中時 `parse_post_multi()` 會依
+**卡號**把卡片分group，一組產生一個 `CardSet`，而不是全部塞進第一個 set id。
+
+分組時會做一次正規化（`_split_group_id()`）：戰鬥包成對發行、共用同一個編號
+（B251/S251），S 半會併進 B 半——與單篇戰鬥包既有的存法一致（B241 這個 set 裡本來
+就放著 `RD/S241` 的卡）。
+
+**既有 DB 的補救**：某篇文章之前被當成單一 set 爬過、現在才加進 `MULTI_DECK_URLS`
+時，重新匯入**不會**把舊卡搬家（`_import_one_card` 刻意不改既有卡的 set_id）。用
+checklist backend 的 `uv run python -m rd_checklist.cli resplit-set <舊SET_ID>`
+依卡號搬過去，override / 編輯紀錄 / 上傳圖 / 持有數都跟著走。
