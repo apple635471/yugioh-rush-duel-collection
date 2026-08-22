@@ -250,7 +250,8 @@ class RemapPrintingOut(BaseModel):
     card_id: str
     from_rarity: str
     to_rarity: str
-    is_alternate_art: bool
+    from_is_alternate_art: bool
+    to_is_alternate_art: bool
     name_jp: str
     name_zh: str
     owned_count: int
@@ -279,7 +280,8 @@ class PrintingRemap(BaseModel):
     card_id: str
     from_rarity: str
     to_rarity: str
-    is_alternate_art: bool = False
+    from_is_alternate_art: bool = False
+    to_is_alternate_art: bool = False
 
 
 class SetListApplyRequest(BaseModel):

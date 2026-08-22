@@ -294,7 +294,8 @@ def apply_set_list_diff(
                 remap.card_id,
                 remap.from_rarity,
                 remap.to_rarity,
-                remap.is_alternate_art,
+                remap.from_is_alternate_art,
+                remap.to_is_alternate_art,
             ):
                 variants_remapped += 1
             else:

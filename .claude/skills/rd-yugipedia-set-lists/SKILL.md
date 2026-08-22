@@ -82,9 +82,18 @@ yugipedia 跑的是舊版 MediaWiki：`rvslots` 參數不支援，內容直接�
 配成一筆 **remap**（改名），不走 delete + create：variant 資料列帶著 `owned_count` 與使用者
 上傳的圖，改名兩者都留著，刪掉重建就沒了。
 
-配對規則：同卡號、同異圖旗標，兩邊各自依貴罕度順位（`rarities.RARITY_ORDER`）排序後依序配。
+配對分兩輪，同卡號、依貴罕度順位（`rarities.RARITY_ORDER`）排序後依序配：
+
+1. **同異圖旗標** —— 單純的貴罕度記錯（`FORR → UR`）
+2. **跨異圖旗標** —— 剩下的再配一次，這是「把異圖當成一般印刷登記」的情況
+   （`SER 一般 → SER 異圖`）。KP26 有 5 筆是這種
+
 完全相同的印刷在配對前就已經從兩個清單移除，所以不會把「本來就對的」配進去；配不完的留在
 原本的清單當一般的建立／刪除。
+
+**翻成異圖時 override 寫的是 `delete` 而不是 `remap`**：匯入只會碰非異圖 variant，所以異圖那筆
+放著就安全，要擋的是爬蟲把同貴罕度的一般 variant 再長回來。反方向（異圖 → 一般）則要清掉該
+貴罕度既有的 `delete` override，否則匯入會跳過它。
 
 實例（ORP4）：資料庫 `JP001 FORR`，卡表說 `JP001 UR` + `JP001 FORR(異圖)` →
 remap `FORR → UR`，另外建立 `FORR(異圖)`。

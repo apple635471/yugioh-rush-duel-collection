@@ -18,24 +18,39 @@ logger = logging.getLogger(__name__)
 
 
 def remap_variant(
-    db: Session, card_id: str, from_rarity: str, to_rarity: str, is_alternate_art: bool
+    db: Session,
+    card_id: str,
+    from_rarity: str,
+    to_rarity: str,
+    from_alternate_art: bool = False,
+    to_alternate_art: bool | None = None,
 ) -> bool:
-    """Change a printing's rarity in place, keeping what hangs off it.
+    """Correct a printing in place — its rarity, its artwork flag, or both.
 
-    Preferred over delete-then-create when the scraper simply read the rarity
+    Preferred over delete-then-create when the scraper simply read the printing
     wrong: the variant row carries owned_count and the uploaded image, so
-    renaming it keeps both, and the override tells the next import to map the
-    scraper's rarity onto the corrected one instead of restoring it.
+    editing it keeps both.
+
+    What the import then does with it depends on the direction:
+
+    * to a normal variant — a `remap` override points the scraper's rarity at
+      the corrected one, so the next import updates this row instead of
+      recreating the old rarity beside it.
+    * to an alternate artwork — the import only ever touches normal variants,
+      so the row is safe once there; a `delete` override stops the scraper's
+      rarity from reappearing as a normal variant next to it.
 
     Returns False when the source is missing or the target already exists.
     The caller commits.
     """
-    if from_rarity == to_rarity:
+    if to_alternate_art is None:
+        to_alternate_art = from_alternate_art
+    if from_rarity == to_rarity and from_alternate_art == to_alternate_art:
         return False
 
     variant = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=from_rarity, is_alternate_art=is_alternate_art)
+        .filter_by(card_id=card_id, rarity=from_rarity, is_alternate_art=from_alternate_art)
         .first()
     )
     if variant is None:
@@ -43,7 +58,7 @@ def remap_variant(
 
     clash = (
         db.query(CardVariantModel)
-        .filter_by(card_id=card_id, rarity=to_rarity, is_alternate_art=is_alternate_art)
+        .filter_by(card_id=card_id, rarity=to_rarity, is_alternate_art=to_alternate_art)
         .first()
     )
     if clash is not None:
@@ -51,37 +66,51 @@ def remap_variant(
 
     now = datetime.now(timezone.utc).isoformat()
 
-    # Overrides only for non-alternate variants — the scraper never produces
-    # alternate artworks, so there is nothing to remap on import.
-    if not is_alternate_art:
+    def _override_for(rarity: str) -> CardVariantOverrideModel | None:
         chained = (
             db.query(CardVariantOverrideModel)
             .filter_by(card_id=card_id, action="remap")
-            .filter(CardVariantOverrideModel.target_rarity == from_rarity)
+            .filter(CardVariantOverrideModel.target_rarity == rarity)
             .first()
         )
-        existing = chained or (
+        return chained or (
             db.query(CardVariantOverrideModel)
-            .filter_by(card_id=card_id, scraper_rarity=from_rarity)
+            .filter_by(card_id=card_id, scraper_rarity=rarity)
             .first()
         )
+
+    # The scraper only ever produced this row if it started as a normal
+    # variant; only then is there something for an override to redirect.
+    if not from_alternate_art:
+        existing = _override_for(from_rarity)
+        action = "delete" if to_alternate_art else "remap"
+        target = None if to_alternate_art else to_rarity
         if existing:
-            existing.action = "remap"
-            existing.target_rarity = to_rarity
+            existing.action = action
+            existing.target_rarity = target
             existing.updated_at = now
         else:
             db.add(
                 CardVariantOverrideModel(
                     card_id=card_id,
                     scraper_rarity=from_rarity,
-                    action="remap",
-                    target_rarity=to_rarity,
+                    action=action,
+                    target_rarity=target,
                 )
             )
+    elif not to_alternate_art:
+        # Becoming a normal variant: a leftover deletion override for that
+        # rarity would have the import skip it.
+        existing = _override_for(to_rarity)
+        if existing is not None and existing.action == "delete":
+            db.delete(existing)
 
     variant.rarity = to_rarity
+    variant.is_alternate_art = to_alternate_art
 
-    if not is_alternate_art:
+    # original_rarity_string tracks what the scraper said, so it only moves
+    # when a normal variant is renamed to another normal variant.
+    if not from_alternate_art and not to_alternate_art:
         card = db.query(CardModel).filter_by(card_id=card_id).first()
         if card is not None:
             rarities = [
@@ -91,7 +120,12 @@ def remap_variant(
                 rarities[rarities.index(from_rarity)] = to_rarity
                 card.original_rarity_string = "/".join(rarities)
 
-    logger.info("Remapped variant %s: %s → %s", card_id, from_rarity, to_rarity)
+    logger.info(
+        "Remapped variant %s: %s%s → %s%s",
+        card_id,
+        from_rarity, " alt" if from_alternate_art else "",
+        to_rarity, " alt" if to_alternate_art else "",
+    )
     return True
 
 

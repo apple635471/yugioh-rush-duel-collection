@@ -78,7 +78,7 @@ def compare_with_yugipedia(db: Session, set_id: str, url: str) -> dict:
 
     missing.sort(key=lambda m: (m["card_id"], m["rarity"], m["is_alternate_art"]))
     extra.sort(key=lambda e: (e["card_id"], e["rarity"], e["is_alternate_art"]))
-    remap.sort(key=lambda r: (r["card_id"], r["from_rarity"]))
+    remap.sort(key=lambda r: (r["card_id"], r["from_rarity"], r["to_rarity"]))
 
     logger.info(
         "%s vs %s: %d missing, %d extra, %d remap",
@@ -109,32 +109,49 @@ def _pair_into_remaps(missing: list[dict], extra: list[dict]) -> list[dict]:
     """
     remaps: list[dict] = []
 
-    groups = {(m["card_id"], m["is_alternate_art"]) for m in missing} & {
-        (e["card_id"], e["is_alternate_art"]) for e in extra
-    }
+    def pair(match_artwork: bool) -> None:
+        """Pair what is left, card by card. With match_artwork the two sides
+        must agree on the artwork flag; without it, a normal printing can be
+        corrected into an alternate one (or back)."""
+        cards = {m["card_id"] for m in missing} & {e["card_id"] for e in extra}
+        for card_id in sorted(cards):
+            for is_alt in ((False, True) if match_artwork else (None,)):
+                want = sorted(
+                    (
+                        m for m in missing
+                        if m["card_id"] == card_id
+                        and (is_alt is None or m["is_alternate_art"] == is_alt)
+                    ),
+                    key=lambda m: rarity_rank(m["rarity"]),
+                )
+                have = sorted(
+                    (
+                        e for e in extra
+                        if e["card_id"] == card_id
+                        and (is_alt is None or e["is_alternate_art"] == is_alt)
+                    ),
+                    key=lambda e: rarity_rank(e["rarity"]),
+                )
+                for target, source in zip(want, have):
+                    remaps.append(
+                        {
+                            "card_id": card_id,
+                            "from_rarity": source["rarity"],
+                            "to_rarity": target["rarity"],
+                            "from_is_alternate_art": source["is_alternate_art"],
+                            "to_is_alternate_art": target["is_alternate_art"],
+                            "name_jp": source["name_jp"] or target["name_jp"],
+                            "name_zh": source["name_zh"],
+                            "owned_count": source["owned_count"],
+                        }
+                    )
+                    missing.remove(target)
+                    extra.remove(source)
 
-    for card_id, is_alt in groups:
-        want = sorted(
-            (m for m in missing if m["card_id"] == card_id and m["is_alternate_art"] == is_alt),
-            key=lambda m: rarity_rank(m["rarity"]),
-        )
-        have = sorted(
-            (e for e in extra if e["card_id"] == card_id and e["is_alternate_art"] == is_alt),
-            key=lambda e: rarity_rank(e["rarity"]),
-        )
-        for target, source in zip(want, have):
-            remaps.append(
-                {
-                    "card_id": card_id,
-                    "from_rarity": source["rarity"],
-                    "to_rarity": target["rarity"],
-                    "is_alternate_art": is_alt,
-                    "name_jp": source["name_jp"] or target["name_jp"],
-                    "name_zh": source["name_zh"],
-                    "owned_count": source["owned_count"],
-                }
-            )
-            missing.remove(target)
-            extra.remove(source)
+    # Same artwork flag first — those are plain rarity corrections. Only then
+    # pair across the flag, which is the "we filed the alternate artwork as a
+    # normal printing" case.
+    pair(match_artwork=True)
+    pair(match_artwork=False)
 
     return remaps

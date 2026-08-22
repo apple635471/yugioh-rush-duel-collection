@@ -78,7 +78,8 @@ export interface RemapPrinting {
   card_id: string
   from_rarity: string
   to_rarity: string
-  is_alternate_art: boolean
+  from_is_alternate_art: boolean
+  to_is_alternate_art: boolean
   name_jp: string
   name_zh: string
   owned_count: number
@@ -106,7 +107,8 @@ export interface PrintingRemapRef {
   card_id: string
   from_rarity: string
   to_rarity: string
-  is_alternate_art?: boolean
+  from_is_alternate_art?: boolean
+  to_is_alternate_art?: boolean
 }
 
 export interface SetListApplyResult {

@@ -39,7 +39,8 @@ const selectedRemap = ref<string[]>([])
 const keyOf = (p: { card_id: string; rarity: string; is_alternate_art: boolean }) =>
   `${p.card_id}|${p.rarity}|${p.is_alternate_art}`
 const remapKeyOf = (r: RemapPrinting) =>
-  `${r.card_id}|${r.from_rarity}>${r.to_rarity}|${r.is_alternate_art}`
+  `${r.card_id}|${r.from_rarity}${r.from_is_alternate_art ? '*' : ''}` +
+  `>${r.to_rarity}${r.to_is_alternate_art ? '*' : ''}`
 
 function open() {
   visible.value = true
@@ -109,7 +110,8 @@ async function apply() {
         card_id: x.card_id,
         from_rarity: x.from_rarity,
         to_rarity: x.to_rarity,
-        is_alternate_art: x.is_alternate_art,
+        from_is_alternate_art: x.from_is_alternate_art,
+        to_is_alternate_art: x.to_is_alternate_art,
       })),
       create: missingChecked.value.map((m: MissingPrinting) => ({
         card_id: m.card_id,
@@ -214,10 +216,11 @@ const ROW = 'flex items-center gap-2 px-2 py-1 rounded text-xs hover:bg-[rgba(20
               <span class="font-mono text-gray-300 shrink-0">{{ r.card_id }}</span>
               <span class="shrink-0">
                 <span class="text-red-300">{{ r.from_rarity }}</span>
+                <span v-if="r.from_is_alternate_art" class="text-[10px] text-purple-300">異圖</span>
                 <span class="text-gray-500 mx-1">→</span>
                 <span class="text-emerald-300">{{ r.to_rarity }}</span>
+                <span v-if="r.to_is_alternate_art" class="text-[10px] text-purple-300">異圖</span>
               </span>
-              <span v-if="r.is_alternate_art" class="text-[10px] text-purple-300 shrink-0">異圖</span>
               <span class="text-gray-300 truncate">{{ r.name_zh || r.name_jp }}</span>
               <span v-if="r.owned_count" class="ml-auto text-[10px] text-emerald-400 shrink-0">
                 持有 {{ r.owned_count }}
