@@ -28,7 +28,8 @@ const props = withDefaults(defineProps<{
   severity?: 'primary' | 'secondary' | 'warn' | 'danger' | 'success' | 'info'
   /** App 自訂色票，覆蓋 severity；gold = 金色系（卡牌主題色） */
   tone?: 'gold'
-  /** sm = 24px（密集列表／輔助）、md = 32px（工具列預設）、lg = 40px（主要 CTA） */
+  /** sm = 24px（密集列表／輔助）、md = 32px（工具列預設）、lg = 40px（主要 CTA）
+   *  字級 sm 與 md 皆 12px、lg 14px；個別按鈕要調整就加 `!text-sm` 之類的 class */
   size?: 'sm' | 'md' | 'lg'
   /** 只有 icon 沒有文字 → 正方形 */
   iconOnly?: boolean
@@ -43,16 +44,17 @@ const props = withDefaults(defineProps<{
 
 /** 高度固定，PrimeVue 的 padding 由 Tailwind utilities layer 覆蓋 */
 const SIZES = {
-  sm: { box: 'h-6', pad: 'px-2 gap-1', text: '!text-[11px]', icon: '0.75rem' },
-  md: { box: 'h-8', pad: 'px-3 gap-1.5', text: '!text-xs', icon: '0.875rem' },
-  lg: { box: 'h-10', pad: 'px-4 gap-2', text: '!text-sm', icon: '1rem' },
+  sm: { box: 'h-6', pad: 'px-2 gap-1', font: '0.75rem', icon: '0.75rem' },
+  md: { box: 'h-8', pad: 'px-3 gap-1.5', font: '0.75rem', icon: '0.875rem' },
+  lg: { box: 'h-10', pad: 'px-4 gap-2', font: '0.875rem', icon: '1rem' },
 } as const
 
 const sizeClass = computed(() => {
   const s = SIZES[props.size]
-  return [s.box, s.text, props.iconOnly ? 'px-0 justify-center' : s.pad]
+  return [s.box, props.iconOnly ? 'px-0 justify-center' : s.pad]
 })
 const iconSize = computed(() => SIZES[props.size].icon)
+const fontSize = computed(() => SIZES[props.size].font)
 
 const primeVariant = computed(() => props.variant === 'filled' ? undefined : props.variant)
 </script>
@@ -63,13 +65,15 @@ const primeVariant = computed(() => props.variant === 'filled' ? undefined : pro
     :variant="primeVariant"
     :disabled="disabled"
     :fluid="fluid"
-    class="app-button shrink-0 whitespace-nowrap !py-0 leading-none"
+    class="app-button whitespace-nowrap !py-0 leading-none"
     :class="[
       sizeClass,
+      // fluid 按鈕要能被 flex 壓縮，不然並排兩顆各要 100% 寬會擠爆容器
+      fluid ? 'flex-1 min-w-0' : 'shrink-0',
       tone ? `app-button--${tone} app-button--${tone}-${variant}` : null,
       { '!w-6': iconOnly && size === 'sm', '!w-8': iconOnly && size === 'md', '!w-10': iconOnly && size === 'lg' },
     ]"
-    :style="{ '--app-button-icon': iconSize }"
+    :style="{ '--app-button-icon': iconSize, '--app-button-font': fontSize }"
   >
     <slot name="icon" />
     <span v-if="!iconOnly && ($slots.default || label)"><slot>{{ label }}</slot></span>

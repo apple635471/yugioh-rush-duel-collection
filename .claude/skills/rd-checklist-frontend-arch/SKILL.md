@@ -32,6 +32,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 - **共用 action 按鈕 `components/ui/AppButton.vue`**：封裝 PrimeVue `Button`，固定尺寸避免同一列按鈕高度不一
   - props：`label` / `variant`（`filled` | `outlined`（預設） | `text`）/ `severity`（PrimeVue 語意色，預設 `secondary`）/ `tone`（App 自訂色票，目前只有 `gold`，給了就覆蓋 `severity`）/ `size`（`sm`=24px、`md`=32px（預設）、`lg`=40px）/ `iconOnly`（正方形）/ `fluid`（撐滿寬度）/ `disabled`
   - slots：預設 slot = 文字（優先於 `label`）；`#icon` = 圖示，svg 由元件依 size 統一縮成 12/14/16px，不用自己標 `w-3.5 h-3.5`
+  - **`fluid` 會改用 `flex-1 min-w-0`（不是 `shrink-0`）**：兩顆並排的 fluid 按鈕各要 100% 寬，不能壓縮就會把後面那顆擠出容器
+  - **字級可被個別覆寫**：元件用 `--app-button-font`（`main.css` 的 `.app-button` 未分層規則讀取），呼叫端加 `!text-sm` 之類的 class 就能蓋掉。`!important` 在 CSS layer 內的優先順序是**反過來的**，所以元件不能用 `!text-xs` 當預設，否則呼叫端怎麼加都蓋不掉
   - `tone` 的樣式寫在元件的 scoped `<style>`（未進 `@layer`，優先度高於 primevue layer）；要加新色票就在那裡加 `.app-button--{tone}-{variant}`
   - 工具列上與按鈕並排的 `SelectButton`（如 `ViewToggle`）加 `app-toolbar-toggle` class，`main.css` 有對應規則把 `.p-togglebutton` 拉成 2rem 對齊
   - **不套用**：卡圖上的浮動 overlay 按鈕、`OwnershipControl` 的 ±、`RarityTabs` 分頁、側邊欄收合把手 —— 定位／形狀特殊，不是一般 action 按鈕

@@ -1005,8 +1005,7 @@ async function submitDeleteVariant() {
             v-else
             @click="toggleSection(section.key)"
             variant="text"
-            size="sm"
-            class="mb-2"
+            class="mb-2 !text-sm"
           >
             <span class="text-sm leading-none mr-0.5">+</span>{{ section.label }}
           </AppButton>
