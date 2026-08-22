@@ -37,6 +37,7 @@
 
 ### 改善
 
+- **`SET_ID_HOMES` 排除名單**（`services/set_service.py`）：`{"21CC": "PROMO"}` — 列在這裡的卡號永遠不會獨立成 set，`resplit-set` 會直接把卡放進指定的 set。與 `merge-set` 的釘選不同，這是針對**卡號**的規則，之後匯入的同卡號卡片也適用
 - **`merge-set`：把指定 set 併進另一個並釘住**（`uv run python -m rd_checklist.cli merge-set 21CC --into PROMO`）
   - 卡片搬進目標 set，並在 `card_overrides` 寫一筆 `set_id` 記號；`resplit-set` 掃到會跳過，重新匯入也不會動
   - 用於 `21CC` 這種只有一張卡、不需要獨立成 set 的雜項編號；搬空的來源 set 會刪掉（手動建立的除外）

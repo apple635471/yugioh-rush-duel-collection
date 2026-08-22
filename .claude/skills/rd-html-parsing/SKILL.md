@@ -96,7 +96,16 @@ uv run python -m rd_checklist.cli resplit-set --all             # 實際搬
 依卡號搬過去，缺的 set 會自動建立（沿用來源 set 的名稱／日期／post_url），
 override / 編輯紀錄 / 上傳圖 / 持有數都跟著卡片走。
 
-**例外：不想讓它自己成一個 set 的**（如 `21CC` 這種只有一張的雜項）：
+**例外一：某個卡號永遠不該獨立成 set** —— 寫在 `set_service.SET_ID_HOMES`：
+
+```python
+SET_ID_HOMES = {"21CC": "PROMO"}   # 卡號 → 它該待的 set
+```
+
+這是**針對卡號的規則**，之後匯入進來的同卡號卡片也一樣：`resplit-set` 不會幫它建
+set，而是把卡放進指定的 set（該 set 不存在時就原地不動）。
+
+**例外二：只針對某一張卡的一次性決定**：
 
 ```bash
 uv run python -m rd_checklist.cli merge-set 21CC --into PROMO

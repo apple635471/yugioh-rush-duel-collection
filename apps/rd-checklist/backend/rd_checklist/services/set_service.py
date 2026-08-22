@@ -37,6 +37,18 @@ def set_id_from_card_id(card_id: str) -> str | None:
     return m.group(1) if m else None
 
 
+# Card numbers that never get a set of their own, and where they live instead.
+# For one-off oddities — a single promo numbered RD/21CC-* is not a product
+# line, it is one card in the Promo pile. resplit_set() keeps these out of
+# their own set and files them under the home named here.
+#
+# This is a rule about the number, so it also catches cards imported later.
+# For a one-time decision about one specific card, use merge-set, which
+# records a pin in card_overrides instead.
+SET_ID_HOMES: dict[str, str] = {
+    "21CC": "PROMO",
+}
+
 PINNED_FIELD = "set_id"
 
 
@@ -141,6 +153,14 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
             kept_pinned += 1
             continue
 
+        home = SET_ID_HOMES.get(target)
+        if home is not None:
+            # Never gets its own set; belongs in `home` when that set exists.
+            if card.set_id == home or db.get(CardSetModel, home) is None:
+                kept_pinned += 1
+                continue
+            target = home
+
         if db.get(CardSetModel, target) is None:
             db.add(
                 CardSetModel(
@@ -203,7 +223,10 @@ def find_split_candidates(db: Session) -> dict[str, dict[str, int]]:
             if card_id in pinned:
                 continue
             target = set_id_from_card_id(card_id)
-            if target and target != set_id:
+            if target is None:
+                continue
+            target = SET_ID_HOMES.get(target, target)
+            if target != set_id:
                 counts[target] = counts.get(target, 0) + 1
         if counts:
             out[set_id] = counts
