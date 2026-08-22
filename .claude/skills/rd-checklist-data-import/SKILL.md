@@ -69,6 +69,13 @@ overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filte
 
 Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。
 
+### `set_id` 釘選（card_overrides 的特例）
+
+`card_overrides` 裡 `field_name='set_id'` 的紀錄不是拿來覆寫欄位的（匯入不會套用它），
+而是一個**記號**：這張卡放在哪個 set 是人工決定的。由 `merge-set` 寫入，`resplit-set`
+掃到會跳過。用途是把 `21CC` 這種只有一張卡的雜項編號併進 `PROMO`，而不會被下一次
+resplit 拆回去。
+
 ### Card Override 保護 (卡片層級)
 
 `_import_one_card()` 匯入卡片時有三層保護:

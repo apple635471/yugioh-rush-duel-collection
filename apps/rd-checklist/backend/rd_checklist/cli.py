@@ -11,7 +11,12 @@ from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
 from .services.product_type_migration import migrate_product_types
-from .services.set_service import delete_card_set, find_split_candidates, resplit_set
+from .services.set_service import (
+    delete_card_set,
+    find_split_candidates,
+    merge_set,
+    resplit_set,
+)
 from .services.rarity_migration import migrate_rarities
 
 
@@ -62,6 +67,17 @@ def main(argv: list[str] | None = None) -> None:
         help="Re-classify existing sets onto the current product types "
         "(retired types → other, tournament_pack → triple_build_pack, "
         "old other → promo; user overrides are kept). Idempotent.",
+    )
+
+    # merge-set
+    mrg = sub.add_parser(
+        "merge-set",
+        help="Move every card of one set into another and pin them there, so "
+        "resplit-set leaves them alone (e.g. 21CC into PROMO)",
+    )
+    mrg.add_argument("source_id", help="Set ID to empty out, e.g. 21CC")
+    mrg.add_argument(
+        "--into", dest="target_id", required=True, help="Set ID to move the cards into"
     )
 
     # resplit-set
@@ -159,6 +175,24 @@ def main(argv: list[str] | None = None) -> None:
         finally:
             db.close()
 
+    elif args.command == "merge-set":
+        init_db()
+        db = SessionLocal()
+        try:
+            stats = merge_set(db, args.source_id, args.target_id)
+            print(
+                f"\nMerged {stats['source_id']} → {stats['target_id']}: "
+                f"{stats['moved']} card(s)"
+            )
+            print("  Cards are pinned; resplit-set will leave them in place.")
+            if stats["source_deleted"]:
+                print(f"  Source set {stats['source_id']} was empty and has been deleted.")
+        except (LookupError, ValueError) as exc:
+            print(exc)
+            sys.exit(1)
+        finally:
+            db.close()
+
     elif args.command == "resplit-set":
         if not args.set_id and not args.all_sets:
             print("Give a set ID, or --all to sweep every set.")
@@ -192,6 +226,8 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"{stats['set_id']}: moved {stats['moved']} → {detail}")
                 if stats["created"]:
                     print(f"    created set(s): {', '.join(stats['created'])}")
+                if stats["kept_pinned"]:
+                    print(f"    left {stats['kept_pinned']} pinned card(s) in place")
                 if stats["source_deleted"]:
                     print("    source set was empty and has been deleted")
                 elif stats["source_empty_kept"]:

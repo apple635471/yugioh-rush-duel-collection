@@ -37,6 +37,10 @@
 
 ### 改善
 
+- **`merge-set`：把指定 set 併進另一個並釘住**（`uv run python -m rd_checklist.cli merge-set 21CC --into PROMO`）
+  - 卡片搬進目標 set，並在 `card_overrides` 寫一筆 `set_id` 記號；`resplit-set` 掃到會跳過，重新匯入也不會動
+  - 用於 `21CC` 這種只有一張卡、不需要獨立成 set 的雜項編號；搬空的來源 set 會刪掉（手動建立的除外）
+  - `resplit-set` 建立新 set 時不再繼承來源的 `is_manual`（由爬取資料衍生出來的 set 不算手動建立）
 - **卡號決定 set：爬蟲一律依卡號拆分，不再靠白名單**
   - 卡號格式是 `RD/{set_id}-{編號}`，`parse_post_multi()` 改為**無條件**依卡號裡的 set id 分組，一組一個 `CardSet`；`MULTI_DECK_URLS` 白名單移除
   - 解決白名單擋不住的情況：戰鬥包文章裡夾帶的特典卡（`RD/S23P-*`）以前會被歸進那期戰鬥包，現在自己成一個 set

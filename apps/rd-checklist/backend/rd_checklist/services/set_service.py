@@ -37,6 +37,75 @@ def set_id_from_card_id(card_id: str) -> str | None:
     return m.group(1) if m else None
 
 
+PINNED_FIELD = "set_id"
+
+
+def pinned_card_ids(db: Session) -> set[str]:
+    """Cards deliberately filed under a set their number doesn't name.
+
+    Recorded as a card_overrides row on "set_id" — the same mechanism that
+    protects hand-edited fields from being overwritten by an import. Used to
+    keep a merge from being undone by the next resplit sweep.
+    """
+    return {
+        row[0]
+        for row in db.query(CardOverrideModel.card_id)
+        .filter(CardOverrideModel.field_name == PINNED_FIELD)
+        .all()
+    }
+
+
+def merge_set(db: Session, source_id: str, target_id: str) -> dict:
+    """Move every card of one set into another and pin them there.
+
+    For set ids that should not exist on their own — a one-card oddity like
+    21CC that belongs in the Promo pile. The cards keep their numbers; a pin
+    records that their home was chosen by hand, so `resplit_set` leaves them
+    alone. The emptied source set is deleted unless it was created by hand.
+    """
+    if source_id == target_id:
+        raise ValueError("Source and target are the same set")
+
+    source = db.get(CardSetModel, source_id)
+    if source is None:
+        raise LookupError(f"Card set not found: {source_id}")
+    if db.get(CardSetModel, target_id) is None:
+        raise LookupError(f"Target card set not found: {target_id}")
+
+    moved = 0
+    for card in db.query(CardModel).filter(CardModel.set_id == source_id).all():
+        card.set_id = target_id
+        override = (
+            db.query(CardOverrideModel)
+            .filter_by(card_id=card.card_id, field_name=PINNED_FIELD)
+            .first()
+        )
+        if override is None:
+            db.add(
+                CardOverrideModel(
+                    card_id=card.card_id, field_name=PINNED_FIELD, value=target_id
+                )
+            )
+        else:
+            override.value = target_id
+        moved += 1
+
+    db.commit()
+
+    deleted = False
+    if moved and not source.is_manual:
+        delete_card_set(db, source_id)
+        deleted = True
+
+    logger.info("Merged %s into %s (%d cards)", source_id, target_id, moved)
+    return {
+        "source_id": source_id,
+        "target_id": target_id,
+        "moved": moved,
+        "source_deleted": deleted,
+    }
+
+
 def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dict:
     """Move a set's cards to the sets their own card numbers point at.
 
@@ -60,11 +129,16 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
     moved: list[tuple[str, str]] = []
     created: list[str] = []
     stayed = 0
+    pinned = pinned_card_ids(db)
+    kept_pinned = 0
 
     for card in db.query(CardModel).filter(CardModel.set_id == set_id).all():
         target = set_id_from_card_id(card.card_id)
         if target is None or target == set_id:
             stayed += 1
+            continue
+        if card.card_id in pinned:
+            kept_pinned += 1
             continue
 
         if db.get(CardSetModel, target) is None:
@@ -77,7 +151,9 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
                     release_date=card_set.release_date,
                     post_url=card_set.post_url,
                     total_cards=0,
-                    is_manual=card_set.is_manual,
+                    # Derived from scraped cards, so not hand-made even when
+                    # the set they came out of was.
+                    is_manual=False,
                 )
             )
             db.flush()
@@ -111,6 +187,7 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
         "by_target": {t: sum(1 for _, x in moved if x == t) for t in sorted({t for _, t in moved})},
         "created": created,
         "stayed": stayed,
+        "kept_pinned": kept_pinned,
         "source_deleted": deleted,
         "source_empty_kept": remaining == 0 and not deleted,
     }
@@ -118,10 +195,13 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
 
 def find_split_candidates(db: Session) -> dict[str, dict[str, int]]:
     """Sets holding cards whose numbers name a different set."""
+    pinned = pinned_card_ids(db)
     out: dict[str, dict[str, int]] = {}
     for (set_id,) in db.query(CardSetModel.set_id).order_by(CardSetModel.set_id).all():
         counts: dict[str, int] = {}
         for (card_id,) in db.query(CardModel.card_id).filter(CardModel.set_id == set_id).all():
+            if card_id in pinned:
+                continue
             target = set_id_from_card_id(card_id)
             if target and target != set_id:
                 counts[target] = counts.get(target, 0) + 1

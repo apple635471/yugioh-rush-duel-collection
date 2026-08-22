@@ -95,3 +95,13 @@ uv run python -m rd_checklist.cli resplit-set --all             # 實際搬
 
 依卡號搬過去，缺的 set 會自動建立（沿用來源 set 的名稱／日期／post_url），
 override / 編輯紀錄 / 上傳圖 / 持有數都跟著卡片走。
+
+**例外：不想讓它自己成一個 set 的**（如 `21CC` 這種只有一張的雜項）：
+
+```bash
+uv run python -m rd_checklist.cli merge-set 21CC --into PROMO
+```
+
+卡片搬進目標 set，並在 `card_overrides` 寫一筆 `set_id` 記號**釘住**——之後
+`resplit-set` 掃到會跳過，重新匯入也不會動（`_import_one_card` 本來就不改既有卡的
+set_id）。搬空的來源 set 會刪掉（手動建立的除外）。
