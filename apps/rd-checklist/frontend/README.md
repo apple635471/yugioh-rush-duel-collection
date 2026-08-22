@@ -16,7 +16,9 @@ App.vue
 │   ├── SetView            # /set/:setId
 │   │   ├── BreadcrumbBar
 │   │   ├── SetMetadataEditor  # 卡組 metadata 顯示/編輯 + override 管理
-│   │   ├── ViewToggle     # Grid ↔ Table 切換
+│   │   │   └── AppButton  # 共用 action 按鈕 (Edit)
+│   │   ├── AppButton      # Add Card
+│   │   ├── ViewToggle     # Grid ↔ Table 切換 (高度對齊 AppButton md)
 │   │   ├── CardGrid       # Grid 模式 (auto-fill minmax(190px,1fr))
 │   │   │   └── CardGridItem × N
 │   │   │       ├── 完整卡牌編號列 + 複製按鈕  (卡圖上方)

@@ -5,6 +5,7 @@ import { updateCardSet, fetchCardSetOverrides, deleteCardSetOverride } from '@/a
 import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
 import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 
@@ -121,18 +122,17 @@ const fieldLabels: Record<string, string> = {
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <Button
+        <AppButton
           @click="startEdit"
-          variant="outlined"
-          severity="secondary"
-          size="small"
+          label="Edit"
           title="Edit set metadata"
         >
-          <svg class="w-3.5 h-3.5 mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-          </svg>
-          Edit
-        </Button>
+          <template #icon>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+            </svg>
+          </template>
+        </AppButton>
         <slot name="view-toggle" />
       </div>
     </div>

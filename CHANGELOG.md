@@ -37,6 +37,10 @@
 
 ### 改善
 
+- **共用 action 按鈕元件 `AppButton`**（`components/ui/AppButton.vue`）：包一層 PrimeVue `Button`，把高度（`md`=32px / `sm`=24px）、水平 padding、字級、icon 間距固定住，icon 走 `#icon` slot（svg 自動統一 14px）
+  - 修正 SetView header 的 `Edit` 與 `Add Card` 大小不一：`Add Card` 原本是自刻的原生 `<button>`（違反 PrimeVue 優先原則），兩顆改用 `AppButton` 後同為 32px
+  - `ViewToggle` 的 `SelectButton` 加 `app-toolbar-toggle` class，於 `main.css` 對齊同一高度，整列工具列按鈕齊平
+
 - **篩選指定貴罕度時，卡片預設顯示該貴罕度**：SetView 將 `filterRarity` 以 `preferredRarity` prop 傳給 `CardGrid` / `CardTable`，篩選某貴罕度時卡片直接以該貴罕度圖面呈現（tab 排序仍依顯示順序，最稀有在前）。Search 頁原已如此
 - **篩選 UI 重新設計（Search 頁 + SetView）**：改用 PrimeVue `IftaLabel` 把欄位名（種類／屬性／等級／貴罕度／Legend／持有；SetView 為貴罕度／卡種）收進欄位內頂端，外層包一層低調 panel；每個下拉以 `placeholder` 顯示預設「全部」（修正 PrimeVue Select 對空值 `''` 顯示空白）；有值的篩選以金色外框高亮，並提供「清除篩選」按鈕。Search 頁預設選項由英文 `All X` 改為中文
 - **貴罕度顯示排序統一**：`pickDefaultVariantKey()` 與 `RarityTabs` 改用 `compareVariantsForDisplay()`（SER 最低、原版優先於異圖）；預設選取的異圖偏好由「異圖優先」改為「原版優先」，tab badge 排序一併調整（search 頁 tab 也適用）
