@@ -4,6 +4,15 @@
 
 ### 新增
 
+- **卡組頁「對照卡表」**：用 yugipedia 的官方卡表檢查卡組有沒有缺漏（`SetView` header 最左邊的按鈕）
+  - 輸入該卡組的 yugipedia 頁面網址（如 `https://yugipedia.com/wiki/High-Grade_Collection`），讀它的 `Set Card Lists:` 子頁
+  - 比對單位是 **(卡號 + 貴罕度 + 是否異圖)** —— 同一張卡的 SR 與 SER 是兩件要收的東西，異圖是第三件
+  - 結果分「缺少」與「多出」兩份可勾選清單，可多選一鍵建立／刪除；建立只填卡號、日文名、貴罕度（`is_manual`），多出的項目會標示持有數與「刪掉整張卡」警告
+  - 日文名自動從卡片頁補上：處理 furigana（`{{Ruby|連|れん}}` → `連`）、`(Rush Duel)` 頁面沿用本傳名稱、`[L]`/`[R]` 共用頁面
+  - 貴罕度縮寫與全名雙軌對照（`ScR` / `Secret Rare` → `SER`）；對不到的字串會回報給前端而不是安靜丟掉
+  - 後端：`services/yugipedia.py`（抓取解析）、`services/set_list_compare.py`（比對）、`POST /api/card-sets/{set_id}/compare` 與 `.../compare/apply`
+  - 驗證：HC01 154 種印刷與資料庫完全一致、KP20 106 種一致（含 5 個異圖）、GRP1 抓出 20 種缺漏
+
 - **卡片文字中的「卡名引用」hover 預覽**：description / summon_condition / condition / effect / continuous_effect 內以「」/『』包住的卡名，會被解析成可互動引用（`CardRefText`）
   - hover → 浮動小視窗顯示該卡基本資料（`CardBasicInfo`，唯讀），移出即消失；以引號內名稱當**完整卡名精確搜尋**（`name_jp` 或 `name_zh` 完全相等；名稱頭尾多餘空白含全形空白會自動去除）
   - 點「更多」→ modal（鎖背景，`CardRefModal`）：左側以卡牌編號列出所有完全同名卡片，可點擊切換右側顯示；右側提供「前往 {set_id} 卡組」連結，於新分頁開啟該卡所屬卡組頁

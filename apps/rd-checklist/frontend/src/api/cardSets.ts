@@ -50,3 +50,63 @@ export async function createCardSet(data: CardSetCreate): Promise<CardSet> {
   const { data: result } = await api.post<CardSet>('/card-sets', data)
   return result
 }
+
+// ── 卡表對照（yugipedia）────────────────────────────────
+
+export interface MissingPrinting {
+  card_id: string
+  rarity: string
+  is_alternate_art: boolean
+  name_en: string
+  name_jp: string
+  /** 卡片本身已存在，只是缺這個貴罕度 */
+  card_exists: boolean
+}
+
+export interface ExtraPrinting {
+  card_id: string
+  rarity: string
+  is_alternate_art: boolean
+  name_jp: string
+  name_zh: string
+  owned_count: number
+  /** 這是該卡唯一的 variant，刪掉等於刪整張卡 */
+  is_only_variant: boolean
+}
+
+export interface SetListCompare {
+  list_page: string
+  expected_count: number
+  actual_count: number
+  missing: MissingPrinting[]
+  extra: ExtraPrinting[]
+  unknown_rarities: string[]
+}
+
+export interface PrintingRef {
+  card_id: string
+  rarity: string
+  is_alternate_art?: boolean
+  name_jp?: string
+}
+
+export interface SetListApplyResult {
+  cards_created: number
+  variants_created: number
+  variants_deleted: number
+  cards_deleted: number
+  errors: string[]
+}
+
+export async function compareSetList(setId: string, url: string): Promise<SetListCompare> {
+  const { data } = await api.post<SetListCompare>(`/card-sets/${setId}/compare`, { url })
+  return data
+}
+
+export async function applySetListDiff(
+  setId: string,
+  payload: { create: PrintingRef[]; delete: PrintingRef[] },
+): Promise<SetListApplyResult> {
+  const { data } = await api.post<SetListApplyResult>(`/card-sets/${setId}/compare/apply`, payload)
+  return data
+}

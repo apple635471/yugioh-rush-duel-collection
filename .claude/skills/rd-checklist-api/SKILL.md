@@ -18,6 +18,9 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 - `PATCH /{set_id}` body: `CardSetUpdate` → `CardSetOut` — 編輯卡組 metadata，自動建立 override
 - `GET /{set_id}/overrides` → `CardSetOverrideOut[]` — 查看該卡組所有手動覆寫
 - `DELETE /{set_id}/overrides/{field_name}` — 刪除單一覆寫，下次匯入恢復 scraper 值
+- `POST /{set_id}/compare` body: `{url}` → `SetListCompareOut` — 對照 yugipedia 卡表，回傳 missing / extra（唯讀）
+- `POST /{set_id}/compare/apply` body: `{create[], delete[]}` → `SetListApplyOut` — 套用差異；建立只填卡號/日文名/貴罕度，刪到最後一個 variant 會連卡片一起刪
+  - 比對單位是 (card_id, rarity, is_alternate_art)，詳見 `rd-yugipedia-set-lists`
 
 ### 卡片 `/api/cards`
 - `GET /next-id/{set_id}` → `NextCardIdOut` — 自動生成下一個可用 card_id (掃描現有卡，找最大數字後綴 +1)

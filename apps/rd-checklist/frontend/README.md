@@ -18,6 +18,7 @@ App.vue
 │   ├── SetView            # /set/:setId
 │   │   ├── BreadcrumbBar
 │   │   ├── SetMetadataEditor  # 卡組 metadata 顯示/編輯 + override 管理
+│   │   │   └── #actions-left slot → SetListCompareDialog 觸發鈕（對照 yugipedia 卡表）
 │   │   │   └── AppButton  # 共用 action 按鈕 (Edit)
 │   │   ├── AppButton      # Add Card
 │   │   ├── ViewToggle     # Grid ↔ Table 切換 (高度對齊 AppButton md)
