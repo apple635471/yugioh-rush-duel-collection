@@ -11,6 +11,7 @@ import RarityTabs from '@/components/cards/RarityTabs.vue'
 import OwnershipControl from '@/components/cards/OwnershipControl.vue'
 import ScanResultPanel from '@/components/detail/ScanResultPanel.vue'
 import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
@@ -621,14 +622,13 @@ async function submitDeleteVariant() {
 
       <!-- Add rarity icon button -->
       <div v-if="availableRarities.length > 0 && !editing" class="relative group/tip">
-        <button
-          @click="startAddVariant"
-          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0"
-        >
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/>
-          </svg>
-        </button>
+        <AppButton @click="startAddVariant" icon-only>
+          <template #icon>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/>
+            </svg>
+          </template>
+        </AppButton>
         <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
           Add rarity
         </div>
@@ -636,14 +636,13 @@ async function submitDeleteVariant() {
 
       <!-- Edit rarity icon button -->
       <div v-if="editableRarities.length > 0 && !editing" class="relative group/tip">
-        <button
-          @click="startEditRarity"
-          class="w-7 h-7 rounded-md border border-white/20 bg-white/[0.08] text-white/70 cursor-pointer flex items-center justify-center transition-colors hover:bg-white/[0.16] hover:text-white shrink-0"
-        >
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 2l3 3-8 8H3v-3L11 2z"/>
-          </svg>
-        </button>
+        <AppButton @click="startEditRarity" icon-only>
+          <template #icon>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 2l3 3-8 8H3v-3L11 2z"/>
+            </svg>
+          </template>
+        </AppButton>
         <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
           Edit rarity
         </div>
@@ -651,15 +650,14 @@ async function submitDeleteVariant() {
 
       <!-- Delete variant icon button (only when >1 variant) -->
       <div v-if="card.variants.length > 1 && !editing" class="relative group/tip">
-        <button
-          @click="startDeleteVariant"
-          class="w-7 h-7 rounded-md border border-[rgba(248,113,113,0.35)] bg-transparent text-[rgba(248,113,113,0.7)] cursor-pointer flex items-center justify-center transition-colors hover:bg-[rgba(248,113,113,0.12)] hover:text-[#f87171] shrink-0"
-        >
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 4 13 4"/><path d="M5 4V3h6v1"/><rect x="4" y="5" width="8" height="9" rx="1"/>
-            <line x1="6.5" y1="7.5" x2="6.5" y2="11.5"/><line x1="9.5" y1="7.5" x2="9.5" y2="11.5"/>
-          </svg>
-        </button>
+        <AppButton @click="startDeleteVariant" icon-only severity="danger">
+          <template #icon>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 4 13 4"/><path d="M5 4V3h6v1"/><rect x="4" y="5" width="8" height="9" rx="1"/>
+              <line x1="6.5" y1="7.5" x2="6.5" y2="11.5"/><line x1="9.5" y1="7.5" x2="9.5" y2="11.5"/>
+            </svg>
+          </template>
+        </AppButton>
         <div class="absolute top-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-[#2e2e4a] border border-white/20 text-[#e0e0e0] text-[11px] px-2 py-[3px] rounded-[5px] whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-20">
           Delete
         </div>
@@ -690,17 +688,15 @@ async function submitDeleteVariant() {
             size="small"
             class="flex-1"
           />
-          <Button
+          <AppButton
             @click="submitAddVariant"
             :disabled="savingVariant || !newVariantRarity"
+            variant="filled"
             severity="warn"
-            size="small"
           >
             {{ savingVariant ? '...' : 'Add' }}
-          </Button>
-          <Button @click="cancelAddVariant" variant="text" severity="secondary" size="small">
-            Cancel
-          </Button>
+          </AppButton>
+          <AppButton @click="cancelAddVariant" variant="text" label="Cancel" />
         </div>
         <!-- Alt-art checkbox row -->
         <div class="flex items-center gap-2 pl-0.5">
@@ -734,17 +730,15 @@ async function submitDeleteVariant() {
             size="small"
             class="flex-1"
           />
-          <Button
+          <AppButton
             @click="submitEditRarity"
             :disabled="savingRarityEdit || !editRarityTarget"
+            variant="filled"
             severity="warn"
-            size="small"
           >
             {{ savingRarityEdit ? '...' : 'Save' }}
-          </Button>
-          <Button @click="cancelEditRarity" variant="text" severity="secondary" size="small">
-            Cancel
-          </Button>
+          </AppButton>
+          <AppButton @click="cancelEditRarity" variant="text" label="Cancel" />
         </div>
         <div v-if="rarityEditError" class="text-red-400 text-xs">{{ rarityEditError }}</div>
       </template>
@@ -753,17 +747,15 @@ async function submitDeleteVariant() {
       <template v-else-if="confirmingDelete">
         <div class="flex items-center gap-1.5">
           <span class="text-xs text-gray-300">刪除 <strong>{{ activeVariant?.is_alternate_art ? `${activeVariant.rarity} ★` : currentRarity }}</strong>？</span>
-          <Button
+          <AppButton
             @click="submitDeleteVariant"
             :disabled="deletingVariant"
+            variant="filled"
             severity="danger"
-            size="small"
           >
             {{ deletingVariant ? '...' : '確認刪除' }}
-          </Button>
-          <Button @click="cancelDeleteVariant" variant="text" severity="secondary" size="small">
-            Cancel
-          </Button>
+          </AppButton>
+          <AppButton @click="cancelDeleteVariant" variant="text" label="Cancel" />
         </div>
         <div v-if="deleteError" class="text-red-400 text-xs">{{ deleteError }}</div>
       </template>
@@ -817,18 +809,22 @@ async function submitDeleteVariant() {
         <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug flex-1 min-w-0">
           {{ card.name_zh || card.name_jp }}
         </h2>
-        <button
+        <AppButton
           v-if="sameNameCount > 1"
           @click="refModalVisible = true"
-          class="shrink-0 mt-0.5 inline-flex items-center gap-1 text-[10px] font-orbitron text-gold hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
+          size="sm"
+          tone="gold"
+          class="mt-0.5 font-orbitron"
           title="查看其他同名卡片"
         >
-          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-          </svg>
+          <template #icon>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+          </template>
           同名卡片 ({{ sameNameCount }})
-        </button>
+        </AppButton>
       </div>
       <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-400 font-orbitron tracking-wide mb-4">
         {{ card.name_jp }}
@@ -996,28 +992,24 @@ async function submitDeleteVariant() {
               size="small"
               class="resize-y"
             />
-            <Button
+            <AppButton
               v-if="!(card as any)[section.key]"
               @click="toggleSection(section.key)"
               variant="text"
-              severity="secondary"
-              size="small"
-              class="text-xs mt-0.5"
-            >
-              Remove
-            </Button>
+              size="sm"
+              label="Remove"
+              class="mt-0.5"
+            />
           </div>
-          <Button
+          <AppButton
             v-else
             @click="toggleSection(section.key)"
             variant="text"
-            severity="secondary"
-            size="small"
-            class="gap-1 text-xs mb-2"
+            size="sm"
+            class="mb-2"
           >
-            <span class="text-base leading-none">+</span>
-            <span>{{ section.label }}</span>
-          </Button>
+            <span class="text-sm leading-none mr-0.5">+</span>{{ section.label }}
+          </AppButton>
         </template>
       </template>
     </template>
@@ -1027,16 +1019,12 @@ async function submitDeleteVariant() {
 
     <!-- Action buttons -->
     <div v-if="editing" class="flex gap-2">
-      <Button @click="saveEdit" :disabled="saving" severity="warn" fluid>
+      <AppButton @click="saveEdit" :disabled="saving" variant="filled" severity="warn" size="lg" fluid>
         {{ saving ? 'Saving...' : 'Save' }}
-      </Button>
-      <Button @click="cancelEdit" variant="outlined" severity="secondary" fluid>
-        Cancel
-      </Button>
+      </AppButton>
+      <AppButton @click="cancelEdit" size="lg" fluid label="Cancel" />
     </div>
-    <Button v-else @click="startEdit" variant="outlined" severity="secondary" fluid>
-      Edit Card Info
-    </Button>
+    <AppButton v-else @click="startEdit" size="lg" fluid label="Edit Card Info" />
 
     <!-- Same-name cards modal (opened by the 同名卡片 button) -->
     <CardRefModal v-model:visible="refModalVisible" :name="refModalName" />

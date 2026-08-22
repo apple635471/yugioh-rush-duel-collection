@@ -3,7 +3,7 @@ import { reactive, computed, watch } from 'vue'
 import { RARITIES } from '@/constants/rarities'
 import Select from 'primevue/select'
 import IftaLabel from 'primevue/iftalabel'
-import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const emit = defineEmits<{
   change: [filters: FilterState]
@@ -109,19 +109,19 @@ function clearFilters() {
         <label :for="`filter-${cfg.key}`">{{ cfg.title }}</label>
       </IftaLabel>
 
-      <Button
+      <AppButton
         v-if="hasActiveFilters"
         @click="clearFilters"
-        size="small"
-        severity="secondary"
         variant="text"
-        class="ml-auto shrink-0 !text-xs"
+        label="清除篩選"
+        class="ml-auto"
       >
-        <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        清除篩選
-      </Button>
+        <template #icon>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </template>
+      </AppButton>
     </div>
   </div>
 </template>

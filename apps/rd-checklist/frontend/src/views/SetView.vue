@@ -13,7 +13,7 @@ import CardTable from '@/components/cards/CardTable.vue'
 import SetMetadataEditor from '@/components/detail/SetMetadataEditor.vue'
 import Select from 'primevue/select'
 import IftaLabel from 'primevue/iftalabel'
-import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const route = useRoute()
 const store = useCardSetsStore()
@@ -133,16 +133,17 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
           @updated="loadAll"
         >
           <template #view-toggle>
-            <button
+            <AppButton
               @click="ui.openCreateSidebar(setId)"
-              class="text-xs text-gray-400 hover:text-yellow-400 border border-gray-600 hover:border-yellow-500/50 rounded px-2 py-1 transition-colors"
+              label="Add Card"
               title="Add new card"
             >
-              <svg class="w-3.5 h-3.5 inline-block mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Add Card
-            </button>
+              <template #icon>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </template>
+            </AppButton>
             <ViewToggle />
           </template>
         </SetMetadataEditor>
@@ -230,19 +231,18 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
               />
               <label for="set-filter-cardtype">卡種</label>
             </IftaLabel>
-            <Button
+            <AppButton
               v-if="filterRarity || filterCardType"
               @click="filterRarity = ''; filterCardType = ''"
-              size="small"
-              severity="secondary"
               variant="text"
-              class="shrink-0 !text-xs"
+              label="清除"
             >
-              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              清除
-            </Button>
+              <template #icon>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </template>
+            </AppButton>
           </div>
         </div>
       </div>

@@ -57,3 +57,9 @@
 [data-pc-name] {
   font-size: inherit;
 }
+
+/* 工具列上的 SelectButton 高度對齊 AppButton (md = 2rem) */
+.app-toolbar-toggle .p-togglebutton {
+  height: 2rem;
+  padding-block: 0;
+}
