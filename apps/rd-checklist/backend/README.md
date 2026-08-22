@@ -63,7 +63,8 @@ uv sync
 uv run python -m rd_checklist.cli init-db
 uv run python -m rd_checklist.cli import --scraper-data ../../../tools/rd-card-scraper/data
 uv run python -m rd_checklist.cli reclassify-product-types   # 既有資料重新分類 (idempotent)
-uv run python -m rd_checklist.cli resplit-set S254           # 依卡號把一個 set 的卡搬到正確的 set
+uv run python -m rd_checklist.cli resplit-set --all --dry-run  # 掃出卡號與 set 不符的卡
+uv run python -m rd_checklist.cli resplit-set --all          # 依卡號搬到正確的 set (缺的 set 自動建立)
 uv run python -m rd_checklist.cli delete-set S254            # 刪除整個 set (含卡片/variant/override)
 uv run uvicorn rd_checklist.main:app --reload --port 8000
 ```

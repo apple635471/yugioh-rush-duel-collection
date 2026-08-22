@@ -11,7 +11,7 @@ from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
 from .services.product_type_migration import migrate_product_types
-from .services.set_service import delete_card_set, resplit_set
+from .services.set_service import delete_card_set, find_split_candidates, resplit_set
 from .services.rarity_migration import migrate_rarities
 
 
@@ -71,7 +71,20 @@ def main(argv: list[str] | None = None) -> None:
         "(for posts now split into several sets); deletes the source set when "
         "it ends up empty",
     )
-    resp.add_argument("set_id", help="Set ID to re-split, e.g. S254")
+    resp.add_argument(
+        "set_id",
+        nargs="?",
+        help="Set ID to re-split, e.g. S254 (omit with --all)",
+    )
+    resp.add_argument(
+        "--all",
+        action="store_true",
+        dest="all_sets",
+        help="Re-split every set that holds cards numbered for another set",
+    )
+    resp.add_argument(
+        "--dry-run", action="store_true", help="Only report what would move"
+    )
     resp.add_argument(
         "--keep-source",
         action="store_true",
@@ -147,19 +160,43 @@ def main(argv: list[str] | None = None) -> None:
             db.close()
 
     elif args.command == "resplit-set":
+        if not args.set_id and not args.all_sets:
+            print("Give a set ID, or --all to sweep every set.")
+            sys.exit(1)
         init_db()
         db = SessionLocal()
         try:
-            stats = resplit_set(db, args.set_id, delete_when_empty=not args.keep_source)
-            print(f"\nRe-split {stats['set_id']}:")
-            print(f"  Cards moved: {stats['moved']}")
-            for target, n in stats["by_target"].items():
-                print(f"    → {target}: {n}")
-            if stats["stayed"]:
-                print(f"  Left in place: {stats['stayed']}")
-            for target, n in stats["missing_targets"].items():
-                print(f"  ⚠ target set {target} does not exist yet — {n} card(s) not moved")
-            print(f"  Source set deleted: {'yes' if stats['source_deleted'] else 'no'}")
+            candidates = find_split_candidates(db)
+            targets = sorted(candidates) if args.all_sets else [args.set_id]
+
+            if args.dry_run:
+                if not candidates:
+                    print("Nothing to split — every card sits in the set its number names.")
+                for set_id in targets:
+                    counts = candidates.get(set_id, {})
+                    if not counts:
+                        print(f"{set_id}: nothing to move")
+                        continue
+                    detail = ", ".join(f"{t} ×{n}" for t, n in sorted(counts.items()))
+                    print(f"{set_id}: {detail}")
+                sys.exit(0)
+
+            total_moved = 0
+            for set_id in targets:
+                stats = resplit_set(db, set_id, delete_when_empty=not args.keep_source)
+                total_moved += stats["moved"]
+                if not stats["moved"]:
+                    print(f"{stats['set_id']}: nothing to move")
+                    continue
+                detail = ", ".join(f"{t} ×{n}" for t, n in stats["by_target"].items())
+                print(f"{stats['set_id']}: moved {stats['moved']} → {detail}")
+                if stats["created"]:
+                    print(f"    created set(s): {', '.join(stats['created'])}")
+                if stats["source_deleted"]:
+                    print("    source set was empty and has been deleted")
+                elif stats["source_empty_kept"]:
+                    print("    source set is empty but was kept (manually created)")
+            print(f"\nTotal cards moved: {total_moved}")
         except LookupError as exc:
             print(exc)
             sys.exit(1)

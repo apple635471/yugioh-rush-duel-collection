@@ -37,6 +37,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
+from collections import defaultdict
 from typing import Optional
 
 from bs4 import BeautifulSoup, NavigableString, Tag
@@ -144,36 +145,6 @@ PRODUCT_TYPE_MAP = {
 YEAR_PROMO_RE = re.compile(r"^\d{2}PR$", re.IGNORECASE)
 
 
-# Posts that contain multiple card sets in a single HTML page.
-# These are handled as exceptions: cards are split by set ID instead of
-# all being assigned to the first detected set ID.
-MULTI_DECK_URLS: frozenset[str] = frozenset({
-    # SD0C + SD0D
-    "https://ntucgm.blogspot.com/2024/12/rush-duel-sd-38.html",
-    # 5 structure decks (ST01~ST05 or similar)
-    "https://ntucgm.blogspot.com/2021/07/rush-duel-7-821.html",
-    # ST01 + ST02
-    "https://ntucgm.blogspot.com/2020/03/rush-duel-st01-st02.html",
-    # GRD1 + GRD2
-    "https://ntucgm.blogspot.com/2022/03/rdgrd1-rush-duel-go-rush-429.html",
-    # SD01~SD05
-    "https://ntucgm.blogspot.com/2022/06/rush-duel-sd5-86.html",
-    # B251~B254 (2025 活動包全年卡表寫在同一篇)
-    "https://ntucgm.blogspot.com/2025/03/rush-duel-2025.html",
-})
-
-# Battle packs ship as a B-half and an S-half sharing one number (B251/S251).
-# They are one product, so when splitting a multi-deck post the S-half folds
-# into the B-half — matching how single-post battle packs are already stored
-# (the B241 set holds the RD/S241 cards).
-_BATTLE_PACK_S_HALF_RE = re.compile(r"^S(\d{3})$")
-
-
-def _split_group_id(set_id: str) -> str:
-    """Set id that a card's own set code belongs under when splitting a post."""
-    m = _BATTLE_PACK_S_HALF_RE.match(set_id)
-    return f"B{m.group(1)}" if m else set_id
-
 
 def compute_content_hash(html: str) -> str:
     """Compute a hash of the post body HTML for change detection."""
@@ -206,10 +177,9 @@ def guess_product_type(set_id: str) -> str:
 def parse_post_multi(html: str, url: str = "") -> list[CardSet]:
     """Parse a blog post HTML into one or more CardSets.
 
-    Most posts contain a single card set and return a one-element list.
-    Posts listed in MULTI_DECK_URLS contain multiple card sets: cards are
-    grouped by set ID (inferred from each card's card_id) and a separate
-    CardSet is returned for each group.
+    Cards are grouped by the set ID inside their own card number, so a post
+    covering one product returns a one-element list and a post covering
+    several returns one CardSet per set.
     """
     post_body = extract_post_body(html)
     if not post_body:
@@ -233,61 +203,53 @@ def parse_post_multi(html: str, url: str = "") -> list[CardSet]:
         post_body, title
     )
 
-    # Exception: multi-deck posts — split cards by set ID
-    if url in MULTI_DECK_URLS:
-        from collections import defaultdict
-        cards_by_set: dict[str, list[Card]] = defaultdict(list)
-        for card in cards:
-            m = SET_ID_RE.search(card.card_id)
-            if m:
-                cards_by_set[_split_group_id(m.group(1))].append(card)
+    # Card numbers are RD/{set_id}-{number}, so the number says which set a
+    # card belongs to. Group by it: most posts cover one set and yield one
+    # CardSet, but a post covering several products (a whole year of event
+    # packs, a run of structure decks) yields one per set, and a promo card
+    # sprinkled into a battle pack post lands in its own set instead of being
+    # filed under the pack. Sets from the same post share its metadata.
+    cards_by_set: dict[str, list[Card]] = defaultdict(list)
+    for card in cards:
+        m = SET_ID_RE.search(card.card_id)
+        if m:
+            cards_by_set[m.group(1)].append(card)
 
-        result: list[CardSet] = []
-        for set_id, set_cards in cards_by_set.items():
-            card_set = CardSet(
-                set_id=set_id,
-                set_name_jp=set_name_jp,
-                set_name_zh=set_name_zh or title,
-                product_type=guess_product_type(set_id),
-                release_date=release_date,
-                post_url=url,
-                rarity_distribution=rarity_dist,
-            )
-            card_set.cards = set_cards
-            card_set.total_cards = len(set_cards)
-            logger.info(
-                f"Multi-deck split: {set_id} with {len(set_cards)} cards ({url})"
-            )
-            result.append(card_set)
-        return result
-
-    # Normal single-deck post
-    set_match = SET_ID_RE.search(all_card_ids[0])
-    if not set_match:
+    if not cards_by_set:
         return []
-    set_id = set_match.group(1)
 
-    card_set = CardSet(
-        set_id=set_id,
-        set_name_jp=set_name_jp,
-        set_name_zh=set_name_zh or title,
-        product_type=guess_product_type(set_id),
-        release_date=release_date,
-        post_url=url,
-        rarity_distribution=rarity_dist,
-    )
-    card_set.cards = cards
-    card_set.total_cards = len(cards)
+    result: list[CardSet] = []
+    for set_id, set_cards in cards_by_set.items():
+        card_set = CardSet(
+            set_id=set_id,
+            set_name_jp=set_name_jp,
+            set_name_zh=set_name_zh or title,
+            product_type=guess_product_type(set_id),
+            release_date=release_date,
+            post_url=url,
+            rarity_distribution=rarity_dist,
+        )
+        card_set.cards = set_cards
+        card_set.total_cards = len(set_cards)
+        result.append(card_set)
 
-    logger.info(f"Parsed {len(cards)} cards from set {set_id} ({url})")
-    return [card_set]
+    if len(result) > 1:
+        logger.info(
+            "Split into %d sets: %s (%s)",
+            len(result),
+            ", ".join(f"{cs.set_id}×{cs.total_cards}" for cs in result),
+            url,
+        )
+    else:
+        logger.info(f"Parsed {len(cards)} cards from set {result[0].set_id} ({url})")
+    return result
 
 
 def parse_post(html: str, url: str = "") -> Optional[CardSet]:
     """Parse a blog post HTML into a CardSet with cards.
 
-    For multi-deck posts (see MULTI_DECK_URLS) only the first CardSet is
-    returned.  Use parse_post_multi() to handle all sets in such posts.
+    Only the first CardSet is returned; use parse_post_multi() for posts
+    that cover more than one set.
     """
     sets = parse_post_multi(html, url)
     return sets[0] if sets else None

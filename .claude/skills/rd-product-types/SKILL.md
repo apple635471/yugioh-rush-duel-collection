@@ -36,12 +36,9 @@ map 裡**，會落到 `other`。要恢復就是把前綴加回 map + 在 `PRODUC
 
 ### `S2` → battle_pack 的來由
 
-戰鬥包成對發行、共用一個編號（B251/S251），兩半放在同一個 set 底下（B241 這個 set
-裡本來就有 `RD/S241` 的卡）。偶爾會有文章被掛在 S 側編號下，所以 `S2` 也歸
-`battle_pack`。
-
-卡號層級的 S 半→B 半正規化在兩處：scraper `parser.py` 的 `_split_group_id()`（拆多
-set 文章時）、backend `set_service.set_id_from_card_id()`（`resplit-set` 搬卡時）。
+戰鬥包成對發行、共用一個編號（B251/S251），S 半是**獨立的 set**（見
+`rd-html-parsing`：卡號不同就是不同 set），所以 `S251`、`S23P` 這些也要歸到
+`battle_pack`——`S2` 前綴就是為此。
 
 ## 已退役的類型
 

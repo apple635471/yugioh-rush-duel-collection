@@ -72,15 +72,26 @@ _LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：
 
 ## 一篇文章多個卡組
 
-多數文章一篇一個 set，但少數把好幾個 set 寫在一起（結構卡組合輯、整年份的活動包）。
-這些 URL 列在 `parser.py` 的 `MULTI_DECK_URLS`，命中時 `parse_post_multi()` 會依
-**卡號**把卡片分group，一組產生一個 `CardSet`，而不是全部塞進第一個 set id。
+**卡號決定 set，沒有白名單。** 卡號格式是 `RD/{set_id}-{編號}`，`parse_post_multi()`
+一律依卡號裡的 set id 分組，一組產生一個 `CardSet`：
 
-分組時會做一次正規化（`_split_group_id()`）：戰鬥包成對發行、共用同一個編號
-（B251/S251），S 半會併進 B 半——與單篇戰鬥包既有的存法一致（B241 這個 set 裡本來
-就放著 `RD/S241` 的卡）。
+- 一般文章只有一種卡號 → 一個 CardSet（跟以前一樣）
+- 整年份活動包、結構卡組合輯 → 依卡號拆成多個（B261/S261/B262/S262/26S1…）
+- 戰鬥包文章裡夾帶的特典卡（`RD/S23P-*`）→ 自己成一個 set，不會被歸到那期戰鬥包
 
-**既有 DB 的補救**：某篇文章之前被當成單一 set 爬過、現在才加進 `MULTI_DECK_URLS`
-時，重新匯入**不會**把舊卡搬家（`_import_one_card` 刻意不改既有卡的 set_id）。用
-checklist backend 的 `uv run python -m rd_checklist.cli resplit-set <舊SET_ID>`
-依卡號搬過去，override / 編輯紀錄 / 上傳圖 / 持有數都跟著走。
+同一篇拆出來的 set 共用文章的名稱、發行日、post_url；`total_cards` 各算各的。
+
+> 以前這件事是靠 `MULTI_DECK_URLS` 白名單控制的（已移除）。白名單的問題是只擋得住
+> 已知的文章，新的一篇又要再加一次；而且它只處理「整篇有多個卡包」，處理不了
+> 「一張特典卡混在單一卡包文章裡」。
+
+**既有 DB 的補救**：重新匯入**不會**把舊卡搬家（`_import_one_card` 刻意不改既有卡的
+`set_id`）。用 checklist backend 掃一遍：
+
+```bash
+uv run python -m rd_checklist.cli resplit-set --all --dry-run   # 先看會搬什麼
+uv run python -m rd_checklist.cli resplit-set --all             # 實際搬
+```
+
+依卡號搬過去，缺的 set 會自動建立（沿用來源 set 的名稱／日期／post_url），
+override / 編輯紀錄 / 上傳圖 / 持有數都跟著卡片走。
