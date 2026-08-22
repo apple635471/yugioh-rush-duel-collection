@@ -54,7 +54,6 @@ RD_TITLE_KEYWORDS = [
     "ラッシュデュエル",
     "RDGRD",
     "rdgrd",
-    "Revolution Booster",
 ]
 
 # Title keywords that definitively mean NOT a card list
@@ -66,12 +65,15 @@ EXCLUDE_TITLE_KEYWORDS = [
     "combo",
     "基礎介紹",       # introductory articles
     "卡圖故事",       # card lore articles
+    # OCG products the blog also covers with a [卡表資料] title. Their cards are
+    # numbered RV01-JP001 etc. — no RD/ prefix — so a scrape yields nothing.
+    "Revolution Booster",
 ]
 
 # ---------- URL-based fallback classification ----------
 
 # URL substrings for Rush Duel related posts (broad match)
-RD_URL_MARKERS = ["rush-duel", "rdgrd", "revolution-booster"]
+RD_URL_MARKERS = ["rush-duel", "rdgrd"]
 
 # URL patterns to EXCLUDE — definitively NOT card lists
 EXCLUDE_URL_PATTERNS = [
@@ -80,6 +82,7 @@ EXCLUDE_URL_PATTERNS = [
     r"meta-\d",                 # meta reports
     r"combo",                   # combo guides
     r"jump-festa.*pr",          # Jump Festa promo (mixed OCG/RD)
+    r"revolution-booster",      # OCG product (RV01-*), not Rush Duel
 ]
 
 # ---------- Rate limits ----------

@@ -37,6 +37,10 @@
 
 ### 改善
 
+- **Discovery 排除 OCG 商品文章**：`Revolution Booster` 是本傳 OCG 的商品（卡號 `RV01-JP###`，主題卡通／巫術／破械），卻被**誤列在接受清單**（`RD_TITLE_KEYWORDS` 與 `RD_URL_MARKERS` 各一筆）。爬它會解析出 0 張卡，而且每次 `check` 都會出現在待更新清單裡
+  - 改為排除：`EXCLUDE_TITLE_KEYWORDS` + `EXCLUDE_URL_PATTERNS` 各加一筆（雙保險）
+  - discovery 從 58 篇 → 57 篇
+
 - **Scraper 卡片文字解析修正**（以 ORP4 實測，解析結果從 73 張 → 80 張，文章全部卡號都拿到）
   - **詳細條目判定**：`_is_detail_entry()` 原本只往後看 3 個文字 chunk，稀有度被 inline 標籤切碎時（`(SR` / `/SER` / `)卡名` 各佔一個 chunk）會把整張卡誤判為索引條目而漏掉。改為掃到下一個卡號為止（上限放寬），ORP4 因此補回 7 張
   - **`選擇效果:` 連標籤存進 effect**：後面的 ● 是「擇一」不是「全部都做」，原本標籤被 `_LABEL_SPLIT_RE` 拆掉，語意就變了
