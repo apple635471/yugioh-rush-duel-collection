@@ -38,6 +38,7 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 ### 搜尋 `/api/search`
 - `GET /?q=青眼&card_type=通常怪獸&attribute=光&level=8&rarity=UR&is_legend=true&owned=missing&limit=200&offset=0`
   - `is_legend`：`true` 只看 Legend 卡、`false` 只看非 Legend、省略則不過濾
+  - `exact`：`true` 時 `q` 需與 `name_jp` 或 `name_zh` 完全相等（供效果文字內的卡名引用查詢用），否則為 `ILIKE %q%` 包含比對
 - `q` 搜尋: ILIKE on name_jp, name_zh, card_id
 - `card_type` 篩選: 使用 `ILIKE %value%` 部分比對，搜尋「儀式」可同時匹配 `儀式怪獸` 和 `儀式/效果怪獸`
 - `owned`: "owned" = owned_count > 0, "missing" = NOT IN (owned > 0)

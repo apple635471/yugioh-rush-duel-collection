@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/search", tags=["search"])
 @router.get("", response_model=list[CardOut])
 def search_cards(
     q: str | None = Query(None, description="Search query (name, card_id)"),
+    exact: bool = Query(False, description="Match the card name exactly (name_jp or name_zh)"),
     card_type: str | None = Query(None, description="Filter by card type"),
     attribute: str | None = Query(None, description="Filter by attribute"),
     level: int | None = Query(None, description="Filter by level"),
@@ -32,14 +33,20 @@ def search_cards(
 
     # Text search across name_jp, name_zh, card_id
     if q:
-        pattern = f"%{q}%"
-        query = query.filter(
-            or_(
-                CardModel.name_jp.ilike(pattern),
-                CardModel.name_zh.ilike(pattern),
-                CardModel.card_id.ilike(pattern),
+        if exact:
+            # Exact whole-name match (used by the in-effect card-reference lookup)
+            query = query.filter(
+                or_(CardModel.name_jp == q, CardModel.name_zh == q)
             )
-        )
+        else:
+            pattern = f"%{q}%"
+            query = query.filter(
+                or_(
+                    CardModel.name_jp.ilike(pattern),
+                    CardModel.name_zh.ilike(pattern),
+                    CardModel.card_id.ilike(pattern),
+                )
+            )
 
     if card_type:
         # Use LIKE so compound types are searchable by component,

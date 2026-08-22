@@ -2,7 +2,7 @@
 import { ref, computed, reactive, watch } from 'vue'
 import type { Card, CardUpdate, ScanResult } from '@/types/card'
 import { variantKey, parseRarityKey } from '@/types/card'
-import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, fetchKonamiImage, addVariant, editVariantRarity, deleteVariant, scanCard } from '@/api/cards'
+import { getCardImageUrl, updateOwnership, updateCard, uploadCardImage, revertCardImage, fetchKonamiImage, addVariant, editVariantRarity, deleteVariant, scanCard, searchCardsByName } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
 import { useUiStore } from '@/stores/ui'
 import { useCardSetsStore } from '@/stores/cardSets'
@@ -18,6 +18,8 @@ import Select from 'primevue/select'
 import Slider from 'primevue/slider'
 import Textarea from 'primevue/textarea'
 import StatInput from '@/components/detail/StatInput.vue'
+import CardRefText from '@/components/detail/CardRefText.vue'
+import CardRefModal from '@/components/detail/CardRefModal.vue'
 import { MONSTER_TYPES } from '@/constants/monsterTypes'
 import { isStatValid, isLevelValid } from '@/utils/cardFields'
 
@@ -311,6 +313,21 @@ function copyCardId() {
   copiedId.value = true
   setTimeout(() => { copiedId.value = false }, 1500)
 }
+
+// ── Same-name cards (different card numbers) ──────────────────────────────────
+const sameNameCount = ref(0) // total cards sharing this full name (incl. this one)
+const refModalVisible = ref(false)
+const refModalName = computed(() => props.card.name_jp || props.card.name_zh || '')
+
+watch(() => props.card.card_id, async () => {
+  sameNameCount.value = 0
+  const name = refModalName.value
+  if (!name) return
+  const list = await searchCardsByName(name)
+  // guard against a newer card having loaded while awaiting
+  if (refModalName.value !== name) return
+  sameNameCount.value = list.length
+}, { immediate: true })
 
 // ---- Variant management ----
 
@@ -766,7 +783,7 @@ async function submitDeleteVariant() {
     <template v-else>
       <!-- Card ID row -->
       <div class="flex items-center gap-1.5 mb-1">
-        <span class="font-mono text-xs text-white/40 tracking-[0.03em] flex-1">{{ card.card_id }}</span>
+        <span class="font-mono text-xs text-white/40 tracking-[0.03em] flex-1 min-w-0 truncate">{{ card.card_id }}</span>
         <span v-if="card.is_legend" class="bg-amber-500/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">LEGEND</span>
         <Button
           v-if="!isOnCardSet"
@@ -795,10 +812,24 @@ async function submitDeleteVariant() {
         </Button>
       </div>
 
-      <!-- Card name -->
-      <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug mb-0.5">
-        {{ card.name_zh || card.name_jp }}
-      </h2>
+      <!-- Card name (with same-name-cards button on the same row) -->
+      <div class="flex items-start gap-2 mb-0.5">
+        <h2 class="font-cinzel text-lg font-bold text-gray-100 leading-snug flex-1 min-w-0">
+          {{ card.name_zh || card.name_jp }}
+        </h2>
+        <button
+          v-if="sameNameCount > 1"
+          @click="refModalVisible = true"
+          class="shrink-0 mt-0.5 inline-flex items-center gap-1 text-[10px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
+          title="查看其他同名卡片"
+        >
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+          同名卡片 ({{ sameNameCount }})
+        </button>
+      </div>
       <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-500 font-orbitron tracking-wide mb-4">
         {{ card.name_jp }}
       </p>
@@ -949,7 +980,9 @@ async function submitDeleteVariant() {
         <!-- View mode: only show if value exists -->
         <div v-if="!editing && (card as any)[section.key]" class="mb-3">
           <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold-dim uppercase mb-1.5">{{ section.label }}</div>
-          <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded-md px-3 py-2">{{ (card as any)[section.key] }}</p>
+          <p class="text-sm text-gray-300 leading-relaxed bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded-md px-3 py-2">
+            <CardRefText :text="(card as any)[section.key]" />
+          </p>
         </div>
 
         <!-- Edit mode: show expanded or show + button -->
@@ -1004,5 +1037,8 @@ async function submitDeleteVariant() {
     <Button v-else @click="startEdit" variant="outlined" severity="secondary" fluid>
       Edit Card Info
     </Button>
+
+    <!-- Same-name cards modal (opened by the 同名卡片 button) -->
+    <CardRefModal v-model:visible="refModalVisible" :name="refModalName" />
   </div>
 </template>

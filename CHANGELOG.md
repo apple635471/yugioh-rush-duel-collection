@@ -4,6 +4,11 @@
 
 ### 新增
 
+- **卡片文字中的「卡名引用」hover 預覽**：description / summon_condition / condition / effect / continuous_effect 內以「」/『』包住的卡名，會被解析成可互動引用（`CardRefText`）
+  - hover → 浮動小視窗顯示該卡基本資料（`CardBasicInfo`，唯讀），移出即消失；以引號內名稱當**完整卡名精確搜尋**（`name_jp` 或 `name_zh` 完全相等；名稱頭尾多餘空白含全形空白會自動去除）
+  - 點「更多」→ modal（鎖背景，`CardRefModal`）：左側以卡牌編號列出所有完全同名卡片，可點擊切換右側顯示；右側提供「前往 {set_id} 卡組」連結，於新分頁開啟該卡所屬卡組頁
+  - 詳情面板（`CardDetailPanel`）：當該卡有其他不同編號但同卡名的卡時，卡名同一列右側顯示「同名卡片 (N)」按鈕，點擊開同一個 modal；無同名卡則不顯示
+- **搜尋「名稱完全符合」checkbox**（`SearchView`）：勾選則卡名需完全相等，否則沿用「包含」比對；後端 `/api/search` 新增 `exact` 參數
 - **卡片編輯／新增欄位改善**（`CardDetailPanel` / `CardCreatePanel`）
   - **種族**：改用可編輯的 `Select`（`constants/monsterTypes.ts` 提供常見種族清單），但仍允許直接輸入新種族
   - **Level**：數字輸入 + `Slider`（1–12、step 1），存檔前驗證為 1–12 整數
@@ -47,6 +52,8 @@
 
 ### 修正
 
+- **`CardBasicInfo`（引用預覽 / modal）切換卡片時效果文字不更新**：`v-for` + `v-show` 在切換 `card` 時 show 狀態殘留（`<p>` 內容已更新但區塊仍 `display:none`），改用 computed 過濾出有值的區塊再 `v-for`，切換即正確顯示
+- **`CardBasicInfo` 卡圖未套用 cache buster**：使用者上傳/更換卡圖後 modal 仍顯示舊圖；比照 `CardGridItem`，依 `ui.imageUpdates` 加 `?t=`（user_upload 退回 `?t=1`）
 - **新增卡牌時 `description` 未被儲存**：`create_card` endpoint 建立 `CardModel` 時漏傳 `body.description`（其餘欄位皆有傳），導致手動新增卡片填入的 Description 儲存後遺失。補上 `description=body.description`（編輯路徑用泛用 setattr 迴圈，不受影響）
 - **over-rush 貴罕度抓不到官網卡圖**：`ORR` / `ORRPBV` 未在 `_KONAMI_RARITY_MAP`，`FORR` 尾綴用舊的 `for`，導致主路徑組不出正確 CDN URL（例：`RD/5TH1-JP146` ORR 抓不到）。改為以「rarity 全小寫」作尾綴：`ORR→orr`、`ORRPBV→orrpbv`、`FORR→forr`（保留 `for` 為 legacy fallback）、`RUR→rur`；fallback 尾綴清單同步補上 `_orr/_orrpbv/_forr/_rur`
 
