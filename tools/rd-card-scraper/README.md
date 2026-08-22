@@ -30,7 +30,7 @@ Phase 1: 翻頁爬取 blog listing page (20篇/頁, ~71頁到 2020)
          ↓ 拿到所有文章的 URL + 標題
 Phase 2: 標題篩選
          [卡表資料] + RD 關鍵字 → ✓ 直接接受
-         [禁限卡表]/Meta/Combo → ✗ 直接排除
+         [禁限卡表]/Meta/Combo/OCG 商品 → ✗ 直接排除
          ↓ 無法分類的文章
 Phase 3: URL 含 rush-duel/rdgrd → 候選
          ↓
