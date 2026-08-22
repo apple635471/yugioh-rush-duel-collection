@@ -130,7 +130,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
   - 編輯直接在原本的顯示欄位上操作，不再跳轉到獨立表單
 
 ### Search
-- `SearchFilters`: 5 個 select 下拉，emit change event
+- `SearchFilters`: 7 個 select 下拉（卡種／屬性／種族／等級／貴罕度／Legend／持有），emit change event
+  - 種族選項來自 `constants/monsterTypes.ts`，與 `CardDetailPanel` / `CardCreatePanel` 編輯卡牌時同一份清單
 
 ## 資料更新模式
 

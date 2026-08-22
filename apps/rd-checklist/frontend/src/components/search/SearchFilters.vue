@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, computed, watch } from 'vue'
+import { MONSTER_TYPES } from '@/constants/monsterTypes'
 import { RARITIES } from '@/constants/rarities'
 import Select from 'primevue/select'
 import IftaLabel from 'primevue/iftalabel'
@@ -12,6 +13,7 @@ const emit = defineEmits<{
 interface FilterState {
   card_type: string
   attribute: string
+  monster_type: string
   level: string
   rarity: string
   is_legend: string
@@ -21,6 +23,7 @@ interface FilterState {
 const filters = reactive<FilterState>({
   card_type: '',
   attribute: '',
+  monster_type: '',
   level: '',
   rarity: '',
   is_legend: '',
@@ -52,6 +55,12 @@ const attributeOptions: Option[] = [
   ...attributes.map(a => ({ label: a, value: a })),
 ]
 
+/* 種族清單與編輯卡牌時共用 constants/monsterTypes.ts，兩邊選項一致 */
+const monsterTypeOptions: Option[] = [
+  { label: '全部', value: '' },
+  ...MONSTER_TYPES.map(m => ({ label: m, value: m })),
+]
+
 const levelOptions: Option[] = [
   { label: '全部', value: '' },
   ...Array.from({ length: 12 }, (_, i) => ({ label: `Lv.${i + 1}`, value: String(i + 1) })),
@@ -75,8 +84,9 @@ const ownedOptions: Option[] = [
 ]
 
 const filterConfigs: { key: keyof FilterState; title: string; options: Option[] }[] = [
-  { key: 'card_type', title: '種類', options: cardTypeOptions },
+  { key: 'card_type', title: '卡種', options: cardTypeOptions },
   { key: 'attribute', title: '屬性', options: attributeOptions },
+  { key: 'monster_type', title: '種族', options: monsterTypeOptions },
   { key: 'level', title: '等級', options: levelOptions },
   { key: 'rarity', title: '貴罕度', options: rarityOptions },
   { key: 'is_legend', title: 'Legend', options: legendOptions },

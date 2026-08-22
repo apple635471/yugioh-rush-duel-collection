@@ -19,6 +19,7 @@ def search_cards(
     exact: bool = Query(False, description="Match the card name exactly (name_jp or name_zh)"),
     card_type: str | None = Query(None, description="Filter by card type"),
     attribute: str | None = Query(None, description="Filter by attribute"),
+    monster_type: str | None = Query(None, description="Filter by monster race (種族)"),
     level: int | None = Query(None, description="Filter by level"),
     set_id: str | None = Query(None, description="Filter by set"),
     rarity: str | None = Query(None, description="Filter by rarity"),
@@ -55,6 +56,9 @@ def search_cards(
 
     if attribute:
         query = query.filter(CardModel.attribute == attribute)
+
+    if monster_type:
+        query = query.filter(CardModel.monster_type == monster_type)
 
     if level is not None:
         query = query.filter(CardModel.level == level)
