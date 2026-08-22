@@ -17,7 +17,12 @@ const viewOptions = [
 </script>
 
 <template>
-  <SelectButton v-model="viewMode" :options="viewOptions" option-value="value">
+  <SelectButton
+    v-model="viewMode"
+    :options="viewOptions"
+    option-value="value"
+    class="app-toolbar-toggle"
+  >
     <template #option="{ option }">
       <!-- Grid icon -->
       <svg v-if="option.value === 'grid'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
