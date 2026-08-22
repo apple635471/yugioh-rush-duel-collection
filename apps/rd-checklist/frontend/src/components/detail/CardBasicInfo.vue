@@ -61,12 +61,12 @@ const visibleTextSections = computed(() =>
         <h4 class="font-cinzel text-base font-bold text-gray-100 leading-snug mt-0.5 break-words">
           {{ card.name_zh || card.name_jp }}
         </h4>
-        <p v-if="card.name_zh && card.name_jp" class="text-[11px] text-gray-500 break-words leading-snug">
+        <p v-if="card.name_zh && card.name_jp" class="text-[11px] text-gray-400 break-words leading-snug">
           {{ card.name_jp }}
         </p>
 
         <div class="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-          <span class="rounded bg-[rgba(201,168,76,0.1)] px-1.5 py-0.5 text-gold-dim">{{ card.card_type }}</span>
+          <span class="rounded bg-[rgba(201,168,76,0.1)] px-1.5 py-0.5 text-gold">{{ card.card_type }}</span>
           <span v-if="isMonster && card.attribute" class="rounded bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5 text-gray-300">{{ card.attribute }}</span>
           <span v-if="isMonster && card.monster_type" class="rounded bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5 text-gray-300">{{ card.monster_type }}</span>
           <span v-if="isMonster && card.level != null" class="rounded bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5 text-gray-300">Lv.{{ card.level }}</span>
@@ -82,7 +82,7 @@ const visibleTextSections = computed(() =>
 
     <div v-if="!compact && visibleTextSections.length" class="mt-3 space-y-2">
       <div v-for="s in visibleTextSections" :key="s.key">
-        <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold-dim uppercase mb-1">{{ s.label }}</div>
+        <div class="font-orbitron text-[10px] font-bold tracking-[0.2em] text-gold uppercase mb-1">{{ s.label }}</div>
         <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-line bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded px-2.5 py-1.5">{{ (card as any)[s.key] }}</p>
       </div>
     </div>

@@ -8,7 +8,7 @@ Vue 3 + TypeScript + Tailwind CSS + **PrimeVue v4** 前端，深色主題卡牌�
 App.vue
 ├── AppHeader              # 頂部導航 (Logo + 搜尋框 + Browse/Search)
 ├── <RouterView>
-│   ├── HomeView           # / 和 /sets/:productType
+│   ├── HomeView           # / 和 /sets/:productType  (新增卡組 → AppButton)
 │   │   ├── BreadcrumbBar
 │   │   ├── ProductTypeSidebar # 左側導覽欄，SECTIONS 常數以 product_type 明列分組
 │   │   │                      #   (補充包系列 / 預組 / 其他)，中文名另起一行
@@ -18,7 +18,9 @@ App.vue
 │   ├── SetView            # /set/:setId
 │   │   ├── BreadcrumbBar
 │   │   ├── SetMetadataEditor  # 卡組 metadata 顯示/編輯 + override 管理
-│   │   ├── ViewToggle     # Grid ↔ Table 切換
+│   │   │   └── AppButton  # 共用 action 按鈕 (Edit)
+│   │   ├── AppButton      # Add Card
+│   │   ├── ViewToggle     # Grid ↔ Table 切換 (高度對齊 AppButton md)
 │   │   ├── CardGrid       # Grid 模式 (auto-fill minmax(190px,1fr))
 │   │   │   └── CardGridItem × N
 │   │   │       ├── 完整卡牌編號列 + 複製按鈕  (卡圖上方)
@@ -29,12 +31,13 @@ App.vue
 │   │   └── CardTable      # Table 模式 (同樣的子元件)
 │   │
 │   └── SearchView         # /search?q=
-│       ├── SearchFilters  # 類型/屬性/等級/稀有度/持有 下拉
+│       ├── SearchFilters  # 類型/屬性/等級/稀有度/持有 下拉 (清除篩選 → AppButton)
 │       ├── ViewToggle
 │       └── CardGrid / CardTable
 │
 └── AppSidebar (Teleport)  # 條件: ui.sidebarOpen
     ├── CardDetailPanel    # ui.sidebarMode='detail': 大圖 + 完整資訊 + 效果 + Add Variant
+    │                       #   貴罕度工具列 icon 鈕 / 同名卡片 (tone=gold) / 底部動作皆用 AppButton
     │   └── ScanResultPanel (Teleport, 浮動可拖曳)  # ✦ Scan 按鈕觸發，顯示 AI 掃描結果剪貼板
     ├── CardCreatePanel    # ui.sidebarMode='create': 新卡建立表單
     └── 收起/展開 tab      # fixed top-1/2 right-0，兩狀態同位置
@@ -84,6 +87,12 @@ App.vue
 ## 視覺設計
 
 - **深色主題**: bg-gray-950 基底，gray-900 卡片，yellow-400 強調色
+- **文字色規則**（所有文字須 ≥ 4.5:1）
+  - 次要／輔助文字一律 `text-gray-400`（#99A1AF，在 #09090F 上 7.63:1）；`text-gray-500` / `text-gray-600` 在這個近黑底上不足 4.5:1，不要當文字色用
+  - 金色文字用 `text-gold`（#C9A84C）；`gold-dim`（#6B5428）是**裝飾色**，只給邊框與進度條漸層，不當文字色
+  - 有底色的 chip／badge 要再提一階（例如 `bg-gray-700` 上用 `text-gray-200`）
+  - 例外：`disabled` 控制項（如數量 −）維持低對比，那是狀態訊號，WCAG 也不要求
+- **左側導覽欄**: `bg-dark-1` + 右側 `rgba(201,168,76,0.10)` 細邊，與內容區分層
 - **未持有卡片**: grayscale + opacity-40 (Grid), opacity-40 整行 (Table)
 - **稀有度色碼**: UR=金, SER=紅, SR=橙, R=藍, N=灰, OVER-RUSH=紫, RUSH=青
 - **LEGEND 標記**: amber-500 badge

@@ -15,7 +15,7 @@
   --color-dark-bg: #09090F;
   --color-dark-1:  #0E1018;
   --color-dark-2:  #131520;
-  --color-dark-3:  #181B28;
+  --color-dark-3:  #262B3D;
   --color-dark-4:  #1E2132;
   --color-surface: #181B2A;
 
@@ -56,4 +56,10 @@
 /* Match app font size in all PrimeVue components */
 [data-pc-name] {
   font-size: inherit;
+}
+
+/* 工具列上的 SelectButton 高度對齊 AppButton (md = 2rem) */
+.app-toolbar-toggle .p-togglebutton {
+  height: 2rem;
+  padding-block: 0;
 }

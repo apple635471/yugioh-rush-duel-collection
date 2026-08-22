@@ -14,6 +14,14 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 **PrimeVue v4** (`primevue@^4.5.4` + `@primeuix/themes`)
 - 主題：`definePreset(Aura, ...)` 客製 primary palette 為 amber（`{amber.50}` → `{amber.950}`）
 - `darkModeSelector: ':root'` — 全域強制深色，不依賴系統設定
+
+**★ 文字對比規則**（底色 `#09090F` 幾乎純黑，Tailwind 的中階灰在這裡會暗一階）：
+- 次要文字用 `text-gray-400`；**不要**用 `text-gray-500` / `text-gray-600` 當文字色（4.11 / 2.27:1，低於 WCAG AA 小字要求的 4.5:1）
+- 金色文字用 `text-gold`；`gold-dim` 是裝飾色（邊框、進度條漸層起點），當文字只有 2.76:1
+- chip／badge 這種自帶底色的元素，文字要再提一階（如 `bg-gray-700` 配 `text-gray-200`）
+- `--color-dark-3` = `#262B3D`（原 `#181B28`），讓 badge 這類小面積底色和文字拉開
+- 例外：`disabled` 控制項維持低對比（狀態訊號，WCAG 不要求）
+
 - CSS layer 順序 (main.css)：`@layer tailwind-base, primevue, tailwind-utilities`
   - Tailwind utilities 永遠覆蓋 PrimeVue 預設樣式
 - 使用元件：`Button`、`InputText`、`InputNumber`、`Select`（種族用 `editable`）、`Slider`（Level / ATK / DEF 拉桿）、`Textarea`、`Checkbox`、`SelectButton`、`IftaLabel`（篩選下拉的欄位內頂端標籤）
@@ -21,6 +29,12 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 - 效果文字內卡名引用：`CardRefText`（解析「」/『』→ hover 浮動預覽 + 點擊開 modal）、`CardBasicInfo`（唯讀卡片摘要，共用於預覽與 modal）、`CardRefModal`（Dialog，左側同名卡編號清單）；查詢用 `searchCardsByName()`（`api/cards.ts`，走 `exact`）
 - Button severity 規範：`warn` = 主要操作（amber）、`secondary` = 次要、`danger` = 刪除、`success` = 完成
 - Button variant 規範：(無) = 實心、`outlined` = 外框、`text` = 無背景
+- **共用 action 按鈕 `components/ui/AppButton.vue`**：封裝 PrimeVue `Button`，固定尺寸避免同一列按鈕高度不一
+  - props：`label` / `variant`（`filled` | `outlined`（預設） | `text`）/ `severity`（PrimeVue 語意色，預設 `secondary`）/ `tone`（App 自訂色票，目前只有 `gold`，給了就覆蓋 `severity`）/ `size`（`sm`=24px、`md`=32px（預設）、`lg`=40px）/ `iconOnly`（正方形）/ `fluid`（撐滿寬度）/ `disabled`
+  - slots：預設 slot = 文字（優先於 `label`）；`#icon` = 圖示，svg 由元件依 size 統一縮成 12/14/16px，不用自己標 `w-3.5 h-3.5`
+  - `tone` 的樣式寫在元件的 scoped `<style>`（未進 `@layer`，優先度高於 primevue layer）；要加新色票就在那裡加 `.app-button--{tone}-{variant}`
+  - 工具列上與按鈕並排的 `SelectButton`（如 `ViewToggle`）加 `app-toolbar-toggle` class，`main.css` 有對應規則把 `.p-togglebutton` 拉成 2rem 對齊
+  - **不套用**：卡圖上的浮動 overlay 按鈕、`OwnershipControl` 的 ±、`RarityTabs` 分頁、側邊欄收合把手 —— 定位／形狀特殊，不是一般 action 按鈕
 
 **★ PrimeVue 優先原則**：所有互動式元素（按鈕、輸入框、下拉選單、彈窗等）必須優先使用 PrimeVue v4 元件，或以 PrimeVue 元件為基礎的自訂封裝。禁止使用原生 HTML 表單元素（`<button>`、`<input>`、`<select>`、`<textarea>`），除非 PrimeVue 沒有對應元件且無法合理封裝。
 
@@ -64,10 +78,13 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 
 ## 元件分類
 
+### UI — 共用基礎元件
+- `ui/AppButton`: 全站 action 按鈕（見上方「UI 元件庫」）。新增按鈕優先用它，不要再自刻原生 `<button>` 或各自指定 `size`
+
 ### Layout — 全域 UI
 - `AppHeader`: Logo + 搜尋框 (submit → router.push /search) + Browse/Search nav
 - `BreadcrumbBar`: 接收 `items: {label, to?}[]` 渲染麵包屑
-- `ViewToggle`: 直接讀寫 `ui.viewMode`
+- `ViewToggle`: 直接讀寫 `ui.viewMode`；`SelectButton` 帶 `app-toolbar-toggle` class 以對齊 `AppButton` 高度
 
 ### Navigation — 首頁
 - `ProductTypeSidebar`: 可收合左側導覽欄（200px 展開 / 36px 收合），使用 PrimeVue Button 切換

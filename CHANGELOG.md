@@ -37,6 +37,22 @@
 
 ### 改善
 
+- **共用 action 按鈕元件 `AppButton`**（`components/ui/AppButton.vue`）：包一層 PrimeVue `Button`，把高度、水平 padding、字級、icon 間距固定住，各處不再自刻原生 `<button>` 或各自指定 `size`
+  - `size`：`sm`=24px（密集列表／輔助）、`md`=32px（工具列預設）、`lg`=40px（主要 CTA）；另有 `icon-only`（正方形）與 `fluid`（撐滿寬度）
+  - `#icon` slot：svg 依 size 自動統一為 12/14/16px，呼叫端不用再標 `w-3.5 h-3.5`
+  - 顏色兩層：`severity` 走 PrimeVue 語意色、`tone` 走 App 自訂色票（目前 `gold`，給了 `tone` 就以它為準）
+  - 修正 SetView header 的 `Edit` 與 `Add Card` 大小不一（`Add Card` 原本是自刻的原生 `<button>`），並套用到 `HomeView`（新增卡組）、`SearchFilters`／`SetView`（清除篩選）、`CardDetailPanel`（貴罕度工具列 icon 鈕、Add/Edit rarity/Delete 表單、同名卡片、底部主要動作）、`CardCreatePanel`（區塊切換鈕、Create Card）
+  - `ViewToggle` 的 `SelectButton` 加 `app-toolbar-toggle` class，於 `main.css` 對齊同一高度，整列工具列按鈕齊平
+  - 不套用：卡圖上的浮動 overlay 按鈕、`OwnershipControl` 的 ±、`RarityTabs` 分頁、側邊欄收合把手（定位／形狀特殊的控制項）
+- **全站文字對比修正**：多處文字在近黑底（`#09090F`）上低於 WCAG AA 的 4.5:1，最嚴重處僅 2.27:1（左側導覽欄的分組標題與數量 badge 幾乎看不清）
+  - `text-gold-dim`（#6B5428，2.76:1）→ `text-gold`（#C9A84C，8.69:1）；`gold-dim` 回歸裝飾用途（邊框、進度條漸層），不再當文字色
+  - `text-gray-500`（4.11:1）／`text-gray-600`（2.27:1）→ `text-gray-400`（7.63:1），次要文字統一一階
+  - `--color-dark-3` `#181B28` → `#262B3D`，badge 等小面積底色與文字拉開（5.40:1）
+  - 左側導覽欄（`ProductTypeSidebar`）改 `bg-dark-1` + 右側細邊，與內容區分層而不只靠文字亮度
+  - `SetMetadataEditor` 的 set_id／貴罕度 chip 在 `bg-gray-700` 上改用 `text-gray-200`
+  - 9px 小標 → 10px、字距 `0.22em`/`0.25em` → `0.16em`（該字級配中文太緊）
+  - `AppButton` 的 `tone="gold"` 文字色同樣由 `gold-dim` 改為 `gold`
+  - 驗證：首頁／卡組頁／搜尋頁全頁掃描，除 `disabled` 控制項（WCAG 豁免）外已無低於 4.5:1 的文字
 - **`SET_ID_HOMES` 排除名單**（`services/set_service.py`）：`{"21CC": "PROMO"}` — 列在這裡的卡號永遠不會獨立成 set，`resplit-set` 會直接把卡放進指定的 set。與 `merge-set` 的釘選不同，這是針對**卡號**的規則，之後匯入的同卡號卡片也適用
 - **`merge-set`：把指定 set 併進另一個並釘住**（`uv run python -m rd_checklist.cli merge-set 21CC --into PROMO`）
   - 卡片搬進目標 set，並在 `card_overrides` 寫一筆 `set_id` 記號；`resplit-set` 掃到會跳過，重新匯入也不會動

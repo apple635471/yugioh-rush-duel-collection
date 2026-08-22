@@ -7,7 +7,7 @@ import type { OwnershipStats } from '@/types/cardSet'
 import ProductTypeSidebar from '@/components/navigation/ProductTypeSidebar.vue'
 import SetList from '@/components/navigation/SetList.vue'
 import CreateCardSetDialog from '@/components/navigation/CreateCardSetDialog.vue'
-import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const route = useRoute()
 const store = useCardSetsStore()
@@ -62,7 +62,7 @@ watch(currentProductType, async (pt) => {
       <!-- Page header with global stats -->
       <div class="flex items-end justify-between gap-6 mb-6 pb-5 border-b border-[rgba(201,168,76,0.12)]">
         <div>
-          <div class="font-orbitron text-[9px] font-bold tracking-[0.25em] text-gold-dim uppercase mb-2">
+          <div class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase mb-2">
             Rush Duel — Collection Tracker
           </div>
           <h1 class="font-cinzel text-2xl font-bold text-gray-100 leading-snug">
@@ -73,19 +73,13 @@ watch(currentProductType, async (pt) => {
 
         <div class="flex items-end gap-3 shrink-0">
           <!-- New card set button -->
-          <Button
-            label="新增卡組"
-            severity="secondary"
-            variant="outlined"
-            size="small"
-            @click="createDialog?.open()"
-          >
+          <AppButton label="新增卡組" @click="createDialog?.open()">
             <template #icon>
-              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
               </svg>
             </template>
-          </Button>
+          </AppButton>
 
           <!-- Stats panel -->
           <div
@@ -96,19 +90,19 @@ watch(currentProductType, async (pt) => {
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ store.sets.length }}
             </div>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">套牌包</div>
+            <div class="text-[10px] text-gray-400 uppercase tracking-wide">套牌包</div>
           </div>
           <div class="px-5 py-2.5 text-center border-r border-[rgba(201,168,76,0.12)]">
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ globalStats.total_variants.toLocaleString() }}
             </div>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">卡片</div>
+            <div class="text-[10px] text-gray-400 uppercase tracking-wide">卡片</div>
           </div>
           <div class="px-5 py-2.5 text-center">
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ globalProgressPct }}%
             </div>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">收集率</div>
+            <div class="text-[10px] text-gray-400 uppercase tracking-wide">收集率</div>
           </div>
           </div><!-- end stats panel -->
         </div><!-- end right side wrapper -->

@@ -13,7 +13,7 @@ import CardTable from '@/components/cards/CardTable.vue'
 import SetMetadataEditor from '@/components/detail/SetMetadataEditor.vue'
 import Select from 'primevue/select'
 import IftaLabel from 'primevue/iftalabel'
-import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const route = useRoute()
 const store = useCardSetsStore()
@@ -133,16 +133,17 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
           @updated="loadAll"
         >
           <template #view-toggle>
-            <button
+            <AppButton
               @click="ui.openCreateSidebar(setId)"
-              class="text-xs text-gray-400 hover:text-yellow-400 border border-gray-600 hover:border-yellow-500/50 rounded px-2 py-1 transition-colors"
+              label="Add Card"
               title="Add new card"
             >
-              <svg class="w-3.5 h-3.5 inline-block mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Add Card
-            </button>
+              <template #icon>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </template>
+            </AppButton>
             <ViewToggle />
           </template>
         </SetMetadataEditor>
@@ -170,7 +171,7 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
             </div>
             <span class="text-xs font-orbitron">
               <span class="text-gold font-bold">{{ progress.owned }}</span>
-              <span class="text-gray-500"> / {{ progress.total }}</span>
+              <span class="text-gray-400"> / {{ progress.total }}</span>
               <span class="ml-2 text-gold-light font-bold">{{ progress.percent }}%</span>
             </span>
           </div>
@@ -186,7 +187,7 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         <div class="flex items-center gap-3 flex-wrap">
           <!-- display mode toggle -->
           <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase">顯示</span>
+            <span class="text-[10px] font-orbitron text-gray-400 tracking-wider uppercase">顯示</span>
             <div class="inline-flex rounded-md border border-[rgba(201,168,76,0.25)] overflow-hidden text-[11px] font-orbitron">
               <button
                 @click="ui.displayMode = 'owned'"
@@ -230,25 +231,24 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
               />
               <label for="set-filter-cardtype">卡種</label>
             </IftaLabel>
-            <Button
+            <AppButton
               v-if="filterRarity || filterCardType"
               @click="filterRarity = ''; filterCardType = ''"
-              size="small"
-              severity="secondary"
               variant="text"
-              class="shrink-0 !text-xs"
+              label="清除"
             >
-              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              清除
-            </Button>
+              <template #icon>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </template>
+            </AppButton>
           </div>
         </div>
       </div>
 
       <!-- Card views -->
-      <div v-if="filteredCards.length === 0" class="text-center text-gray-500 py-16 text-sm">
+      <div v-if="filteredCards.length === 0" class="text-center text-gray-400 py-16 text-sm">
         沒有符合篩選條件的卡片。
       </div>
       <CardGrid

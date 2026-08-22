@@ -207,7 +207,7 @@ function hasValue(value: any): boolean {
           class="flex-1 py-1.5 text-xs font-medium rounded-none"
           :class="viewMode === 'translated'
             ? 'text-yellow-400 border-b-2 border-yellow-400 -mb-px'
-            : 'text-gray-500 hover:text-gray-300'"
+            : 'text-gray-400 hover:text-gray-300'"
         >
           繁體中文
         </Button>
@@ -218,7 +218,7 @@ function hasValue(value: any): boolean {
           class="flex-1 py-1.5 text-xs font-medium rounded-none"
           :class="viewMode === 'raw'
             ? 'text-blue-400 border-b-2 border-blue-400 -mb-px'
-            : 'text-gray-500 hover:text-gray-300'"
+            : 'text-gray-400 hover:text-gray-300'"
         >
           原始日文
         </Button>
@@ -232,7 +232,7 @@ function hasValue(value: any): boolean {
           <div class="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
           <div class="text-center">
             <p class="text-sm text-gray-400">呼叫 OpenAI 中…</p>
-            <p class="text-xs text-gray-600 mt-1">Phase 1: OCR → Phase 2: 翻譯</p>
+            <p class="text-xs text-gray-400 mt-1">Phase 1: OCR → Phase 2: 翻譯</p>
           </div>
         </div>
 
@@ -249,12 +249,12 @@ function hasValue(value: any): boolean {
             class="group flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-700/50 transition-colors"
           >
             <!-- Label -->
-            <span class="w-24 shrink-0 text-xs text-gray-500 pt-0.5 leading-tight">{{ field.label }}</span>
+            <span class="w-24 shrink-0 text-xs text-gray-400 pt-0.5 leading-tight">{{ field.label }}</span>
 
             <!-- Value -->
             <span
               class="flex-1 text-sm leading-relaxed whitespace-pre-line break-words"
-              :class="hasValue(getValue(field.source, field.key)) ? 'text-gray-200' : 'text-gray-600'"
+              :class="hasValue(getValue(field.source, field.key)) ? 'text-gray-200' : 'text-gray-400'"
             >
               {{ displayValue(field.key, getValue(field.source, field.key)) }}
             </span>
@@ -281,7 +281,7 @@ function hasValue(value: any): boolean {
         </template>
 
         <!-- Empty -->
-        <div v-else class="py-8 text-center text-gray-600 text-sm">
+        <div v-else class="py-8 text-center text-gray-400 text-sm">
           點擊 Scan 按鈕開始掃描
         </div>
       </div>

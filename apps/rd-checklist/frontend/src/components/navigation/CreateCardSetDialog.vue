@@ -83,7 +83,7 @@ defineExpose({ open })
       title: { class: 'font-cinzel text-base font-semibold text-gold-light' },
       content: { class: 'bg-dark-2 px-5 py-4' },
       footer: { class: 'bg-dark-2 border-t border-[rgba(201,168,76,0.1)] px-5 py-3' },
-      closeButton: { class: 'text-gray-500 hover:text-gray-200' },
+      closeButton: { class: 'text-gray-400 hover:text-gray-200' },
     }"
   >
     <div class="flex flex-col gap-4">
@@ -99,7 +99,7 @@ defineExpose({ open })
           :class="errorMsg && !form.set_id.trim() ? 'p-invalid' : ''"
           @keydown.enter="submit"
         />
-        <p class="text-[11px] text-gray-600">唯一識別碼，建立後不可更改</p>
+        <p class="text-[11px] text-gray-400">唯一識別碼，建立後不可更改</p>
       </div>
 
       <!-- 中文名 -->

@@ -5,6 +5,7 @@ import { updateCardSet, fetchCardSetOverrides, deleteCardSetOverride } from '@/a
 import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
 import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 
@@ -121,32 +122,31 @@ const fieldLabels: Record<string, string> = {
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <Button
+        <AppButton
           @click="startEdit"
-          variant="outlined"
-          severity="secondary"
-          size="small"
+          label="Edit"
           title="Edit set metadata"
         >
-          <svg class="w-3.5 h-3.5 mr-0.5 -mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-          </svg>
-          Edit
-        </Button>
+          <template #icon>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+            </svg>
+          </template>
+        </AppButton>
         <slot name="view-toggle" />
       </div>
     </div>
 
     <!-- Set meta tags -->
     <div class="flex flex-wrap gap-3 text-xs text-gray-400">
-      <span class="bg-gray-700 px-2 py-0.5 rounded">{{ cardSet.set_id }}</span>
+      <span class="bg-gray-700 px-2 py-0.5 rounded text-gray-200">{{ cardSet.set_id }}</span>
       <span v-if="cardSet.release_date">{{ cardSet.release_date }}</span>
       <span>{{ totalCards }} cards</span>
       <template v-if="rarityDistSorted.length > 0">
         <span
           v-for="[rarity, count] in rarityDistSorted"
           :key="rarity"
-          class="bg-gray-700/60 px-1.5 py-0.5 rounded font-mono"
+          class="bg-gray-700/60 px-1.5 py-0.5 rounded font-mono text-gray-200"
         >{{ rarity }}×{{ count }}</span>
       </template>
     </div>
@@ -157,7 +157,7 @@ const fieldLabels: Record<string, string> = {
     <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mb-2">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-sm font-medium text-gray-300">Edit Set Metadata</h2>
-        <span class="bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-400">{{ cardSet.set_id }}</span>
+        <span class="bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-200">{{ cardSet.set_id }}</span>
       </div>
 
       <div class="space-y-2.5">
@@ -215,16 +215,16 @@ const fieldLabels: Record<string, string> = {
         <!-- Auto-computed (read-only) -->
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Total Cards</label>
-          <span class="text-xs text-gray-500 italic">{{ totalCards }} (auto-computed)</span>
+          <span class="text-xs text-gray-400 italic">{{ totalCards }} (auto-computed)</span>
         </div>
         <div class="flex items-start gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0 pt-0.5">Rarity Dist.</label>
-          <span class="text-xs text-gray-500 italic flex flex-wrap gap-1">
+          <span class="text-xs text-gray-400 italic flex flex-wrap gap-1">
             <template v-if="rarityDistSorted.length > 0">
               <span v-for="[rarity, count] in rarityDistSorted" :key="rarity">{{ rarity }}×{{ count }}</span>
             </template>
             <span v-else>—</span>
-            <span class="text-gray-600">(auto-computed)</span>
+            <span class="text-gray-400">(auto-computed)</span>
           </span>
         </div>
       </div>

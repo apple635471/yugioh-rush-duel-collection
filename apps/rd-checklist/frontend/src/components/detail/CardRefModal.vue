@@ -37,8 +37,8 @@ watch([visible, () => props.name], async ([open]) => {
     :style="{ width: '48rem', maxWidth: '95vw' }"
     :content-style="{ minHeight: '20rem' }"
   >
-    <div v-if="loading" class="flex items-center justify-center h-64 text-sm text-gray-500">載入中…</div>
-    <div v-else-if="!cards.length" class="flex items-center justify-center h-64 text-sm text-gray-500">
+    <div v-if="loading" class="flex items-center justify-center h-64 text-sm text-gray-400">載入中…</div>
+    <div v-else-if="!cards.length" class="flex items-center justify-center h-64 text-sm text-gray-400">
       查無完全同名的卡片
     </div>
     <div v-else class="flex gap-4">
@@ -51,7 +51,7 @@ watch([visible, () => props.name], async ([open]) => {
           class="w-full text-left font-mono text-[11px] rounded px-2 py-1.5 transition-colors truncate"
           :class="selected?.card_id === c.card_id
             ? 'bg-gold text-black font-bold'
-            : 'text-gold-dim hover:bg-[rgba(201,168,76,0.1)]'"
+            : 'text-gold hover:bg-[rgba(201,168,76,0.1)]'"
           :title="c.card_id"
         >{{ c.card_id.split('/').pop() }}</button>
       </div>
@@ -63,7 +63,7 @@ watch([visible, () => props.name], async ([open]) => {
             :href="`/set/${selected.set_id}`"
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center gap-1 text-[11px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-2 py-1 transition-colors"
+            class="inline-flex items-center gap-1 text-[11px] font-orbitron text-gold hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-2 py-1 transition-colors"
             :title="`在新分頁開啟 ${selected.set_id} 卡組`"
           >
             前往 {{ selected.set_id }} 卡組

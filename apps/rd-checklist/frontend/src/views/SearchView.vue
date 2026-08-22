@@ -121,7 +121,7 @@ onMounted(doSearch)
     </div>
 
     <!-- Empty -->
-    <div v-else-if="cards.length === 0" class="text-center py-12 text-gray-500">
+    <div v-else-if="cards.length === 0" class="text-center py-12 text-gray-400">
       No cards found. Try different search terms or filters.
     </div>
 
