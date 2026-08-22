@@ -13,7 +13,6 @@ import CardTable from '@/components/cards/CardTable.vue'
 import SetMetadataEditor from '@/components/detail/SetMetadataEditor.vue'
 import Select from 'primevue/select'
 import IftaLabel from 'primevue/iftalabel'
-import Button from 'primevue/button'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const route = useRoute()
@@ -232,19 +231,18 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
               />
               <label for="set-filter-cardtype">卡種</label>
             </IftaLabel>
-            <Button
+            <AppButton
               v-if="filterRarity || filterCardType"
               @click="filterRarity = ''; filterCardType = ''"
-              size="small"
-              severity="secondary"
               variant="text"
-              class="shrink-0 !text-xs"
+              label="清除"
             >
-              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              清除
-            </Button>
+              <template #icon>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </template>
+            </AppButton>
           </div>
         </div>
       </div>

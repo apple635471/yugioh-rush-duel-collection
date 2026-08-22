@@ -22,9 +22,11 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 - Button severity 規範：`warn` = 主要操作（amber）、`secondary` = 次要、`danger` = 刪除、`success` = 完成
 - Button variant 規範：(無) = 實心、`outlined` = 外框、`text` = 無背景
 - **共用 action 按鈕 `components/ui/AppButton.vue`**：封裝 PrimeVue `Button`，固定尺寸避免同一列按鈕高度不一
-  - props：`label` / `variant`（`filled` | `outlined`（預設） | `text`）/ `severity`（預設 `secondary`）/ `size`（`md`=32px（預設，工具列）、`sm`=24px（密集列表））/ `disabled`
-  - slots：預設 slot = 文字（優先於 `label`）；`#icon` = 圖示，svg 由元件統一縮成 14px，不用自己標 `w-3.5 h-3.5`
+  - props：`label` / `variant`（`filled` | `outlined`（預設） | `text`）/ `severity`（PrimeVue 語意色，預設 `secondary`）/ `tone`（App 自訂色票，目前只有 `gold`，給了就覆蓋 `severity`）/ `size`（`sm`=24px、`md`=32px（預設）、`lg`=40px）/ `iconOnly`（正方形）/ `fluid`（撐滿寬度）/ `disabled`
+  - slots：預設 slot = 文字（優先於 `label`）；`#icon` = 圖示，svg 由元件依 size 統一縮成 12/14/16px，不用自己標 `w-3.5 h-3.5`
+  - `tone` 的樣式寫在元件的 scoped `<style>`（未進 `@layer`，優先度高於 primevue layer）；要加新色票就在那裡加 `.app-button--{tone}-{variant}`
   - 工具列上與按鈕並排的 `SelectButton`（如 `ViewToggle`）加 `app-toolbar-toggle` class，`main.css` 有對應規則把 `.p-togglebutton` 拉成 2rem 對齊
+  - **不套用**：卡圖上的浮動 overlay 按鈕、`OwnershipControl` 的 ±、`RarityTabs` 分頁、側邊欄收合把手 —— 定位／形狀特殊，不是一般 action 按鈕
 
 **★ PrimeVue 優先原則**：所有互動式元素（按鈕、輸入框、下拉選單、彈窗等）必須優先使用 PrimeVue v4 元件，或以 PrimeVue 元件為基礎的自訂封裝。禁止使用原生 HTML 表單元素（`<button>`、`<input>`、`<select>`、`<textarea>`），除非 PrimeVue 沒有對應元件且無法合理封裝。
 

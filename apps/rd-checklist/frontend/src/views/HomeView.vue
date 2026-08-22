@@ -7,7 +7,7 @@ import type { OwnershipStats } from '@/types/cardSet'
 import ProductTypeSidebar from '@/components/navigation/ProductTypeSidebar.vue'
 import SetList from '@/components/navigation/SetList.vue'
 import CreateCardSetDialog from '@/components/navigation/CreateCardSetDialog.vue'
-import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 
 const route = useRoute()
 const store = useCardSetsStore()
@@ -69,19 +69,13 @@ watch(currentProductType, async (pt) => {
 
         <div class="flex items-end gap-3 shrink-0">
           <!-- New card set button -->
-          <Button
-            label="新增卡組"
-            severity="secondary"
-            variant="outlined"
-            size="small"
-            @click="createDialog?.open()"
-          >
+          <AppButton label="新增卡組" @click="createDialog?.open()">
             <template #icon>
-              <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
               </svg>
             </template>
-          </Button>
+          </AppButton>
 
           <!-- Stats panel -->
           <div

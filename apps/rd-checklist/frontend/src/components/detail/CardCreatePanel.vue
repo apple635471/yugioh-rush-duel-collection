@@ -3,7 +3,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import type { CardCreate } from '@/types/card'
 import { createCard, getNextCardId } from '@/api/cards'
 import { RARITIES } from '@/constants/rarities'
-import Button from 'primevue/button'
+import AppButton from '@/components/ui/AppButton.vue'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
@@ -281,27 +281,23 @@ async function onSubmit() {
             size="small"
             class="resize-y"
           />
-          <Button
+          <AppButton
             @click="toggleSection(section.key)"
             variant="text"
-            severity="secondary"
-            size="small"
-            class="text-xs mt-0.5"
-          >
-            Remove
-          </Button>
+            size="sm"
+            label="Remove"
+            class="mt-0.5"
+          />
         </div>
-        <Button
+        <AppButton
           v-else
           @click="toggleSection(section.key)"
           variant="text"
-          severity="secondary"
-          size="small"
-          class="gap-1 text-xs mb-2"
+          size="sm"
+          class="mb-2"
         >
-          <span class="text-base leading-none">+</span>
-          <span>{{ section.label }}</span>
-        </Button>
+          <span class="text-sm leading-none mr-0.5">+</span>{{ section.label }}
+        </AppButton>
       </template>
     </template>
 
@@ -309,14 +305,16 @@ async function onSubmit() {
     <div v-if="error" class="text-red-400 text-sm mb-3">{{ error }}</div>
 
     <!-- Submit -->
-    <Button
+    <AppButton
       @click="onSubmit"
       :disabled="saving || loadingId"
+      variant="filled"
       severity="warn"
+      size="lg"
       fluid
     >
       {{ saving ? 'Creating...' : 'Create Card' }}
-    </Button>
+    </AppButton>
 
     <p class="text-xs text-gray-600 mt-2 text-center">
       Image can be uploaded after creation.

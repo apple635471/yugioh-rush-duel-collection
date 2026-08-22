@@ -8,7 +8,7 @@ Vue 3 + TypeScript + Tailwind CSS + **PrimeVue v4** 前端，深色主題卡牌�
 App.vue
 ├── AppHeader              # 頂部導航 (Logo + 搜尋框 + Browse/Search)
 ├── <RouterView>
-│   ├── HomeView           # / 和 /sets/:productType
+│   ├── HomeView           # / 和 /sets/:productType  (新增卡組 → AppButton)
 │   │   ├── BreadcrumbBar
 │   │   ├── ProductTypeNav # 產品類型 pill 篩選列
 │   │   └── SetList        # 卡組 grid (set_id, 名稱, 日期, 卡數)
@@ -29,12 +29,13 @@ App.vue
 │   │   └── CardTable      # Table 模式 (同樣的子元件)
 │   │
 │   └── SearchView         # /search?q=
-│       ├── SearchFilters  # 類型/屬性/等級/稀有度/持有 下拉
+│       ├── SearchFilters  # 類型/屬性/等級/稀有度/持有 下拉 (清除篩選 → AppButton)
 │       ├── ViewToggle
 │       └── CardGrid / CardTable
 │
 └── AppSidebar (Teleport)  # 條件: ui.sidebarOpen
     ├── CardDetailPanel    # ui.sidebarMode='detail': 大圖 + 完整資訊 + 效果 + Add Variant
+    │                       #   貴罕度工具列 icon 鈕 / 同名卡片 (tone=gold) / 底部動作皆用 AppButton
     │   └── ScanResultPanel (Teleport, 浮動可拖曳)  # ✦ Scan 按鈕觸發，顯示 AI 掃描結果剪貼板
     ├── CardCreatePanel    # ui.sidebarMode='create': 新卡建立表單
     └── 收起/展開 tab      # fixed top-1/2 right-0，兩狀態同位置
