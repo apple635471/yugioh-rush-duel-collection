@@ -69,6 +69,17 @@ overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filte
 
 Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。
 
+### 匯入時的正規化
+
+| 欄位 | 處理 |
+|------|------|
+| `product_type` | `canonical_product_type()` 重新推導（見 `rd-product-types`）|
+| `rarity` | `normalize_rarity()` 收斂同義拼法 |
+| `monster_type` | `normalize_monster_type()` 收斂種族寫法（見 `rd-html-parsing`）|
+
+都是「scraper 值只是提示」，所以重新匯入舊 JSON 會**修正**而不是還原。既有 DB 各有對應
+的一次性 CLI：`reclassify-product-types` / `normalize-rarities` / `normalize-monster-types`。
+
 ### 卡片歸屬的兩種人工介入
 
 | 機制 | 位置 | 適用 |

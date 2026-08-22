@@ -20,7 +20,8 @@ class Card:
     level: Optional[int] = None
     atk: Optional[str] = None  # str because some may be "?"
     defense: Optional[str] = None
-    summon_condition: Optional[str] = None  # e.g. 此卡只能用...特殊召喚
+    summon_condition: Optional[str] = None  # 怪獸: 融合素材／召喚限制（條件之前那段）
+    description: Optional[str] = None  # 魔法˙陷阱: 條件之前那段（卡名視為…等）
     condition: Optional[str] = None
     effect: Optional[str] = None
     continuous_effect: Optional[str] = None  # 永續效果

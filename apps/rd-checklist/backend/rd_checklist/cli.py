@@ -10,6 +10,7 @@ from pathlib import Path
 from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
+from .services.monster_type_migration import migrate_monster_types
 from .services.product_type_migration import migrate_product_types
 from .services.set_service import (
     delete_card_set,
@@ -59,6 +60,14 @@ def main(argv: list[str] | None = None) -> None:
         "normalize-rarities",
         help="Collapse synonym rarities (SRP/PSR→SPR, NRP/PNR→NPR, URP/PUR→UPR) "
         "in existing DB rows and user-uploaded images (idempotent)",
+    )
+
+    # normalize-monster-types
+    sub.add_parser(
+        "normalize-monster-types",
+        help="Collapse inconsistent monster race spellings (三種 omega 寫法 → "
+        "omega 超能族、炎 → 炎族、爬蟲族 → 爬蟲類族、魔法族 → 魔法使族) "
+        "in existing DB rows (idempotent)",
     )
 
     # reclassify-product-types
@@ -159,6 +168,20 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  Overrides updated: {stats['overrides_updated']}")
             print(f"  Images renamed:    {stats['images_renamed']}")
             print(f"  Images de-duped:   {stats['images_skipped_conflict']}")
+        finally:
+            db.close()
+
+    elif args.command == "normalize-monster-types":
+        init_db()
+        db = SessionLocal()
+        try:
+            stats = migrate_monster_types(db)
+            print("\nMonster race normalization complete:")
+            print(f"  Cards changed:     {stats['cards_changed']}")
+            print(f"  Overrides updated: {stats['overrides_updated']}")
+            for before, targets in stats["changes"].items():
+                for after, n in targets.items():
+                    print(f"    {before} → {after}: {n}")
         finally:
             db.close()
 

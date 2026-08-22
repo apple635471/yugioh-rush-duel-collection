@@ -43,19 +43,53 @@ description: Parsing Rush Duel card data from ntucgm blog post HTML. Use when mo
 
 Stats 行之後的文字區塊會被解析為多個欄位:
 
-1. **summon_condition** (召喚條件): 位於 stats 行和 `條件:` 標籤之間的描述文字 (如「此卡只能用…特殊召喚」)
+1. **stats 行和 `條件:` 之間那段** —— 依卡種分流：
+   - 怪獸 → **summon_condition**（融合素材、召喚限制，如「此卡只能用…特殊召喚」）
+   - 魔法˙陷阱 → **description**（如「手牌或墓地此卡卡名視為…」）
 2. **condition** (發動條件): `條件:` 或 `條件：` 標籤後的文字
 3. **effect** (效果): `效果:` 或 `可以發動效果:` 標籤後的文字
+   - **`選擇效果:` 連標籤一起存進 effect**（`CHOICE_EFFECT_RE`）。後面的 ● 是「擇一」而不是「全部都做」，把標籤拿掉語意就變了
 4. **continuous_effect** (永續效果): `永續效果:` 標籤後的文字，與一般 `效果:` 分開儲存
+
+文章段落結尾的分隔線（`------` 之類）由 `_SEPARATOR_RE` 濾掉，不會被當成內容。
 
 ### 同行多標籤問題
 
 有些文章中 `條件:…效果:…` 連在同一個 HTML element 裡。Parser 使用 `_LABEL_SPLIT_RE` 拆分:
 ```python
-_LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：])")
+_LABEL_SPLIT_RE = re.compile(
+    r"(?=(?:條件|永續效果|選擇效果|(?<!永續)(?<!選擇)效果)[:：])"
+)
 ```
 - 使用 lookahead 在標籤前切割
-- `(?<!永續)` negative lookbehind 避免 `永續效果:` 被拆斷為 `永續` + `效果:`
+- 兩個 negative lookbehind 避免 `永續效果:` / `選擇效果:` 被拆斷成 `永續`＋`效果:`
+
+### 詳細條目的判定
+
+同一個卡號在文章裡通常出現兩次（上方索引 + 下方詳細）。`_is_detail_entry()` 的判準是
+**在遇到下一個卡號之前有沒有出現 stats 行**——索引區的下一個 chunk 一定是另一個卡號，
+詳細區則會先遇到 stats。
+
+前瞻視窗要夠寬：稀有度標記常被 inline 標籤切碎，例如 `(SR` / `/SER` / `)卡名` 佔掉三個
+chunk，stats 行排在第四個之後。視窗太窄會讓整張卡被當成索引條目而漏掉。
+
+## 種族正規化
+
+部落格對同一個種族有多種寫法，`monster_types.py` 的 `normalize_monster_type()` 在解析時
+收斂（backend 匯入時會再做一次，舊 JSON 不必重爬就自癒）：
+
+| 來源寫法 | 正規名 |
+|---------|--------|
+| 歐米茄超能族 / 奧米茄超能族 / 奧米加超能族 | `omega 超能族` |
+| 炎 | 炎族 |
+| 爬蟲族 | 爬蟲類族 |
+| 魔法族 | 魔法使族 |
+
+## 改了 parser 之後
+
+`scrape-url` / `update` 是比對文章 content hash，**頁面沒變就不會重新解析**。改完 parser
+要讓既有資料套用新規則，得用 `uv run python -m rd_card_scraper.cli update --force`
+（重爬全部）。
 
 ## 稀有度標記
 

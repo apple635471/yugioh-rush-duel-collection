@@ -43,6 +43,7 @@ from typing import Optional
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 from .models import Card, CardSet
+from .monster_types import normalize_monster_type
 from .rarities import normalize_rarity_string
 
 logger = logging.getLogger(__name__)
@@ -104,11 +105,21 @@ CONDITION_RE = re.compile(r"條件[:：]\s*(.+)")
 EFFECT_RE = re.compile(r"^效果[:：]\s*(.+)", re.DOTALL)
 CONTINUOUS_EFFECT_RE = re.compile(r"永續效果[:：]\s*(.+)", re.DOTALL)
 
+# 選擇效果: the card offers a choice between the ● bullets that follow. The
+# label is part of the rules text — without it the bullets read as things that
+# all happen — so the whole segment is kept, label included.
+CHOICE_EFFECT_RE = re.compile(r"^(選擇效果[:：]\s*.+)", re.DOTALL)
+
+# Rules of dashes/underscores the blog uses to close a section — never content.
+_SEPARATOR_RE = re.compile(r"^[-–—=_─━.·・\s]{4,}$")
+
 # Labels that can appear in card text; used to split a single chunk that
 # contains multiple sections (e.g. "條件:…效果:…" on one line).
-# The negative lookbehind (?<!永續) prevents "效果:" from splitting inside
-# "永續效果:" — "永續效果" is matched as a whole unit instead.
-_LABEL_SPLIT_RE = re.compile(r"(?=(?:條件|永續效果|(?<!永續)效果)[:：])")
+# The negative lookbehinds keep 永續效果 / 選擇效果 whole instead of splitting
+# them at their trailing "效果:".
+_LABEL_SPLIT_RE = re.compile(
+    r"(?=(?:條件|永續效果|選擇效果|(?<!永續)(?<!選擇)效果)[:：])"
+)
 
 # Product type mapping from set ID prefix.
 # Mirrors rd_checklist/product_types.py in the checklist backend — keep both
@@ -439,9 +450,11 @@ def _flatten_to_chunks(post_body: Tag) -> list[dict]:
 def _is_detail_entry(chunks: list[dict], idx: int) -> bool:
     """Check if a card ID at chunks[idx] is a detail entry (not summary).
 
-    A detail entry has stats keywords nearby (within next 3 text chunks):
-    card type keywords like 通常怪獸, 效果怪獸, 通常魔法, etc.
-    OR the header line itself contains inline stats.
+    A detail entry is one whose stats line arrives before the next card ID —
+    that is what separates it from a summary entry, where the next thing is
+    always another card ID. The scan is capped only to bound the work: some
+    headers are chopped into several chunks by inline markup, e.g. a rarity
+    written as "(SR" / "/SER" / ")name" across three of them.
     """
     header_text = chunks[idx]["text"]
 
@@ -473,9 +486,9 @@ def _is_detail_entry(chunks: list[dict], idx: int) -> bool:
     if COMPACT_STATS_RE.search(combined):
         return True
 
-    # Check next few text chunks
+    # Scan forward for a stats line, stopping at the next card ID.
     checked = 0
-    for j in range(idx + 1, min(idx + 6, len(chunks))):
+    for j in range(idx + 1, min(idx + 20, len(chunks))):
         if chunks[j]["type"] != "text":
             continue
         text = chunks[j]["text"]
@@ -486,7 +499,7 @@ def _is_detail_entry(chunks: list[dict], idx: int) -> bool:
             if kw in text:
                 return True
         checked += 1
-        if checked >= 3:
+        if checked >= 10:
             break
 
     return False
@@ -655,7 +668,7 @@ def _parse_card_details(
         parts = _LABEL_SPLIT_RE.split(line)
         for p in parts:
             p = p.strip()
-            if p:
+            if p and not _SEPARATOR_RE.match(p):
                 post_stats_lines.append(p)
 
     # Step 2: classify each part
@@ -671,8 +684,14 @@ def _parse_card_details(
         cond_match = CONDITION_RE.match(line)
         eff_match = EFFECT_RE.match(line)
         cont_eff_match = CONTINUOUS_EFFECT_RE.match(line)
+        choice_eff_match = CHOICE_EFFECT_RE.match(line)
 
-        if cond_match:
+        if choice_eff_match:
+            # Label kept: "選擇效果:" is what makes the ● bullets alternatives.
+            effect_parts.append(choice_eff_match.group(1))
+            seen_effect = True
+            in_section = "effect"
+        elif cond_match:
             cond_parts.append(cond_match.group(1))
             seen_condition = True
             in_section = "cond"
@@ -692,8 +711,17 @@ def _parse_card_details(
         elif in_section == "cont_effect" and line and not STATS_RE.search(line):
             cont_effect_parts.append(line)
 
+    card.monster_type = normalize_monster_type(card.monster_type)
+
     if summon_cond_parts:
-        card.summon_condition = "".join(summon_cond_parts)
+        # The text sitting between the stats line and 條件: is fusion material /
+        # summoning restrictions on a monster, but flavour or a name-treated-as
+        # clause on a spell or trap — different fields, same position.
+        text = "".join(summon_cond_parts)
+        if "怪獸" in (card.card_type or ""):
+            card.summon_condition = text
+        else:
+            card.description = text
     if cond_parts:
         card.condition = "".join(cond_parts)
     if effect_parts:

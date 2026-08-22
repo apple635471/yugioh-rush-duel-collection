@@ -33,4 +33,5 @@ export const MONSTER_TYPES: string[] = [
   '半機械族',
   '超龍族',
   '魔導騎士族',
+  'omega 超能族',
 ]
