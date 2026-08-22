@@ -9,6 +9,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel, CardVariantOverrideModel
+from ..monster_types import normalize_monster_type
 from ..product_types import canonical_product_type
 from ..rarities import normalize_rarity, normalize_rarity_string
 
@@ -162,7 +163,11 @@ def _import_one_card(
     card.name_zh = _val("name_zh", card_data.get("name_zh", ""))
     card.card_type = _val("card_type", card_data.get("card_type", ""))
     card.attribute = _val("attribute", card_data.get("attribute"))
-    card.monster_type = _val("monster_type", card_data.get("monster_type"))
+    # Normalize here too: older scraper JSON predates the scraper-side fix,
+    # so re-importing corrects the race instead of restoring the odd spelling.
+    card.monster_type = normalize_monster_type(
+        _val("monster_type", card_data.get("monster_type"))
+    )
 
     level_val = _val("level", card_data.get("level"))
     card.level = int(level_val) if level_val is not None else None
@@ -171,6 +176,7 @@ def _import_one_card(
     card.defense = _val("defense", card_data.get("defense"))
     card.maximum_atk = _val("maximum_atk", card_data.get("maximum_atk"))
     card.summon_condition = _val("summon_condition", card_data.get("summon_condition"))
+    card.description = _val("description", card_data.get("description"))
     card.condition = _val("condition", card_data.get("condition"))
     card.effect = _val("effect", card_data.get("effect"))
     card.continuous_effect = _val("continuous_effect", card_data.get("continuous_effect"))

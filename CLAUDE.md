@@ -53,6 +53,7 @@ uv sync
 uv run python -m rd_checklist.cli init-db                           # 初始化資料庫
 uv run python -m rd_checklist.cli import --scraper-data ../../../tools/rd-card-scraper/data  # 匯入爬取資料
 uv run python -m rd_checklist.cli reclassify-product-types           # 既有卡組重新分類產品類型
+uv run python -m rd_checklist.cli normalize-monster-types           # 收斂種族寫法
 uv run python -m rd_checklist.cli resplit-set --all                 # 依卡號把卡搬到正確 set (--dry-run 先看)
 uv run python -m rd_checklist.cli merge-set 21CC --into PROMO       # 把某 set 併進另一個並釘住
 uv run python -m rd_checklist.cli delete-set S254                   # 刪除整個卡組

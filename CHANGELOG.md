@@ -37,6 +37,17 @@
 
 ### 改善
 
+- **Scraper 卡片文字解析修正**（以 ORP4 實測，解析結果從 73 張 → 80 張，文章全部卡號都拿到）
+  - **詳細條目判定**：`_is_detail_entry()` 原本只往後看 3 個文字 chunk，稀有度被 inline 標籤切碎時（`(SR` / `/SER` / `)卡名` 各佔一個 chunk）會把整張卡誤判為索引條目而漏掉。改為掃到下一個卡號為止（上限放寬），ORP4 因此補回 7 張
+  - **`選擇效果:` 連標籤存進 effect**：後面的 ● 是「擇一」不是「全部都做」，原本標籤被 `_LABEL_SPLIT_RE` 拆掉，語意就變了
+  - **魔法˙陷阱的前置文字改存 description**：stats 行與 `條件:` 之間那段，怪獸是融合素材／召喚限制（`summon_condition`），魔陷則是「卡名視為…」這類敘述，原本一律塞進 `summon_condition`
+  - **`Card` 新增 `description` 欄位**，匯入端一併補上（原本 backend 有欄位但匯入沒讀）
+  - 段落結尾的分隔線（`------`）不再被當成內容
+- **種族寫法正規化**：`歐米茄/奧米茄/奧米加超能族` → `omega 超能族`、`炎` → `炎族`、`爬蟲族` → `爬蟲類族`、`魔法族` → `魔法使族`
+  - Scraper 解析時收斂（`monster_types.py`），backend 匯入時再收斂一次，舊 JSON 不必重爬即自癒
+  - 一次性 CLI：`uv run python -m rd_checklist.cli normalize-monster-types`（idempotent）
+  - 前端種族清單（`constants/monsterTypes.ts`）新增 `omega 超能族`，篩選與編輯卡牌都選得到
+
 - **搜尋頁新增「種族」篩選**（`SearchFilters`）：選項用 `constants/monsterTypes.ts`，與編輯卡牌時同一份清單；後端 `/api/search` 新增 `monster_type` 參數（完全相等比對）
 - **搜尋頁「種類」改名為「卡種」**，與卡組頁的篩選用語一致
 

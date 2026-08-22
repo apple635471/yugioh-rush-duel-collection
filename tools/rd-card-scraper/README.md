@@ -50,7 +50,7 @@ data/
   └── scrape_state.json   # 增量更新狀態
 ```
 
-每張卡片的 JSON 包含：`card_id`, `rarity`, `name_jp`, `name_zh`, `card_type`, `attribute`, `monster_type`, `level`, `atk`, `defense`, `summon_condition`, `condition`, `effect`, `continuous_effect`, `image_url`, `image_file`, `is_legend`。
+每張卡片的 JSON 包含：`card_id`, `rarity`, `name_jp`, `name_zh`, `card_type`, `attribute`, `monster_type`, `level`, `atk`, `defense`, `summon_condition`, `description`, `condition`, `effect`, `continuous_effect`, `image_url`, `image_file`, `is_legend`。
 
 ## 指令
 
