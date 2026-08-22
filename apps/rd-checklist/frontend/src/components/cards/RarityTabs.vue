@@ -38,6 +38,7 @@ const rarityColors: Record<string, string> = {
 
   // ── Rush Rare ───────────────────────────────────────────────────────────
   RR:          'text-emerald-400 border-emerald-400',  // 超速貴罕
+  GRR:         'text-amber-300 border-amber-400',      // 黃金超速貴罕（金色調）
 
   // ── Over Rush Rare ──────────────────────────────────────────────────────
   ORR:         'text-purple-400 border-purple-400',    // 超越超速貴罕

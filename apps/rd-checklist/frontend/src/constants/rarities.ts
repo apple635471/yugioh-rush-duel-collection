@@ -11,6 +11,7 @@ export const RARITIES: { value: string; label: string }[] = [
   { value: 'RUR',    label: 'RUR (紅亮)' },
   { value: 'SER',    label: 'SER (半鑽)' },
   { value: 'RR',     label: 'RR (超速貴罕)' },
+  { value: 'GRR',    label: 'GRR (黃金超速貴罕)' },
   { value: 'ORR',    label: 'ORR (超越超速貴罕)' },
   { value: 'ORRPBV', label: 'ORRPBV (黑鑽超越超速)' },
   { value: 'FORR',   label: 'FORR (全超越超速罕貴)' },
