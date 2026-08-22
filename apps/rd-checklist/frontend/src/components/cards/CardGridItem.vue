@@ -140,7 +140,7 @@ async function onOwnershipUpdate(cardId: string, rarityKey: string, count: numbe
       />
       <div
         v-else
-        class="w-full h-full flex items-center justify-center text-gray-600 text-xs"
+        class="w-full h-full flex items-center justify-center text-gray-400 text-xs"
       >
         No Image
       </div>

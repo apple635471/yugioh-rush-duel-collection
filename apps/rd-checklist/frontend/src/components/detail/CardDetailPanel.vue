@@ -501,7 +501,7 @@ async function submitDeleteVariant() {
           :alt="card.name_zh || card.name_jp"
           class="w-full h-full object-cover"
         />
-        <div v-else class="w-full h-full flex items-center justify-center text-gray-500">
+        <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
           No Image
         </div>
 
@@ -713,10 +713,10 @@ async function submitDeleteVariant() {
           <label
             for="new-variant-alt"
             class="text-xs select-none"
-            :class="newVariantAltForced ? 'text-gray-500 cursor-default' : 'text-gray-300 cursor-pointer'"
+            :class="newVariantAltForced ? 'text-gray-400 cursor-default' : 'text-gray-300 cursor-pointer'"
           >
             異圖
-            <span v-if="newVariantAltForced" class="text-gray-500">（此貴罕度已有普通版，自動設為異圖）</span>
+            <span v-if="newVariantAltForced" class="text-gray-400">（此貴罕度已有普通版，自動設為異圖）</span>
           </label>
         </div>
         <div v-if="variantError" class="text-red-400 text-xs">{{ variantError }}</div>
@@ -791,7 +791,7 @@ async function submitDeleteVariant() {
           size="small"
           severity="secondary"
           variant="text"
-          class="!text-[10px] !px-1.5 !py-0.5 !h-auto font-mono text-gold-dim hover:text-gold-light"
+          class="!text-[10px] !px-1.5 !py-0.5 !h-auto font-mono text-gold hover:text-gold-light"
           :title="'前往 ' + card.set_id + ' 卡組頁'"
         >{{ card.set_id }}</Button>
         <Button
@@ -820,7 +820,7 @@ async function submitDeleteVariant() {
         <button
           v-if="sameNameCount > 1"
           @click="refModalVisible = true"
-          class="shrink-0 mt-0.5 inline-flex items-center gap-1 text-[10px] font-orbitron text-gold-dim hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
+          class="shrink-0 mt-0.5 inline-flex items-center gap-1 text-[10px] font-orbitron text-gold hover:text-gold-light border border-[rgba(201,168,76,0.3)] hover:border-gold/50 rounded px-1.5 py-0.5 transition-colors"
           title="查看其他同名卡片"
         >
           <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -830,7 +830,7 @@ async function submitDeleteVariant() {
           同名卡片 ({{ sameNameCount }})
         </button>
       </div>
-      <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-500 font-orbitron tracking-wide mb-4">
+      <p v-if="card.name_zh && card.name_jp" class="text-xs text-gray-400 font-orbitron tracking-wide mb-4">
         {{ card.name_jp }}
       </p>
       <div v-else class="mb-4" />
@@ -882,13 +882,13 @@ async function submitDeleteVariant() {
     <div v-if="editing" class="rounded-lg overflow-hidden mb-4 border border-[rgba(201,168,76,0.1)]">
       <!-- Card ID (always read-only) -->
       <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-        <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Card ID</span>
+        <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">Card ID</span>
         <span class="px-3 py-2 text-sm text-gray-200 font-mono">{{ card.card_id }}</span>
       </div>
 
       <!-- Card Type -->
       <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-        <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Type</span>
+        <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">Type</span>
         <div class="px-3 py-2 flex-1">
           <Select
             v-model="form.card_type"
@@ -905,7 +905,7 @@ async function submitDeleteVariant() {
       <template v-if="isMonster">
         <!-- Attribute -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">屬性</span>
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">屬性</span>
           <div class="px-3 py-2 flex-1">
             <Select
               v-model="form.attribute"
@@ -920,7 +920,7 @@ async function submitDeleteVariant() {
 
         <!-- Monster Type (種族): pick from common races or type a new one -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">種族</span>
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">種族</span>
           <div class="px-3 py-2 flex-1">
             <Select
               v-model="form.monster_type"
@@ -935,7 +935,7 @@ async function submitDeleteVariant() {
 
         <!-- Level: number input + 1–12 slider -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">Level</span>
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">Level</span>
           <div class="px-3 py-2 flex-1 space-y-2">
             <InputNumber
               v-model="form.level"
@@ -954,13 +954,13 @@ async function submitDeleteVariant() {
 
         <!-- ATK / DEF / MAX ATK: "?" or number, keyboard + step-100 slider -->
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">ATK</span>
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">ATK</span>
           <div class="px-3 py-2 flex-1">
             <StatInput v-model="form.atk" />
           </div>
         </div>
         <div class="flex items-center border-b border-[rgba(201,168,76,0.08)]">
-          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold-dim bg-[rgba(201,168,76,0.04)]">DEF</span>
+          <span class="w-20 shrink-0 px-3 py-2 text-[11px] font-orbitron font-bold tracking-wide text-gold bg-[rgba(201,168,76,0.04)]">DEF</span>
           <div class="px-3 py-2 flex-1">
             <StatInput v-model="form.defense" />
           </div>
@@ -979,7 +979,7 @@ async function submitDeleteVariant() {
       <template v-if="!section.monsterOnly || isMonster">
         <!-- View mode: only show if value exists -->
         <div v-if="!editing && (card as any)[section.key]" class="mb-3">
-          <div class="font-orbitron text-[9px] font-bold tracking-[0.2em] text-gold-dim uppercase mb-1.5">{{ section.label }}</div>
+          <div class="font-orbitron text-[10px] font-bold tracking-[0.2em] text-gold uppercase mb-1.5">{{ section.label }}</div>
           <p class="text-sm text-gray-300 leading-relaxed bg-[rgba(201,168,76,0.03)] border border-[rgba(201,168,76,0.08)] rounded-md px-3 py-2">
             <CardRefText :text="(card as any)[section.key]" />
           </p>
@@ -988,7 +988,7 @@ async function submitDeleteVariant() {
         <!-- Edit mode: show expanded or show + button -->
         <template v-if="editing">
           <div v-if="expandedSections[section.key]" class="mb-3">
-            <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ section.label }}</h3>
+            <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-1">{{ section.label }}</h3>
             <Textarea
               v-model="(form as any)[section.key]"
               :rows="2"

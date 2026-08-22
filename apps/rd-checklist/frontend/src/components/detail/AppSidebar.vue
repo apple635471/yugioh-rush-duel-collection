@@ -88,10 +88,10 @@ const cardLabel = computed(() =>
           @card-updated="loadCard"
         />
 
-        <div v-else class="p-6 text-center text-gray-500">
+        <div v-else class="p-6 text-center text-gray-400">
           <p>Card not found.</p>
           <p v-if="loadError" class="text-xs text-red-400 mt-1 font-mono">{{ loadError }}</p>
-          <p v-if="ui.sidebarCardId" class="text-xs text-gray-600 mt-1 font-mono">{{ ui.sidebarCardId }}</p>
+          <p v-if="ui.sidebarCardId" class="text-xs text-gray-400 mt-1 font-mono">{{ ui.sidebarCardId }}</p>
         </div>
       </template>
     </aside>
@@ -124,7 +124,7 @@ const cardLabel = computed(() =>
       </svg>
       <span
         v-if="cardLabel"
-        class="text-[9px] text-gray-400 group-hover:text-gold max-h-28 overflow-hidden"
+        class="text-[10px] text-gray-400 group-hover:text-gold max-h-28 overflow-hidden"
         style="writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap;"
       >
         {{ cardLabel }}

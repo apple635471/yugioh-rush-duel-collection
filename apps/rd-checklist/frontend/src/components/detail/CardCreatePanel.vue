@@ -147,7 +147,7 @@ async function onSubmit() {
       <div class="flex items-center px-3 py-2 border-b border-gray-700">
         <span class="w-20 text-xs text-gray-400 shrink-0">Card ID</span>
         <div class="flex-1">
-          <div v-if="loadingId" class="text-sm text-gray-500">Loading...</div>
+          <div v-if="loadingId" class="text-sm text-gray-400">Loading...</div>
           <InputText
             v-else
             v-model="form.card_id"
@@ -273,7 +273,7 @@ async function onSubmit() {
     <template v-for="section in textSections" :key="section.key">
       <template v-if="!section.monsterOnly || isMonster">
         <div v-if="expandedSections[section.key]" class="mb-3">
-          <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ section.label }}</h3>
+          <h3 class="text-xs text-gray-400 uppercase tracking-wider mb-1">{{ section.label }}</h3>
           <Textarea
             v-model="(form as any)[section.key]"
             :rows="2"
@@ -318,7 +318,7 @@ async function onSubmit() {
       {{ saving ? 'Creating...' : 'Create Card' }}
     </Button>
 
-    <p class="text-xs text-gray-600 mt-2 text-center">
+    <p class="text-xs text-gray-400 mt-2 text-center">
       Image can be uploaded after creation.
     </p>
   </div>

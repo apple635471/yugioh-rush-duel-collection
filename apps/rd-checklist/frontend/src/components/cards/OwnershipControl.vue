@@ -40,14 +40,14 @@ function decrement() {
         'w-5 h-5 p-0 flex items-center justify-center rounded text-xs font-bold leading-none',
         localCount > 0
           ? 'bg-gray-600 text-gray-200 hover:bg-gray-500 hover:text-white'
-          : 'bg-gray-700 text-gray-500 cursor-not-allowed',
+          : 'bg-gray-700 text-gray-400 cursor-not-allowed',
       ]"
     >
       −
     </Button>
     <span
       class="w-5 text-center text-xs font-semibold tabular-nums"
-      :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-500'"
+      :class="localCount > 0 ? 'text-emerald-400' : 'text-gray-400'"
     >
       {{ localCount }}
     </span>

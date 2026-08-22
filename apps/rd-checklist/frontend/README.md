@@ -82,6 +82,12 @@ App.vue
 ## 視覺設計
 
 - **深色主題**: bg-gray-950 基底，gray-900 卡片，yellow-400 強調色
+- **文字色規則**（所有文字須 ≥ 4.5:1）
+  - 次要／輔助文字一律 `text-gray-400`（#99A1AF，在 #09090F 上 7.63:1）；`text-gray-500` / `text-gray-600` 在這個近黑底上不足 4.5:1，不要當文字色用
+  - 金色文字用 `text-gold`（#C9A84C）；`gold-dim`（#6B5428）是**裝飾色**，只給邊框與進度條漸層，不當文字色
+  - 有底色的 chip／badge 要再提一階（例如 `bg-gray-700` 上用 `text-gray-200`）
+  - 例外：`disabled` 控制項（如數量 −）維持低對比，那是狀態訊號，WCAG 也不要求
+- **左側導覽欄**: `bg-dark-1` + 右側 `rgba(201,168,76,0.10)` 細邊，與內容區分層
 - **未持有卡片**: grayscale + opacity-40 (Grid), opacity-40 整行 (Table)
 - **稀有度色碼**: UR=金, SER=紅, SR=橙, R=藍, N=灰, OVER-RUSH=紫, RUSH=青
 - **LEGEND 標記**: amber-500 badge

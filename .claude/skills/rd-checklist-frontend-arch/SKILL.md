@@ -14,6 +14,14 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 **PrimeVue v4** (`primevue@^4.5.4` + `@primeuix/themes`)
 - 主題：`definePreset(Aura, ...)` 客製 primary palette 為 amber（`{amber.50}` → `{amber.950}`）
 - `darkModeSelector: ':root'` — 全域強制深色，不依賴系統設定
+
+**★ 文字對比規則**（底色 `#09090F` 幾乎純黑，Tailwind 的中階灰在這裡會暗一階）：
+- 次要文字用 `text-gray-400`；**不要**用 `text-gray-500` / `text-gray-600` 當文字色（4.11 / 2.27:1，低於 WCAG AA 小字要求的 4.5:1）
+- 金色文字用 `text-gold`；`gold-dim` 是裝飾色（邊框、進度條漸層起點），當文字只有 2.76:1
+- chip／badge 這種自帶底色的元素，文字要再提一階（如 `bg-gray-700` 配 `text-gray-200`）
+- `--color-dark-3` = `#262B3D`（原 `#181B28`），讓 badge 這類小面積底色和文字拉開
+- 例外：`disabled` 控制項維持低對比（狀態訊號，WCAG 不要求）
+
 - CSS layer 順序 (main.css)：`@layer tailwind-base, primevue, tailwind-utilities`
   - Tailwind utilities 永遠覆蓋 PrimeVue 預設樣式
 - 使用元件：`Button`、`InputText`、`InputNumber`、`Select`（種族用 `editable`）、`Slider`（Level / ATK / DEF 拉桿）、`Textarea`、`Checkbox`、`SelectButton`、`IftaLabel`（篩選下拉的欄位內頂端標籤）

@@ -111,14 +111,14 @@ function openModal(name: string) {
       @mouseenter="cancelHide"
       @mouseleave="scheduleHide"
     >
-      <div v-if="hoverLoading" class="text-xs text-gray-500 py-6 text-center">載入中…</div>
+      <div v-if="hoverLoading" class="text-xs text-gray-400 py-6 text-center">載入中…</div>
       <template v-else-if="hoverCard">
         <CardBasicInfo :card="hoverCard" compact />
         <button class="ref-more" @click="openModal(hoverName)">
           更多<span v-if="hoverCount > 1"> ({{ hoverCount }})</span> ›
         </button>
       </template>
-      <div v-else class="text-xs text-gray-500 py-6 text-center">查無「{{ hoverName }}」</div>
+      <div v-else class="text-xs text-gray-400 py-6 text-center">查無「{{ hoverName }}」</div>
     </div>
   </Teleport>
 

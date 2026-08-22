@@ -170,7 +170,7 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
             </div>
             <span class="text-xs font-orbitron">
               <span class="text-gold font-bold">{{ progress.owned }}</span>
-              <span class="text-gray-500"> / {{ progress.total }}</span>
+              <span class="text-gray-400"> / {{ progress.total }}</span>
               <span class="ml-2 text-gold-light font-bold">{{ progress.percent }}%</span>
             </span>
           </div>
@@ -186,7 +186,7 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         <div class="flex items-center gap-3 flex-wrap">
           <!-- display mode toggle -->
           <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-orbitron text-gray-500 tracking-wider uppercase">顯示</span>
+            <span class="text-[10px] font-orbitron text-gray-400 tracking-wider uppercase">顯示</span>
             <div class="inline-flex rounded-md border border-[rgba(201,168,76,0.25)] overflow-hidden text-[11px] font-orbitron">
               <button
                 @click="ui.displayMode = 'owned'"
@@ -248,7 +248,7 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
       </div>
 
       <!-- Card views -->
-      <div v-if="filteredCards.length === 0" class="text-center text-gray-500 py-16 text-sm">
+      <div v-if="filteredCards.length === 0" class="text-center text-gray-400 py-16 text-sm">
         沒有符合篩選條件的卡片。
       </div>
       <CardGrid
