@@ -87,7 +87,8 @@ const primeVariant = computed(() => props.variant === 'filled' ? undefined : pro
 /* ── tone: gold ──────────────────────────────────────────────────────────
    scoped style 未進 @layer，優先度高於 primevue layer，足以蓋掉 severity 配色 */
 .app-button--gold {
-  color: var(--color-gold-dim);
+  /* gold-dim (#6B5428) 是裝飾色，當文字只有 2.76:1；文字用 gold */
+  color: var(--color-gold);
   transition: color .15s, border-color .15s, background-color .15s;
 }
 .app-button--gold:hover:not(:disabled) {

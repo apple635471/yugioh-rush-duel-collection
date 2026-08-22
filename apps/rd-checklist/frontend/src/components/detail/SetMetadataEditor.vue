@@ -139,14 +139,14 @@ const fieldLabels: Record<string, string> = {
 
     <!-- Set meta tags -->
     <div class="flex flex-wrap gap-3 text-xs text-gray-400">
-      <span class="bg-gray-700 px-2 py-0.5 rounded">{{ cardSet.set_id }}</span>
+      <span class="bg-gray-700 px-2 py-0.5 rounded text-gray-200">{{ cardSet.set_id }}</span>
       <span v-if="cardSet.release_date">{{ cardSet.release_date }}</span>
       <span>{{ totalCards }} cards</span>
       <template v-if="rarityDistSorted.length > 0">
         <span
           v-for="[rarity, count] in rarityDistSorted"
           :key="rarity"
-          class="bg-gray-700/60 px-1.5 py-0.5 rounded font-mono"
+          class="bg-gray-700/60 px-1.5 py-0.5 rounded font-mono text-gray-200"
         >{{ rarity }}×{{ count }}</span>
       </template>
     </div>
@@ -157,7 +157,7 @@ const fieldLabels: Record<string, string> = {
     <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mb-2">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-sm font-medium text-gray-300">Edit Set Metadata</h2>
-        <span class="bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-400">{{ cardSet.set_id }}</span>
+        <span class="bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-200">{{ cardSet.set_id }}</span>
       </div>
 
       <div class="space-y-2.5">
@@ -215,16 +215,16 @@ const fieldLabels: Record<string, string> = {
         <!-- Auto-computed (read-only) -->
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Total Cards</label>
-          <span class="text-xs text-gray-500 italic">{{ totalCards }} (auto-computed)</span>
+          <span class="text-xs text-gray-400 italic">{{ totalCards }} (auto-computed)</span>
         </div>
         <div class="flex items-start gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0 pt-0.5">Rarity Dist.</label>
-          <span class="text-xs text-gray-500 italic flex flex-wrap gap-1">
+          <span class="text-xs text-gray-400 italic flex flex-wrap gap-1">
             <template v-if="rarityDistSorted.length > 0">
               <span v-for="[rarity, count] in rarityDistSorted" :key="rarity">{{ rarity }}×{{ count }}</span>
             </template>
             <span v-else>—</span>
-            <span class="text-gray-600">(auto-computed)</span>
+            <span class="text-gray-400">(auto-computed)</span>
           </span>
         </div>
       </div>

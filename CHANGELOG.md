@@ -44,6 +44,15 @@
   - 修正 SetView header 的 `Edit` 與 `Add Card` 大小不一（`Add Card` 原本是自刻的原生 `<button>`），並套用到 `HomeView`（新增卡組）、`SearchFilters`／`SetView`（清除篩選）、`CardDetailPanel`（貴罕度工具列 icon 鈕、Add/Edit rarity/Delete 表單、同名卡片、底部主要動作）、`CardCreatePanel`（區塊切換鈕、Create Card）
   - `ViewToggle` 的 `SelectButton` 加 `app-toolbar-toggle` class，於 `main.css` 對齊同一高度，整列工具列按鈕齊平
   - 不套用：卡圖上的浮動 overlay 按鈕、`OwnershipControl` 的 ±、`RarityTabs` 分頁、側邊欄收合把手（定位／形狀特殊的控制項）
+- **全站文字對比修正**：多處文字在近黑底（`#09090F`）上低於 WCAG AA 的 4.5:1，最嚴重處僅 2.27:1（左側導覽欄的分組標題與數量 badge 幾乎看不清）
+  - `text-gold-dim`（#6B5428，2.76:1）→ `text-gold`（#C9A84C，8.69:1）；`gold-dim` 回歸裝飾用途（邊框、進度條漸層），不再當文字色
+  - `text-gray-500`（4.11:1）／`text-gray-600`（2.27:1）→ `text-gray-400`（7.63:1），次要文字統一一階
+  - `--color-dark-3` `#181B28` → `#262B3D`，badge 等小面積底色與文字拉開（5.40:1）
+  - 左側導覽欄（`ProductTypeSidebar`）改 `bg-dark-1` + 右側細邊，與內容區分層而不只靠文字亮度
+  - `SetMetadataEditor` 的 set_id／貴罕度 chip 在 `bg-gray-700` 上改用 `text-gray-200`
+  - 9px 小標 → 10px、字距 `0.22em`/`0.25em` → `0.16em`（該字級配中文太緊）
+  - `AppButton` 的 `tone="gold"` 文字色同樣由 `gold-dim` 改為 `gold`
+  - 驗證：首頁／卡組頁／搜尋頁全頁掃描，除 `disabled` 控制項（WCAG 豁免）外已無低於 4.5:1 的文字
 
 - **篩選指定貴罕度時，卡片預設顯示該貴罕度**：SetView 將 `filterRarity` 以 `preferredRarity` prop 傳給 `CardGrid` / `CardTable`，篩選某貴罕度時卡片直接以該貴罕度圖面呈現（tab 排序仍依顯示順序，最稀有在前）。Search 頁原已如此
 - **篩選 UI 重新設計（Search 頁 + SetView）**：改用 PrimeVue `IftaLabel` 把欄位名（種類／屬性／等級／貴罕度／Legend／持有；SetView 為貴罕度／卡種）收進欄位內頂端，外層包一層低調 panel；每個下拉以 `placeholder` 顯示預設「全部」（修正 PrimeVue Select 對空值 `''` 顯示空白）；有值的篩選以金色外框高亮，並提供「清除篩選」按鈕。Search 頁預設選項由英文 `All X` 改為中文

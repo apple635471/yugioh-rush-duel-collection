@@ -30,7 +30,7 @@ function progressPct(stats: OwnershipStats | null) {
   <!-- Empty state -->
   <div
     v-else-if="sets.length === 0"
-    class="text-center py-12 text-gray-500"
+    class="text-center py-12 text-gray-400"
   >
     No card sets found.
   </div>
@@ -50,7 +50,7 @@ function progressPct(stats: OwnershipStats | null) {
         <span class="text-[11px] font-orbitron text-gold/80 bg-[rgba(201,168,76,0.1)] px-1.5 py-0.5 rounded tracking-wide">
           {{ s.set_id }}
         </span>
-        <span v-if="s.release_date" class="text-[11px] font-orbitron text-gray-500 shrink-0">
+        <span v-if="s.release_date" class="text-[11px] font-orbitron text-gray-400 shrink-0">
           {{ s.release_date }}
         </span>
       </div>
@@ -59,7 +59,7 @@ function progressPct(stats: OwnershipStats | null) {
       <h3 class="text-sm font-medium text-gray-100 group-hover:text-gold transition-colors leading-snug mb-0.5">
         {{ s.set_name_zh || s.set_name_jp }}
       </h3>
-      <p v-if="s.set_name_zh && s.set_name_jp" class="text-xs text-gray-500 leading-snug">
+      <p v-if="s.set_name_zh && s.set_name_jp" class="text-xs text-gray-400 leading-snug">
         {{ s.set_name_jp }}
       </p>
 
@@ -71,13 +71,13 @@ function progressPct(stats: OwnershipStats | null) {
         <div class="mt-3">
           <!-- Stats row -->
           <div class="flex items-center justify-between text-[10px] mb-1.5">
-            <span class="font-orbitron text-gray-500">
+            <span class="font-orbitron text-gray-400">
               {{ getStats(s.set_id)!.owned_variants }}
               <span class="opacity-60">/ {{ getStats(s.set_id)!.total_variants }}</span>
             </span>
             <span
               class="font-orbitron font-bold"
-              :class="progressPct(getStats(s.set_id)) === 100 ? 'text-emerald-400' : 'text-gold-dim'"
+              :class="progressPct(getStats(s.set_id)) === 100 ? 'text-emerald-400' : 'text-gold'"
             >
               {{ progressPct(getStats(s.set_id)) }}%
             </span>
@@ -95,7 +95,7 @@ function progressPct(stats: OwnershipStats | null) {
         </div>
       </template>
       <template v-else>
-        <div class="mt-3 flex items-center justify-between text-[11px] text-gray-500">
+        <div class="mt-3 flex items-center justify-between text-[11px] text-gray-400">
           <span class="font-orbitron">{{ s.total_cards }} <span class="opacity-70">cards</span></span>
           <span class="text-gold/40 group-hover:text-gold/70 transition-colors">→</span>
         </div>

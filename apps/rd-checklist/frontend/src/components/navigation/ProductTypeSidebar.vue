@@ -75,12 +75,12 @@ function isActive(pt: ProductType): boolean {
   <!-- Expanded sidebar -->
   <aside
     v-else
-    class="shrink-0 sticky top-[56px] self-start h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden"
+    class="shrink-0 sticky top-[56px] self-start h-[calc(100vh-56px)] overflow-y-auto overflow-x-hidden bg-dark-1 border-r border-[rgba(201,168,76,0.10)]"
     style="width: 200px"
   >
     <!-- Header row with collapse button -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-[rgba(201,168,76,0.1)]">
-      <span class="font-orbitron text-[9px] font-bold tracking-[0.22em] text-gold-dim uppercase">
+      <span class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase">
         Browse
       </span>
       <Button
@@ -104,14 +104,14 @@ function isActive(pt: ProductType): boolean {
         class="flex items-center justify-between px-4 py-1.5 text-xs border-l-2 transition-all"
         :class="!route.params.productType
           ? 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
-          : 'border-l-transparent text-gray-500 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
+          : 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
       >
         <span>全部</span>
         <span
-          class="font-orbitron text-[9px] px-1 py-0.5 rounded"
+          class="font-orbitron text-[10px] px-1 py-0.5 rounded"
           :class="!route.params.productType
-            ? 'text-gold-dim bg-[rgba(201,168,76,0.15)]'
-            : 'text-gray-600 bg-dark-3'"
+            ? 'text-gold bg-[rgba(201,168,76,0.15)]'
+            : 'text-gray-400 bg-dark-3'"
         >
           {{ productTypes.reduce((sum, pt) => sum + pt.set_count, 0) }}
         </span>
@@ -123,7 +123,7 @@ function isActive(pt: ProductType): boolean {
       <template v-if="getSectionTypes(section.label, productTypes).length > 0">
         <div class="h-px bg-[rgba(201,168,76,0.08)] mx-4 my-1" />
         <div class="pt-2 pb-1">
-          <div class="font-orbitron text-[9px] font-bold tracking-[0.22em] text-gold-dim uppercase px-4 mb-1">
+          <div class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase px-4 mb-1">
             {{ section.label }}
           </div>
           <router-link
@@ -133,14 +133,14 @@ function isActive(pt: ProductType): boolean {
             class="flex items-center justify-between px-4 py-1.5 text-xs border-l-2 transition-all"
             :class="isActive(pt)
               ? 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
-              : 'border-l-transparent text-gray-500 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
+              : 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
           >
             <span class="leading-snug">{{ pt.display_name }}</span>
             <span
-              class="font-orbitron text-[9px] px-1 py-0.5 rounded shrink-0 ml-1"
+              class="font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0 ml-1"
               :class="isActive(pt)
-                ? 'text-gold-dim bg-[rgba(201,168,76,0.15)]'
-                : 'text-gray-600 bg-dark-3'"
+                ? 'text-gold bg-[rgba(201,168,76,0.15)]'
+                : 'text-gray-400 bg-dark-3'"
             >
               {{ pt.set_count }}
             </span>
@@ -153,7 +153,7 @@ function isActive(pt: ProductType): boolean {
     <template v-if="getSectionTypes('其他', productTypes).length > 0">
       <div class="h-px bg-[rgba(201,168,76,0.08)] mx-4 my-1" />
       <div class="pt-2 pb-1">
-        <div class="font-orbitron text-[9px] font-bold tracking-[0.22em] text-gold-dim uppercase px-4 mb-1">
+        <div class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase px-4 mb-1">
           其他
         </div>
         <router-link
@@ -163,14 +163,14 @@ function isActive(pt: ProductType): boolean {
           class="flex items-center justify-between px-4 py-1.5 text-xs border-l-2 transition-all"
           :class="isActive(pt)
             ? 'border-l-gold text-gold-light bg-[rgba(201,168,76,0.08)] font-medium'
-            : 'border-l-transparent text-gray-500 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
+            : 'border-l-transparent text-gray-400 hover:text-gray-200 hover:bg-[rgba(201,168,76,0.04)]'"
         >
           <span>{{ pt.display_name }}</span>
           <span
-            class="font-orbitron text-[9px] px-1 py-0.5 rounded shrink-0 ml-1"
+            class="font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0 ml-1"
             :class="isActive(pt)
-              ? 'text-gold-dim bg-[rgba(201,168,76,0.15)]'
-              : 'text-gray-600 bg-dark-3'"
+              ? 'text-gold bg-[rgba(201,168,76,0.15)]'
+              : 'text-gray-400 bg-dark-3'"
           >
             {{ pt.set_count }}
           </span>

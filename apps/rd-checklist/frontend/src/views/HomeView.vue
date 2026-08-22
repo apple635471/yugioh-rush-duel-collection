@@ -54,7 +54,7 @@ watch(currentProductType, async (pt) => {
       <!-- Page header with global stats -->
       <div class="flex items-end justify-between gap-6 mb-6 pb-5 border-b border-[rgba(201,168,76,0.12)]">
         <div>
-          <div class="font-orbitron text-[9px] font-bold tracking-[0.25em] text-gold-dim uppercase mb-2">
+          <div class="font-orbitron text-[10px] font-bold tracking-[0.16em] text-gold uppercase mb-2">
             Rush Duel — Collection Tracker
           </div>
           <h1 class="font-cinzel text-2xl font-bold text-gray-100 leading-snug">
@@ -86,19 +86,19 @@ watch(currentProductType, async (pt) => {
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ store.sets.length }}
             </div>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">套牌包</div>
+            <div class="text-[10px] text-gray-400 uppercase tracking-wide">套牌包</div>
           </div>
           <div class="px-5 py-2.5 text-center border-r border-[rgba(201,168,76,0.12)]">
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ globalStats.total_variants.toLocaleString() }}
             </div>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">卡片</div>
+            <div class="text-[10px] text-gray-400 uppercase tracking-wide">卡片</div>
           </div>
           <div class="px-5 py-2.5 text-center">
             <div class="font-orbitron text-xl font-bold text-gold-light leading-none mb-1">
               {{ globalProgressPct }}%
             </div>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">收集率</div>
+            <div class="text-[10px] text-gray-400 uppercase tracking-wide">收集率</div>
           </div>
           </div><!-- end stats panel -->
         </div><!-- end right side wrapper -->
