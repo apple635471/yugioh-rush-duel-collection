@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from datetime import datetime, timezone
@@ -11,7 +12,7 @@ import requests
 
 from .discovery import discover_rd_posts
 from .downloader import download_images, sanitize_filename
-from .models import CardSet, PostState, ScrapeState
+from .models import Card, CardSet, PostState, ScrapeState
 from .parser import compute_content_hash, extract_post_body, parse_post, parse_post_multi
 
 logger = logging.getLogger(__name__)
@@ -115,6 +116,9 @@ class RushDuelScraper:
                 # cards.json retains the image_file paths.
                 self._link_existing_images(card_set.cards, card_set.set_id)
 
+            # Fold into whatever another post already contributed to this set
+            card_set = self._merge_with_existing(card_set)
+
             # Save card data
             card_set.save(self.data_dir)
 
@@ -141,6 +145,62 @@ class RushDuelScraper:
 
         logger.info(f"Scraped {total_cards} cards from {state_set_id}")
         return "scraped"
+
+    def _merge_with_existing(self, card_set: CardSet) -> CardSet:
+        """Fold a set parsed from this post into what another post already saved.
+
+        Cards are grouped by the set id in their own number, so a post can
+        produce a set it is not really about: a booster post that references
+        one card of the previous booster, or a promo series (S23P) sprinkled a
+        card or two at a time across a season of battle pack posts.
+
+        The set on disk is the accumulation of every post that mentioned it, so
+        a post that is not the set's own source may only *add* cards — never
+        overwrite the entries or the metadata that the set's own post wrote.
+        Without this, one passing reference would replace a 70-card set with a
+        single card, and the image cleanup would then delete the rest.
+        """
+        path = self.data_dir / card_set.set_id / "cards.json"
+        if not path.exists():
+            return card_set
+
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            logger.warning(f"Could not read existing {card_set.set_id}/cards.json")
+            return card_set
+
+        # Same post: this parse is the authoritative one, replace wholesale.
+        if existing.get("post_url") == card_set.post_url:
+            return card_set
+
+        existing_cards = existing.get("cards", [])
+        known_ids = {c.get("card_id") for c in existing_cards}
+        added = [c for c in card_set.cards if c.card_id not in known_ids]
+
+        merged = CardSet(
+            set_id=card_set.set_id,
+            set_name_jp=existing.get("set_name_jp", ""),
+            set_name_zh=existing.get("set_name_zh", ""),
+            product_type=existing.get("product_type", card_set.product_type),
+            release_date=existing.get("release_date"),
+            post_url=existing.get("post_url", ""),
+            rarity_distribution=existing.get("rarity_distribution") or {},
+        )
+        merged.cards = [Card(**c) for c in existing_cards] + added
+        merged.total_cards = len(merged.cards)
+
+        if added:
+            logger.info(
+                f"{card_set.set_id}: added {len(added)} card(s) from {card_set.post_url} "
+                f"to the {len(existing_cards)} already saved from {merged.post_url}"
+            )
+        else:
+            logger.info(
+                f"{card_set.set_id}: all {len(card_set.cards)} card(s) in this post "
+                f"already saved from {merged.post_url}, left untouched"
+            )
+        return merged
 
     def _cleanup_orphaned_images(self, card_set: CardSet) -> None:
         """Delete image files in set_id/images/ that no longer belong to any card.

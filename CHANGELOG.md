@@ -35,6 +35,12 @@
   - **雙模式進度條**（單一條、可切換）：`淨收集`（預設，排除異圖 + 排除 SER，但該卡只有 SER 時保留）／`標準`（全部 variant）。兩者皆由前端 `cards` 即時計算，隨 `owned_count` 變動即時更新
   - **SER 一律視為最低貴罕度、同貴罕度異圖排在原版之後**：新增 `displayRarityRank()` / `compareVariantsForDisplay()` / `orderVariantsForDisplay()`（`constants/rarities.ts`）
 
+### 修正
+
+- **一篇文章順帶提到別的 set 時會把那個 set 蓋掉**（`scraper.py`）：改成一律依卡號拆分之後，KP26 的文章裡提到一張 KP25 的卡，就被當成「這篇文章裡的 KP25 卡組」整個覆寫——`data/KP25/cards.json` 從 70 張變 1 張，`_cleanup_orphaned_images()` 接著刪掉 67 張卡圖
+  - 新增 `_merge_with_existing()`：磁碟上已有同名 set 且**來自別篇文章**時，這次只能**增加**沒見過的卡，不覆寫既有卡片與 metadata；同一篇文章重爬則照舊整份取代
+  - 一併修好同類情形：促銷系列（如 `S23P`）的卡散在好幾篇戰鬥包文章裡，現在會累加而不是互相覆蓋
+
 ### 改善
 
 - **Discovery 排除 OCG 商品文章**：`Revolution Booster` 是本傳 OCG 的商品（卡號 `RV01-JP###`，主題卡通／巫術／破械），卻被**誤列在接受清單**（`RD_TITLE_KEYWORDS` 與 `RD_URL_MARKERS` 各一筆）。爬它會解析出 0 張卡，而且每次 `check` 都會出現在待更新清單裡
