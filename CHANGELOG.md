@@ -52,6 +52,13 @@
 
 ### 修正
 
+- **卡片編輯面板的 Save 把 Cancel 擠出面板**：`AppButton` 的 `fluid` 與 `shrink-0` 同時存在，兩顆各要 100% 寬又不能壓縮。`fluid` 改用 `flex-1 min-w-0`
+- **`+Description` 這排區塊切換鈕太小**：11px → 14px，與面板其他文字（下拉 14px、輸入框 16px）看齊
+  - 連帶把 `AppButton` 的字級從 `!text-xs` 改成 `--app-button-font` CSS 變數：`!important` 在 CSS layer 內的優先順序是反過來的，元件用 `!text-xs` 會讓呼叫端**怎麼加 class 都蓋不掉**
+  - `sm` 尺寸字級也從 11px 提到 12px
+
+### 修正
+
 - **一篇文章順帶提到別的 set 時會把那個 set 蓋掉**（`scraper.py`）：改成一律依卡號拆分之後，KP26 的文章裡提到一張 KP25 的卡，就被當成「這篇文章裡的 KP25 卡組」整個覆寫——`data/KP25/cards.json` 從 70 張變 1 張，`_cleanup_orphaned_images()` 接著刪掉 67 張卡圖
   - 新增 `_merge_with_existing()`：磁碟上已有同名 set 且**來自別篇文章**時，這次只能**增加**沒見過的卡，不覆寫既有卡片與 metadata；同一篇文章重爬則照舊整份取代
   - 一併修好同類情形：促銷系列（如 `S23P`）的卡散在好幾篇戰鬥包文章裡，現在會累加而不是互相覆蓋

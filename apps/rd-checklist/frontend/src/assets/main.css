@@ -58,6 +58,14 @@
   font-size: inherit;
 }
 
+/* AppButton 的字級由元件用 --app-button-font 指定。這條與上面同為「未分層」
+   規則，靠順序勝出；但仍輸給 utilities layer 裡的 !important，所以呼叫端要調整
+   個別按鈕時，加 !text-sm 之類的 class 就能覆寫（!important 在 layer 裡的優先
+   順序是反過來的，未分層的 !important 反而最弱）。 */
+.app-button {
+  font-size: var(--app-button-font, inherit);
+}
+
 /* 工具列上的 SelectButton 高度對齊 AppButton (md = 2rem) */
 .app-toolbar-toggle .p-togglebutton {
   height: 2rem;
