@@ -89,17 +89,8 @@ COMPACT_STATS_RE = re.compile(
     r"(光|暗|炎|水|風|地)\s*"               # group 2: Attribute (0+ spaces — may be adjacent)
     r"(\d+)[星☆]\s*"                       # group 3: Level
     r"([^\d/\s(（]+)(?:/\s*([^\s(（]+))?\s*"  # group 4: type abbrev, group 5: race (opt)
-    # ATK / DEF. Usually separated by a space, but some entries run them
-    # together — "21001500" is 2100/1500, so an unbroken 8-digit run splits
-    # down the middle. Anything else ambiguous (7 digits, say) is left alone.
-    r"(?:(?P<atk8>\d{4})(?P<def8>\d{4})(?!\d)"
-    r"|(?P<atk>\d+|\?)\s+(?P<def>\d+|\?))"
+    r"(\d+|\?)\s+(\d+|\?)"                  # group 6: ATK, group 7: DEF
 )
-
-
-def _compact_atk_def(m: re.Match) -> tuple[str | None, str | None]:
-    """ATK and DEF out of a COMPACT_STATS_RE match, whichever branch matched."""
-    return (m.group("atk") or m.group("atk8"), m.group("def") or m.group("def8"))
 
 # Abbreviated card type → full type keyword
 _COMPACT_TYPE_MAP = {
@@ -633,7 +624,8 @@ def _parse_card_details(
                 card.monster_type = (
                     type_abbrev if type_abbrev.endswith("族") else type_abbrev + "族"
                 )
-            card.atk, card.defense = _compact_atk_def(m)
+            card.atk = m.group(6)
+            card.defense = m.group(7)
 
             # Extract JP name from combined text when not already set.
             # JP name = text between end of card_id and the opening of (ChName).

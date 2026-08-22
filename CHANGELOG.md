@@ -6,8 +6,7 @@
 
 - **新增 GRR 貴罕度**（黃金超速貴罕）：只出現在 GRP1 這一包，順位排在 `RR` 與 `ORR` 之間
   - 前端貴罕度清單（`constants/rarities.ts`）與 tab 配色（金色調）；後端 `rarities.RARITY_ORDER`；yugipedia 對照表已含 `GRR` / `Gold Rush Rare`
-  - Scraper 的 `COMPACT_STATS_RE` 支援 ATK/DEF 連在一起的寫法（`21001500` → 2100/1500），`RD/GRP1-JP001` 原本因此整張被跳過
-  - GRP1 重爬匯入：42 → 55 張卡，7 個 GRR 到位
+  - GRP1 重爬匯入：42 → 55 張卡，7 個 GRR 到位（爬蟲本身沒有為此改動）
 
 - **卡組頁「對照卡表」**：用 yugipedia 的官方卡表檢查卡組有沒有缺漏（`SetView` header 最左邊的按鈕）
   - 輸入該卡組的 yugipedia 頁面網址（如 `https://yugipedia.com/wiki/High-Grade_Collection`），讀它的 `Set Card Lists:` 子頁
