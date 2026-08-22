@@ -74,12 +74,24 @@ export interface ExtraPrinting {
   is_only_variant: boolean
 }
 
+export interface RemapPrinting {
+  card_id: string
+  from_rarity: string
+  to_rarity: string
+  is_alternate_art: boolean
+  name_jp: string
+  name_zh: string
+  owned_count: number
+}
+
 export interface SetListCompare {
   list_page: string
   expected_count: number
   actual_count: number
   missing: MissingPrinting[]
   extra: ExtraPrinting[]
+  /** 貴罕度記錯：改名即可，持有數與上傳圖都保住 */
+  remap: RemapPrinting[]
   unknown_rarities: string[]
 }
 
@@ -90,7 +102,15 @@ export interface PrintingRef {
   name_jp?: string
 }
 
+export interface PrintingRemapRef {
+  card_id: string
+  from_rarity: string
+  to_rarity: string
+  is_alternate_art?: boolean
+}
+
 export interface SetListApplyResult {
+  variants_remapped: number
   cards_created: number
   variants_created: number
   variants_deleted: number
@@ -105,7 +125,7 @@ export async function compareSetList(setId: string, url: string): Promise<SetLis
 
 export async function applySetListDiff(
   setId: string,
-  payload: { create: PrintingRef[]; delete: PrintingRef[] },
+  payload: { remap?: PrintingRemapRef[]; create: PrintingRef[]; delete: PrintingRef[] },
 ): Promise<SetListApplyResult> {
   const { data } = await api.post<SetListApplyResult>(`/card-sets/${setId}/compare/apply`, payload)
   return data

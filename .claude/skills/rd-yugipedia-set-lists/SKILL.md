@@ -76,6 +76,22 @@ yugipedia 跑的是舊版 MediaWiki：`rvslots` 參數不支援，內容直接�
 - `POST /api/card-sets/{set_id}/compare` — 唯讀，回傳 missing / extra
 - `POST /api/card-sets/{set_id}/compare/apply` — 套用勾選的項目
 
+### 三種差異，優先用 remap
+
+比對後同一張卡若**同時**出現在「缺少」與「多出」，那多半不是缺卡，是**貴罕度記錯**。這種
+配成一筆 **remap**（改名），不走 delete + create：variant 資料列帶著 `owned_count` 與使用者
+上傳的圖，改名兩者都留著，刪掉重建就沒了。
+
+配對規則：同卡號、同異圖旗標，兩邊各自依貴罕度順位（`rarities.RARITY_ORDER`）排序後依序配。
+完全相同的印刷在配對前就已經從兩個清單移除，所以不會把「本來就對的」配進去；配不完的留在
+原本的清單當一般的建立／刪除。
+
+實例（ORP4）：資料庫 `JP001 FORR`，卡表說 `JP001 UR` + `JP001 FORR(異圖)` →
+remap `FORR → UR`，另外建立 `FORR(異圖)`。
+
+`services/variant_service.remap_variant()` 會寫 `action="remap"` 的 override
+（`scraper_rarity` → `target_rarity`），下次匯入時爬蟲的錯誤貴罕度會被對應到正確的那個。
+
 刪除走 `services/variant_service.delete_variant()`——與單筆刪除端點同一份邏輯，會寫入
 `card_variant_overrides` 的刪除記錄並同步 `original_rarity_string`。**少了這步，下次匯入
 會把刪掉的貴罕度復活**：爬蟲判錯貴罕度（記成 N，實際是 SR/SER）時，補上 SR/SER 再刪掉 N，

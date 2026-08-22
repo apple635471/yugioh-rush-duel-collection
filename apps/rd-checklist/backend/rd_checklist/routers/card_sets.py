@@ -27,7 +27,10 @@ from ..schemas import (
 )
 from ..services.card_service import delete_card_and_variants
 from ..services.set_list_compare import compare_with_yugipedia
-from ..services.variant_service import delete_variant as delete_variant_row
+from ..services.variant_service import (
+    delete_variant as delete_variant_row,
+    remap_variant as remap_variant_row,
+)
 from ..services.yugipedia import YugipediaError
 
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
@@ -280,6 +283,28 @@ def apply_set_list_diff(
 
     errors: list[str] = []
     cards_created = variants_created = variants_deleted = cards_deleted = 0
+    variants_remapped = 0
+
+    # Remaps first: they free the old rarity and fill the new one, so a later
+    # create/delete in the same batch sees the corrected state.
+    for remap in body.remap:
+        try:
+            if remap_variant_row(
+                db,
+                remap.card_id,
+                remap.from_rarity,
+                remap.to_rarity,
+                remap.is_alternate_art,
+            ):
+                variants_remapped += 1
+            else:
+                errors.append(
+                    f"{remap.card_id} {remap.from_rarity} → {remap.to_rarity}: 無法改（來源不存在或目標已存在）"
+                )
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{remap.card_id} {remap.from_rarity} → {remap.to_rarity}: {exc}")
+
+    db.flush()
 
     for item in body.create:
         try:
@@ -362,6 +387,7 @@ def apply_set_list_diff(
 
     db.commit()
     return SetListApplyOut(
+        variants_remapped=variants_remapped,
         cards_created=cards_created,
         variants_created=variants_created,
         variants_deleted=variants_deleted,

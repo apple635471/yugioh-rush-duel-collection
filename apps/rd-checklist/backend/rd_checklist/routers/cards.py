@@ -27,7 +27,10 @@ from ..schemas import (
     VariantCreate,
     VariantRarityUpdate,
 )
-from ..services.variant_service import delete_variant as delete_variant_row
+from ..services.variant_service import (
+    delete_variant as delete_variant_row,
+    remap_variant as remap_variant_row,
+)
 from ..utils import parse_rarity_key
 
 router = APIRouter(prefix="/api/cards", tags=["cards"])
@@ -182,47 +185,7 @@ def edit_variant_rarity(card_id: str, rarity_key: str, body: VariantRarityUpdate
             detail=f"Variant {card_id} ({body.new_rarity}{'(異圖)' if is_alt else ''}) already exists",
         )
 
-    now = datetime.now(timezone.utc).isoformat()
-
-    # Maintain card_variant_overrides only for non-alt variants (scraper only
-    # produces normal variants).
-    if not is_alt:
-        chained = (
-            db.query(CardVariantOverrideModel)
-            .filter_by(card_id=card_id, action="remap")
-            .filter(CardVariantOverrideModel.target_rarity == actual_rarity)
-            .first()
-        )
-        if chained:
-            chained.target_rarity = body.new_rarity
-            chained.updated_at = now
-        else:
-            existing = (
-                db.query(CardVariantOverrideModel)
-                .filter_by(card_id=card_id, scraper_rarity=actual_rarity)
-                .first()
-            )
-            if existing:
-                existing.action = "remap"
-                existing.target_rarity = body.new_rarity
-                existing.updated_at = now
-            else:
-                db.add(CardVariantOverrideModel(
-                    card_id=card_id,
-                    scraper_rarity=actual_rarity,
-                    action="remap",
-                    target_rarity=body.new_rarity,
-                ))
-
-    # Rename the variant in the DB
-    variant.rarity = body.new_rarity
-
-    # Keep original_rarity_string in sync (only for non-alt variants)
-    if not is_alt:
-        rarities = [r.strip() for r in card.original_rarity_string.split("/") if r.strip()]
-        if actual_rarity in rarities:
-            rarities[rarities.index(actual_rarity)] = body.new_rarity
-        card.original_rarity_string = "/".join(rarities)
+    remap_variant_row(db, card_id, actual_rarity, body.new_rarity, is_alt)
 
     db.commit()
     db.refresh(card)

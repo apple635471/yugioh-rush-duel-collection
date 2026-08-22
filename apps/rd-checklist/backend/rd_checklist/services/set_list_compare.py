@@ -12,6 +12,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from ..models import CardModel, CardVariantModel
+from ..rarities import rarity_rank
 from .yugipedia import ExpectedVariant, fetch_set_list
 
 logger = logging.getLogger(__name__)
@@ -73,12 +74,15 @@ def compare_with_yugipedia(db: Session, set_id: str, url: str) -> dict:
         if key not in expected
     ]
 
+    remap = _pair_into_remaps(missing, extra)
+
     missing.sort(key=lambda m: (m["card_id"], m["rarity"], m["is_alternate_art"]))
     extra.sort(key=lambda e: (e["card_id"], e["rarity"], e["is_alternate_art"]))
+    remap.sort(key=lambda r: (r["card_id"], r["from_rarity"]))
 
     logger.info(
-        "%s vs %s: %d missing, %d extra",
-        set_id, result.list_page, len(missing), len(extra),
+        "%s vs %s: %d missing, %d extra, %d remap",
+        set_id, result.list_page, len(missing), len(extra), len(remap),
     )
     return {
         "list_page": result.list_page,
@@ -86,5 +90,51 @@ def compare_with_yugipedia(db: Session, set_id: str, url: str) -> dict:
         "actual_count": len(actual),
         "missing": missing,
         "extra": extra,
+        "remap": remap,
         "unknown_rarities": result.unknown_rarities,
     }
+
+
+def _pair_into_remaps(missing: list[dict], extra: list[dict]) -> list[dict]:
+    """Turn "we have X, the list says Y" into a rarity correction.
+
+    A card the scraper read at the wrong rarity shows up as both a missing and
+    an extra printing. Deleting and recreating would work, but the variant row
+    carries the owned count and the uploaded image — renaming it keeps both, so
+    pairs are proposed as remaps and removed from the two lists.
+
+    Pairing is by card and artwork flag, least-rare first on each side, so the
+    result does not depend on dict ordering. Anything left over stays a plain
+    create or delete.
+    """
+    remaps: list[dict] = []
+
+    groups = {(m["card_id"], m["is_alternate_art"]) for m in missing} & {
+        (e["card_id"], e["is_alternate_art"]) for e in extra
+    }
+
+    for card_id, is_alt in groups:
+        want = sorted(
+            (m for m in missing if m["card_id"] == card_id and m["is_alternate_art"] == is_alt),
+            key=lambda m: rarity_rank(m["rarity"]),
+        )
+        have = sorted(
+            (e for e in extra if e["card_id"] == card_id and e["is_alternate_art"] == is_alt),
+            key=lambda e: rarity_rank(e["rarity"]),
+        )
+        for target, source in zip(want, have):
+            remaps.append(
+                {
+                    "card_id": card_id,
+                    "from_rarity": source["rarity"],
+                    "to_rarity": target["rarity"],
+                    "is_alternate_art": is_alt,
+                    "name_jp": source["name_jp"] or target["name_jp"],
+                    "name_zh": source["name_zh"],
+                    "owned_count": source["owned_count"],
+                }
+            )
+            missing.remove(target)
+            extra.remove(source)
+
+    return remaps

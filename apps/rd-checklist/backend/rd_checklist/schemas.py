@@ -243,12 +243,26 @@ class ExtraPrintingOut(BaseModel):
     is_only_variant: bool
 
 
+class RemapPrintingOut(BaseModel):
+    """We hold this printing at the wrong rarity — rename it rather than
+    delete-and-recreate, so owned_count and the uploaded image survive."""
+
+    card_id: str
+    from_rarity: str
+    to_rarity: str
+    is_alternate_art: bool
+    name_jp: str
+    name_zh: str
+    owned_count: int
+
+
 class SetListCompareOut(BaseModel):
     list_page: str
     expected_count: int
     actual_count: int
     missing: list[MissingPrintingOut]
     extra: list[ExtraPrintingOut]
+    remap: list[RemapPrintingOut]
     unknown_rarities: list[str]
 
 
@@ -261,12 +275,21 @@ class PrintingRef(BaseModel):
     name_jp: str = ""
 
 
+class PrintingRemap(BaseModel):
+    card_id: str
+    from_rarity: str
+    to_rarity: str
+    is_alternate_art: bool = False
+
+
 class SetListApplyRequest(BaseModel):
+    remap: list[PrintingRemap] = []
     create: list[PrintingRef] = []
     delete: list[PrintingRef] = []
 
 
 class SetListApplyOut(BaseModel):
+    variants_remapped: int
     cards_created: int
     variants_created: int
     variants_deleted: int
