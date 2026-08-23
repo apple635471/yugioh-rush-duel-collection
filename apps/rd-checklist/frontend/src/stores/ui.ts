@@ -4,6 +4,9 @@ import { ref } from 'vue'
 export const useUiStore = defineStore('ui', () => {
   const viewMode = ref<'grid' | 'table'>('grid')
 
+  // 卡組清單頁的呈現方式：卡片牆 or 依發行日排的時間軸
+  const setViewMode = ref<'card' | 'timeline'>('card')
+
   // Set-page default-variant display mode:
   //   'owned'   → show the rarest rarity you own (fallback: rarest overall)
   //   'highest' → always show the rarest rarity
@@ -67,7 +70,7 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   return {
-    viewMode, displayMode, progressMode,
+    viewMode, setViewMode, displayMode, progressMode,
     sidebarOpen, sidebarMinimized, sidebarCardId, sidebarRarity,
     sidebarMode, sidebarCreateSetId, imageUpdates,
     toggleView, openSidebar, openCreateSidebar, closeSidebar,

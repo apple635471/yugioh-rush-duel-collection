@@ -13,7 +13,10 @@ App.vue
 │   │   ├── ProductTypeSidebar # 左側導覽欄，SECTIONS 常數以 product_type 明列分組
 │   │   │                      #   (補充包系列 / 預組 / 其他)，中文名另起一行
 │   │   ├── ProductTypeNav # 產品類型 pill 篩選列 (舊版，仍保留)
-│   │   └── SetList        # 卡組 grid (set_id, 名稱, 日期, 卡數)
+│   │   ├── SetViewToggle  # 卡片牆 ↔ 時間軸 (高度對齊 AppButton md)
+│   │   ├── SetList        # 卡組 grid (set_id, 名稱, 日期, 卡數)
+│   │   └── SetTimeline    # 時間軸視圖：依發行日左右交錯，含貴罕度分布 +
+│   │                      #   最稀有 4 張卡圖 + 包裝圖；無發行日的卡組不出現
 │   │
 │   ├── SetView            # /set/:setId
 │   │   ├── BreadcrumbBar
@@ -52,14 +55,15 @@ App.vue
 │ useCardSetsStore                 │    │ useUiStore                   │
 │                                  │    │                              │
 │ productTypes: ProductType[]      │    │ viewMode: 'grid'|'table'     │
-│ sets: CardSet[]                  │    │ sidebarOpen: boolean         │
-│ currentSet: CardSetWithCards     │    │ sidebarCardId: string        │
-│ loading: boolean                 │    │ sidebarRarity: string        │
-│                                  │    │ sidebarMode: 'detail'|'create│
-│ loadProductTypes()               │    │ sidebarCreateSetId: string   │
-│ loadSets(productType?)           │    │                              │
-│ loadSet(setId)                   │    │ openSidebar(id, rarity)      │
-└──────────────────────────────────┘    │ openCreateSidebar(setId)     │
+│ sets: CardSet[]                  │    │ setViewMode:'card'|'timeline'│
+│ currentSet: CardSetWithCards     │    │ sidebarOpen: boolean         │
+│ loading: boolean                 │    │ sidebarCardId: string        │
+│                                  │    │ sidebarRarity: string        │
+│ loadProductTypes()               │    │ sidebarMode: 'detail'|'create│
+│ loadSets(productType?)           │    │ sidebarCreateSetId: string   │
+│ loadSet(setId)                   │    │                              │
+└──────────────────────────────────┘    │ openSidebar(id, rarity)      │
+                                        │ openCreateSidebar(setId)     │
                                         │ closeSidebar() / toggleView()│
                                         └──────────────────────────────┘
 ```

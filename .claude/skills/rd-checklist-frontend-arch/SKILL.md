@@ -58,7 +58,8 @@ Vue 3 (Composition API) + TypeScript + Tailwind CSS + Pinia + Vue Router + **Pri
 - `updateCardInSet(updated: Card)` — 以 `Object.assign` 將側邊欄重新載入的 card 物件同步回 `currentSet.cards`（編輯/圖片上傳後呼叫）
 
 **useUiStore** — UI 狀態
-- `viewMode: 'grid' | 'table'` — Grid/Table 切換
+- `viewMode: 'grid' | 'table'` — 卡組頁的卡片 Grid/Table 切換
+- `setViewMode: 'card' | 'timeline'` — 首頁卡組清單的呈現方式（卡片牆／時間軸）
 - `displayMode: 'owned' | 'highest'` — SetView 預設 variant 選取模式（`owned`=擁有優先、`highest`=一律最高；預設 `owned`）
 - `progressMode: 'standard' | 'net'` — SetView 進度條模式（`standard`=全部 variant、`net`=排除異圖與 SER；預設 `net`）
 - `sidebarOpen`, `sidebarCardId`, `sidebarRarity` — 側邊欄
@@ -96,6 +97,15 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `ProductTypeNav`: pill 列（舊版，仍保留但 HomeView 已改用 Sidebar）
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
   - hover 時顯示該卡組的圖片（Teleport 到 body 的浮動視窗，卡片本身 `overflow-hidden` 會裁掉）。每個卡組只查一次 API 就快取；進場延遲 120ms，滑過一整排不會每張都打；沒有圖就不彈視窗
+- `SetViewToggle`: 讀寫 `ui.setViewMode`，卡片牆 ↔ 時間軸；與 `ViewToggle` 一樣帶 `app-toolbar-toggle` class
+- `SetTimeline`: 時間軸視圖，資料來自 `GET /api/card-sets/timeline`（`HomeView` 切到時間軸才載入，同一個產品線不重載）
+  - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPE_THEME` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色
+  - 盒高固定 228px、`.tl-row + .tl-row { margin-top: -98px }` → 列距 130px，異側咬合、同側留 32px；`.tl-box` 的 `overflow` 必須是 `visible`，否則指向軸線的箭頭（`::after` 三角形）會被裁掉，圓角改由各子元素自己處理
+  - 盒高固定，所以 `.tl-main > *` 一律 `flex-shrink: 0`，剩餘高度全給卡圖列（否則標題會被壓成半截）
+  - 點卡圖／卡組圖片開燈箱（PrimeVue `Dialog`，與 `SetGalleryStrip` 同一套做法），左右鍵或箭頭鈕在同一個卡組的圖片間移動；卡組圖片開燈箱時才用 `fetchSetImages` 補齊整個 gallery 並快取
+  - 整盒可點是「鋪滿的連結」：`.tl-link` 絕對定位 inset:0 墊在底層，圖片 `position: relative` 疊在上面自己吃點擊（`<button>` 不能包在 `<a>` 裡）
+  - `.tl-row` 設 `pointer-events: none`、只有 `.tl-box` 打開：列與列上下重疊且每列都橫跨整個寬度，不關掉的話後面那列的空白區會蓋住前一列盒子的下半部
+  - < 1100px 時放棄交錯：軸線靠左、卡組一律排右邊、盒高改 auto
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)
 - `CardGrid`: `auto-fill minmax(190px,1fr)` grid，container 為 `max-w-screen-2xl`

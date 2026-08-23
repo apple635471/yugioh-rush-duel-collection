@@ -8,7 +8,7 @@ FastAPI + SQLite 後端，提供卡牌瀏覽、搜尋、持有數追蹤、卡片
 main.py                     # FastAPI app, CORS, 註冊 routers
   │
   ├── routers/
-  │   ├── card_sets.py      # GET /api/card-sets, /product-types, /{set_id}
+  │   ├── card_sets.py      # GET /api/card-sets, /product-types, /timeline, /{set_id}
   │   ├── cards.py          # GET/POST /api/cards, GET/PATCH /{card_id}, POST variants, GET next-id
   │   ├── ownership.py      # PATCH /api/ownership/{card_id}/{rarity}, /batch, GET /stats
   │   ├── search.py         # GET /api/search?q=&card_type=&attribute=&level=&rarity=&owned=
@@ -77,6 +77,7 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 |--------|------|------|
 | GET | `/api/card-sets/product-types` | 產品類型 + 中英標籤 + 數量 |
 | GET | `/api/card-sets?product_type=` | 卡組列表 |
+| GET | `/api/card-sets/timeline` | 時間軸視圖資料（統計 + 貴罕度分布 + 高貴罕度卡圖 + 包裝圖；無發行日的卡組不回傳）|
 | GET | `/api/card-sets/{set_id}` | 卡組 + 所有卡片 (eager load variants) |
 | PATCH | `/api/card-sets/{set_id}` | 編輯卡組 metadata (自動建立 override) |
 | POST | `/api/card-sets/{set_id}/compare` | 對照 yugipedia 卡表（網址可省略，用記住的）|

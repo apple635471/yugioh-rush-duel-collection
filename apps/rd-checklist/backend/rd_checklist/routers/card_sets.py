@@ -33,10 +33,12 @@ from ..schemas import (
     SetListApplyRequest,
     SetListCompareOut,
     SetListCompareRequest,
+    TimelineSetOut,
 )
 from ..services.card_service import delete_card_and_variants
 from ..services.set_image_service import refresh_set_images
 from ..services.set_list_compare import compare_with_yugipedia
+from ..services.timeline_service import build_timeline
 from ..services.variant_service import (
     delete_variant as delete_variant_row,
     remap_variant as remap_variant_row,
@@ -119,6 +121,20 @@ def create_card_set(body: CardSetCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(card_set)
     return card_set
+
+
+@router.get("/timeline", response_model=list[TimelineSetOut])
+def get_timeline(
+    product_type: str | None = None,
+    top_cards: int = 4,
+    db: Session = Depends(get_db),
+):
+    """Set list laid out on a time axis — newest first.
+
+    Sets without a release date are omitted; they have no place on the axis.
+    Must stay declared before "/{set_id}", or that route swallows "timeline".
+    """
+    return build_timeline(db, product_type=product_type, top_cards=top_cards)
 
 
 @router.get("/{set_id}", response_model=CardSetWithCardsOut)

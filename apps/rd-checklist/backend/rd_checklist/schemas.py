@@ -206,6 +206,39 @@ class OwnershipStatsOut(BaseModel):
     total_owned_copies: int
 
 
+# ── Timeline view ──
+
+
+class TimelineRarityOut(BaseModel):
+    rarity: str
+    count: int
+    owned: int
+
+
+class TimelineCardOut(BaseModel):
+    card_id: str
+    rarity: str
+    is_alternate_art: bool
+    name_zh: str = ""
+    name_jp: str = ""
+
+
+class TimelineSetOut(BaseModel):
+    set_id: str
+    set_name_jp: str
+    set_name_zh: str
+    product_type: str
+    release_date: str
+    total_cards: int
+    total_variants: int
+    owned_variants: int
+    # rarest first; every rarity present in the set
+    rarity_distribution: list[TimelineRarityOut]
+    top_cards: list[TimelineCardOut]
+    # first gallery image of the set (the pack shot), if it has one
+    image_id: Optional[int] = None
+
+
 # ── Search ──
 
 
