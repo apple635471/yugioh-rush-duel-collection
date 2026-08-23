@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### 修復
+
+- **卡組編輯／新增的「產品類型」下拉沒跟上分類調整**：選項還是舊的一套——`other` 被標成 `Promo (Promo)`、`unknown` 被標成 `Other (其他)`，還留著五個已經退役的類型（角色包、GRC 角色包、Extra 包、VS 包、大會包），也沒有 `promo` 與 `triple_build_pack`。所以 CP01 這種 `other` 的卡組，編輯時會顯示成 Promo，跟側邊欄對不起來
+  - `constants/productTypes.ts` 改成單一來源：一份 `PRODUCT_TYPES`（value / 英文 / 中文 / 顏色）長出下拉選項與時間軸配色，順序與側邊欄 `SECTIONS` 一致，標籤也與側邊欄相同（`Promo`、`Other` 沒有慣用中文名就只顯示英文）
+  - 這份清單必須與後端 `product_types.PRODUCT_TYPE_LABELS` 同步——後端是分類的權威，前端只負責顯示
+
 ### 新增
 
 - **卡組清單「時間軸」視圖**（`SetTimeline`，右上角 toggle 切換卡片牆／時間軸）

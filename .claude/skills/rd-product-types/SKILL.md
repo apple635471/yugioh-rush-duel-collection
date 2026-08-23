@@ -9,6 +9,11 @@ description: Identifying Rush Duel product types from set ID prefixes. Use when 
 （scraper 的 `parser.py` 有一份鏡像 `PRODUCT_TYPE_MAP` / `guess_product_type`，
 兩邊要一起改；匯入時 backend 會重新推導，所以 backend 那份才是最終決定者。）
 
+**前端還有第三份鏡像**：`frontend/src/constants/productTypes.ts` 的 `PRODUCT_TYPES`
+（下拉選項 + 時間軸配色）。改動類型清單時三份一起改，否則會像 2026-08 那次一樣——
+編輯卡組的下拉還停在舊分類，`other` 顯示成 Promo，跟側邊欄對不起來。
+側邊欄的標籤是 API 給的（`/product-types` 用 `PRODUCT_TYPE_LABELS`），只有下拉是寫死的。
+
 ## set_id → 產品類型
 
 | 前綴 | 類型 | 側邊欄分組 | 顯示名稱 |

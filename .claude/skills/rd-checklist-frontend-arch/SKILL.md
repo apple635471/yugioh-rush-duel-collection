@@ -99,7 +99,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
   - hover 時顯示該卡組的圖片（Teleport 到 body 的浮動視窗，卡片本身 `overflow-hidden` 會裁掉）。每個卡組只查一次 API 就快取；進場延遲 120ms，滑過一整排不會每張都打；沒有圖就不彈視窗
 - `SetViewToggle`: 讀寫 `ui.setViewMode`，卡片牆 ↔ 時間軸；與 `ViewToggle` 一樣帶 `app-toolbar-toggle` class
 - `SetTimeline`: 時間軸視圖，資料來自 `GET /api/card-sets/timeline`（`HomeView` 切到時間軸才載入，同一個產品線不重載）
-  - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPE_THEME` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色
+  - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPES` → `productTypeTheme()` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色。同一份清單也長出建立/編輯卡組的下拉選項，要與後端 `PRODUCT_TYPE_LABELS` 同步
   - 盒高固定 228px、`.tl-row + .tl-row { margin-top: -98px }` → 列距 130px，異側咬合、同側留 32px；`.tl-box` 的 `overflow` 必須是 `visible`，否則指向軸線的箭頭（`::after` 三角形）會被裁掉，圓角改由各子元素自己處理
   - 盒高固定，所以 `.tl-main > *` 一律 `flex-shrink: 0`，剩餘高度全給卡圖列（否則標題會被壓成半截）
   - 點卡圖／卡組圖片開燈箱（PrimeVue `Dialog`，與 `SetGalleryStrip` 同一套做法），左右鍵或箭頭鈕在同一個卡組的圖片間移動；卡組圖片開燈箱時才用 `fetchSetImages` 補齊整個 gallery 並快取
