@@ -102,6 +102,9 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
   - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPE_THEME` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色
   - 盒高固定 228px、`.tl-row + .tl-row { margin-top: -98px }` → 列距 130px，異側咬合、同側留 32px；`.tl-box` 的 `overflow` 必須是 `visible`，否則指向軸線的箭頭（`::after` 三角形）會被裁掉，圓角改由各子元素自己處理
   - 盒高固定，所以 `.tl-main > *` 一律 `flex-shrink: 0`，剩餘高度全給卡圖列（否則標題會被壓成半截）
+  - 點卡圖／卡組圖片開燈箱（PrimeVue `Dialog`，與 `SetGalleryStrip` 同一套做法），左右鍵或箭頭鈕在同一個卡組的圖片間移動；卡組圖片開燈箱時才用 `fetchSetImages` 補齊整個 gallery 並快取
+  - 整盒可點是「鋪滿的連結」：`.tl-link` 絕對定位 inset:0 墊在底層，圖片 `position: relative` 疊在上面自己吃點擊（`<button>` 不能包在 `<a>` 裡）
+  - `.tl-row` 設 `pointer-events: none`、只有 `.tl-box` 打開：列與列上下重疊且每列都橫跨整個寬度，不關掉的話後面那列的空白區會蓋住前一列盒子的下半部
   - < 1100px 時放棄交錯：軸線靠左、卡組一律排右邊、盒高改 auto
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)

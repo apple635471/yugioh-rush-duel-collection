@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { getSetImageUrl, type TimelineSet } from '@/api/cardSets'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import Dialog from 'primevue/dialog'
+import { fetchSetImages, getSetImageUrl, type CardSetImage, type TimelineSet } from '@/api/cardSets'
 import { getCardImageUrl } from '@/api/cards'
 import { productTypeTheme } from '@/constants/productTypes'
 
@@ -77,6 +78,97 @@ function cardImage(card: { card_id: string; rarity: string; is_alternate_art: bo
 function emptySlots(set: TimelineSet) {
   return Math.max(0, CARD_SLOTS - set.top_cards.length)
 }
+
+/* ── 點縮圖放大 ────────────────────────────────────────────
+   盒子裡的圖太小，看不出是哪張卡。點任一張就開燈箱，左右鍵在同一個卡組的
+   圖片之間移動（卡組圖片在前、卡圖在後，順序與盒子上看到的一致）。 */
+interface PreviewItem {
+  key: string
+  src: string
+  label: string
+  sub: string
+}
+
+const previewSet = ref<TimelineSet | null>(null)
+const previewItems = ref<PreviewItem[]>([])
+const previewIndex = ref(0)
+const previewOpen = computed(() => previewItems.value.length > 0)
+const previewCurrent = computed(() => previewItems.value[previewIndex.value] ?? null)
+
+/** 卡組圖片可能不只一張，但時間軸只帶第一張；開燈箱時才去補齊，補完就記住 */
+const galleryCache = new Map<string, CardSetImage[]>()
+
+function cardItems(set: TimelineSet): PreviewItem[] {
+  return set.top_cards.map(c => ({
+    key: `card-${c.card_id}-${c.rarity}-${c.is_alternate_art}`,
+    src: cardImage(c),
+    label: c.name_zh || c.name_jp || c.card_id,
+    sub: `${c.card_id} · ${c.rarity}${c.is_alternate_art ? ' 異圖' : ''}`,
+  }))
+}
+
+function galleryItems(set: TimelineSet, images?: CardSetImage[]): PreviewItem[] {
+  if (images) {
+    return images.map(img => ({
+      key: `set-${img.id}`,
+      src: getSetImageUrl(img.id),
+      label: `${set.set_id} 卡組圖片`,
+      sub: img.title,
+    }))
+  }
+  if (set.image_id === null) return []
+  return [{
+    key: `set-${set.image_id}`,
+    src: getSetImageUrl(set.image_id),
+    label: `${set.set_id} 卡組圖片`,
+    sub: '',
+  }]
+}
+
+async function openPreview(set: TimelineSet, kind: 'gallery' | 'card', cardIndex = 0) {
+  const images = galleryCache.get(set.set_id)
+  const shots = galleryItems(set, images)
+  previewSet.value = set
+  previewItems.value = [...shots, ...cardItems(set)]
+  previewIndex.value = kind === 'gallery' ? 0 : shots.length + cardIndex
+  if (images || set.image_id === null) return
+
+  // 背景補齊卡組圖片；補完後卡圖會往後挪，索引跟著挪才不會跳到別張
+  let fetched: CardSetImage[] = []
+  try {
+    fetched = await fetchSetImages(set.set_id)
+  } catch {
+    return
+  }
+  galleryCache.set(set.set_id, fetched)
+  if (previewSet.value !== set || fetched.length <= shots.length) return
+  const shift = fetched.length - shots.length
+  previewItems.value = [...galleryItems(set, fetched), ...cardItems(set)]
+  if (kind === 'card') previewIndex.value += shift
+}
+
+function closePreview() {
+  previewItems.value = []
+  previewSet.value = null
+  previewIndex.value = 0
+}
+
+function step(delta: number) {
+  const n = previewItems.value.length
+  if (n < 2) return
+  previewIndex.value = (previewIndex.value + delta + n) % n
+}
+
+function onKey(e: KeyboardEvent) {
+  if (e.key === 'ArrowLeft') step(-1)
+  else if (e.key === 'ArrowRight') step(1)
+}
+
+watch(previewOpen, (open) => {
+  if (open) window.addEventListener('keydown', onKey)
+  else window.removeEventListener('keydown', onKey)
+})
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
@@ -103,7 +195,13 @@ function emptySlots(set: TimelineSet) {
 
       <!-- 一個卡組 -->
       <div v-else class="tl-row" :class="row.side" :style="{ '--c': row.color }">
-        <router-link :to="`/set/${row.set.set_id}`" class="tl-box">
+        <div class="tl-box">
+          <!-- 整個盒子可點：連結鋪滿盒子墊在底下，圖片再疊上去自己吃點擊 -->
+          <router-link
+            :to="`/set/${row.set.set_id}`"
+            class="tl-link"
+            :aria-label="`${row.set.set_id} ${row.set.set_name_zh || row.set.set_name_jp}`"
+          />
           <div class="tl-edge" />
 
           <div class="tl-main">
@@ -127,10 +225,17 @@ function emptySlots(set: TimelineSet) {
 
             <!-- 該卡組最稀有的幾張卡（同一張卡只取它最稀有的版本） -->
             <div class="tl-cards">
-              <figure v-for="c in row.set.top_cards" :key="c.card_id + c.rarity" class="tl-card">
+              <button
+                v-for="(c, i) in row.set.top_cards"
+                :key="c.card_id + c.rarity"
+                type="button"
+                class="tl-card"
+                :title="`${c.name_zh || c.name_jp}（${c.rarity}）— 點擊放大`"
+                @click="openPreview(row.set, 'card', i)"
+              >
                 <img :src="cardImage(c)" :alt="c.name_zh || c.name_jp" loading="lazy">
-                <figcaption>{{ c.rarity }}</figcaption>
-              </figure>
+                <span class="tl-card-rar">{{ c.rarity }}</span>
+              </button>
               <div v-for="n in emptySlots(row.set)" :key="`empty-${n}`" class="tl-card empty" />
             </div>
 
@@ -146,17 +251,70 @@ function emptySlots(set: TimelineSet) {
           </div>
 
           <!-- 卡組包裝圖 -->
-          <div v-if="row.set.image_id" class="tl-shot">
+          <button
+            v-if="row.set.image_id"
+            type="button"
+            class="tl-shot"
+            :title="`${row.set.set_id} 卡組圖片 — 點擊放大`"
+            @click="openPreview(row.set, 'gallery')"
+          >
             <img :src="getSetImageUrl(row.set.image_id)" :alt="`${row.set.set_id} 包裝`" loading="lazy">
-          </div>
+          </button>
           <div v-else class="tl-shot empty"><span>{{ row.set.set_id }}</span></div>
-        </router-link>
+        </div>
 
         <div class="tl-stem" />
         <div class="tl-node" />
       </div>
     </template>
   </div>
+
+  <!-- 放大檢視：左右鍵或兩側箭頭在同一個卡組的圖片之間移動 -->
+  <Dialog
+    :visible="previewOpen"
+    modal
+    dismissable-mask
+    :style="{ width: 'auto', maxWidth: '94vw' }"
+    @update:visible="closePreview"
+  >
+    <template #header>
+      <div class="min-w-0">
+        <div class="text-sm text-gray-100 truncate">{{ previewCurrent?.label }}</div>
+        <div v-if="previewCurrent?.sub" class="font-orbitron text-[11px] text-gray-400 truncate">
+          {{ previewCurrent.sub }}
+        </div>
+      </div>
+    </template>
+
+    <div v-if="previewCurrent" class="flex items-center gap-3">
+      <button
+        v-if="previewItems.length > 1"
+        type="button"
+        class="tl-nav"
+        aria-label="上一張"
+        @click="step(-1)"
+      >‹</button>
+
+      <img
+        :key="previewCurrent.key"
+        :src="previewCurrent.src"
+        :alt="previewCurrent.label"
+        class="max-h-[78vh] w-auto max-w-full rounded"
+      >
+
+      <button
+        v-if="previewItems.length > 1"
+        type="button"
+        class="tl-nav"
+        aria-label="下一張"
+        @click="step(1)"
+      >›</button>
+    </div>
+
+    <div v-if="previewItems.length > 1" class="mt-2 text-center font-orbitron text-[11px] text-gray-400">
+      {{ previewIndex + 1 }} / {{ previewItems.length }}
+    </div>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -204,7 +362,11 @@ function emptySlots(set: TimelineSet) {
 .tl-row {
   position: relative;
   display: flex;
+  /* 列與列上下重疊，而每一列都橫跨整個寬度：不關掉指標事件的話，後面那一列
+     的空白區會蓋住前一列盒子的下半部，讓那裡點不到 */
+  pointer-events: none;
 }
+.tl-box, .tl-node, .tl-stem { pointer-events: auto; }
 .tl-row + .tl-row { margin-top: -98px; }
 .tl-year + .tl-row { margin-top: 0.4rem; }
 .tl-row.l { justify-content: flex-start; padding-right: calc(50% + 2.2rem); }
@@ -258,6 +420,16 @@ function emptySlots(set: TimelineSet) {
 .tl-row.l .tl-box::after { right: -17px; border-left-color:  var(--c); }
 .tl-row.r .tl-box::after { left:  -17px; border-right-color: var(--c); }
 .tl-row.l .tl-box { flex-direction: row-reverse; }
+
+/* 整盒可點的連結墊在底層；圖片是 position:relative，DOM 在後面所以疊在它上面，
+   點圖不會順便觸發跳轉 */
+.tl-link {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 8px;
+}
+.tl-link:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
 
 .tl-edge { width: 5px; background: var(--c); flex-shrink: 0; }
 .tl-row.r .tl-edge { border-radius: 7px 0 0 7px; }
@@ -326,9 +498,13 @@ function emptySlots(set: TimelineSet) {
 }
 .tl-card {
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
   position: relative;
   height: 100%;
   aspect-ratio: 59 / 86;
+  cursor: zoom-in;
 }
 .tl-card img {
   height: 100%;
@@ -337,8 +513,14 @@ function emptySlots(set: TimelineSet) {
   border-radius: 3px;
   display: block;
   border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: border-color 0.15s, transform 0.15s;
 }
-.tl-card figcaption {
+.tl-card:hover img {
+  border-color: var(--c);
+  transform: scale(1.04);
+}
+.tl-card:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+.tl-card-rar {
   position: absolute;
   left: 3px;
   bottom: 3px;
@@ -349,7 +531,7 @@ function emptySlots(set: TimelineSet) {
   padding: 0 0.2rem;
   border-radius: 2px;
 }
-.tl-card.empty { border: 1px dashed rgba(255, 255, 255, 0.07); border-radius: 3px; }
+.tl-card.empty { border: 1px dashed rgba(255, 255, 255, 0.07); border-radius: 3px; cursor: default; }
 
 .tl-foot { display: flex; align-items: baseline; gap: 0.5rem; margin-top: auto; }
 .tl-num {
@@ -383,6 +565,7 @@ function emptySlots(set: TimelineSet) {
 .tl-bar-fill.done { background: var(--color-emerald-500); }
 
 .tl-shot {
+  position: relative;
   flex-shrink: 0;
   width: 104px;
   display: flex;
@@ -390,11 +573,24 @@ function emptySlots(set: TimelineSet) {
   justify-content: center;
   background: rgba(0, 0, 0, 0.25);
   padding: 0.5rem;
+  border: 0;
+  cursor: zoom-in;
+  /* hover 放大 5%，不讓它溢出盒子邊界 */
+  overflow: hidden;
 }
-.tl-shot img { max-height: 210px; max-width: 100%; width: auto; border-radius: 3px; }
+.tl-shot img {
+  max-height: 210px;
+  max-width: 100%;
+  width: auto;
+  border-radius: 3px;
+  transition: transform 0.15s;
+}
+.tl-shot:hover img { transform: scale(1.05); }
+.tl-shot:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
 .tl-row.r .tl-shot { border-radius: 0 7px 7px 0; }
 .tl-row.l .tl-shot { border-radius: 7px 0 0 7px; }
 .tl-shot.empty {
+  cursor: default;
   background: transparent;
   border-left: 1px dashed color-mix(in srgb, var(--c) 28%, transparent);
   font-family: var(--font-orbitron);
@@ -402,6 +598,22 @@ function emptySlots(set: TimelineSet) {
   color: color-mix(in srgb, var(--c) 65%, transparent);
 }
 .tl-row.l .tl-shot.empty { border-left: 0; border-right: 1px dashed color-mix(in srgb, var(--c) 28%, transparent); }
+
+/* 燈箱左右鈕 */
+.tl-nav {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 3.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-gray-300);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.tl-nav:hover { border-color: var(--color-gold); color: var(--color-gold-light); }
 
 /* 版面不夠寬時放棄交錯：軸線靠左，卡組一律排右邊、高度改為自動 */
 @media (max-width: 1100px) {
