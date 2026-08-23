@@ -21,6 +21,8 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
   - **路由順序**：須定義在 `GET /{set_id}` **之前**，否則 catch-all 會把 `timeline` 當成 set_id
 - `GET /{set_id}` → `CardSetWithCardsOut` — 含所有 cards + variants (eager loaded)
 - `PATCH /{set_id}` body: `CardSetUpdate` → `CardSetOut` — 編輯卡組 metadata，自動建立 override
+  - **收不到 `product_type`**：分類由 set_id 規則決定（見 `rd-product-types`），`_OVERRIDABLE_FIELDS` 與 schema 都沒有這個欄位
+- `POST /` body: `CardSetCreate` → `CardSetOut` (201) — 手動建立卡組（`is_manual=True`）；`product_type` 同樣不收，用 `canonical_product_type(set_id)` 推導
 - `GET /{set_id}/overrides` → `CardSetOverrideOut[]` — 查看該卡組所有手動覆寫
 - `DELETE /{set_id}/overrides/{field_name}` — 刪除單一覆寫，下次匯入恢復 scraper 值
 - `GET /{set_id}/images` → `CardSetImageOut[]` — 卡組圖片（gallery 順序）

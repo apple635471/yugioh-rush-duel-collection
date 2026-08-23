@@ -31,7 +31,7 @@ override**，直接存欄位。填了之後「對照卡表」不用每次貼網�
 ### card_sets
 - `set_id` (PK, str): 如 "KP01", "ST01"
 - `set_name_jp`, `set_name_zh`: 日文/中文名
-- `product_type` (indexed): booster, starter, character_pack, ...
+- `product_type` (indexed): booster / advanced_pack / … / promo / other，由 set_id 規則算出（見 `rd-product-types`）
 - `release_date`: "2020/4/11" 格式
 - `post_url`: 來源文章 URL
 - `total_cards`: 卡片總數
@@ -60,7 +60,7 @@ override**，直接存欄位。填了之後「對照卡表」不用每次貼網�
 
 ### card_set_overrides ★使用者手動覆寫
 - `id` (PK, auto), `set_id` (FK → card_sets, indexed)
-- `field_name`: 被覆寫的欄位名 (set_name_jp, set_name_zh, product_type, release_date, total_cards, rarity_distribution)
+- `field_name`: 被覆寫的欄位名 (set_name_jp, set_name_zh, release_date, total_cards, rarity_distribution)；**沒有 `product_type`**——分類由 set_id 規則決定，見 `rd-product-types`
 - `UNIQUE(set_id, field_name)`: 每組每欄位只一筆 override
 - `value` (Text): 使用者手動設定的值 (字串；rarity_distribution 為 JSON 字串)
 - 匯入時檢查: 若有 override，跳過該欄位不用 scraper 值

@@ -18,7 +18,7 @@ export interface CardSetCreate {
   set_id: string
   set_name_jp?: string
   set_name_zh?: string
-  product_type?: string
+  /** 沒有 product_type：分類由 set_id 規則決定（後端 product_types.py）*/
   release_date?: string | null
 }
 
@@ -44,7 +44,7 @@ export interface OwnershipStats {
 export interface CardSetUpdate {
   set_name_jp?: string
   set_name_zh?: string
-  product_type?: string
+  /** 沒有 product_type：分類由 set_id 規則決定，不可編輯 */
   release_date?: string
   yugipedia_url?: string
 }

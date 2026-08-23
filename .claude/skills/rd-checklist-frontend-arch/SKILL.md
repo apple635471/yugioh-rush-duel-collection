@@ -99,7 +99,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
   - hover 時顯示該卡組的圖片（Teleport 到 body 的浮動視窗，卡片本身 `overflow-hidden` 會裁掉）。每個卡組只查一次 API 就快取；進場延遲 120ms，滑過一整排不會每張都打；沒有圖就不彈視窗
 - `SetViewToggle`: 讀寫 `ui.setViewMode`，卡片牆 ↔ 時間軸；與 `ViewToggle` 一樣帶 `app-toolbar-toggle` class
 - `SetTimeline`: 時間軸視圖，資料來自 `GET /api/card-sets/timeline`（`HomeView` 切到時間軸才載入，同一個產品線不重載）
-  - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPE_THEME` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色
+  - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPES` → `productTypeTheme()` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色。同一份清單也長出建立/編輯卡組的下拉選項，要與後端 `PRODUCT_TYPE_LABELS` 同步
   - 盒高固定 228px、`.tl-row + .tl-row { margin-top: -98px }` → 列距 130px，異側咬合、同側留 32px；`.tl-box` 的 `overflow` 必須是 `visible`，否則指向軸線的箭頭（`::after` 三角形）會被裁掉，圓角改由各子元素自己處理
   - 盒高固定，所以 `.tl-main > *` 一律 `flex-shrink: 0`，剩餘高度全給卡圖列（否則標題會被壓成半截）
   - 點卡圖／卡組圖片開燈箱（PrimeVue `Dialog`，與 `SetGalleryStrip` 同一套做法），左右鍵或箭頭鈕在同一個卡組的圖片間移動；卡組圖片開燈箱時才用 `fetchSetImages` 補齊整個 gallery 並快取
@@ -135,7 +135,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `CardCreatePanel`: 建立新卡片表單 (card_id 自動生成 + 可編輯, rarity dropdown, card_type dropdown, 怪獸欄位條件顯示)
 - `SetMetadataEditor`: 卡組 metadata inline 編輯，嵌入 SetView header
   - View mode: 顯示中文/日文名 + meta tags (set_id, release_date, card count)
-  - Edit mode: 表單可修改 set_name_zh, set_name_jp, product_type, release_date, total_cards, rarity_distribution
+  - Edit mode: 表單可修改 set_name_zh, set_name_jp, release_date, yugipedia_url
+  - `product_type` 與 total_cards / rarity_distribution 同列在唯讀那組（`Other (由 set_id 決定)`）——分類只看 set_id 規則，要改是改後端 `product_types.py`
   - 儲存時自動建立 override (防止匯入覆蓋)，已有 override 的欄位顯示黃色圖示
   - 可展開查看/刪除 override (恢復 scraper 值)
   - `@updated` → SetView 重新 `loadAll()` 刷新資料
