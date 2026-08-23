@@ -25,11 +25,12 @@ export const PRODUCT_TYPES: {
   { value: 'other',             en: 'Other',             zh: null,         color: '#8C90A3' },
 ]
 
-/** 建立/編輯卡組的下拉選項，標籤與側邊欄一致（英文 + 中文） */
-export const PRODUCT_TYPE_OPTIONS = PRODUCT_TYPES.map(t => ({
-  value: t.value,
-  label: t.zh ? `${t.en} (${t.zh})` : t.en,
-}))
+/** 完整標籤（英文 + 中文），與側邊欄一致；分類是唯讀的，所以只拿來顯示 */
+export function productTypeLabel(productType: string): string {
+  const t = PRODUCT_TYPES.find(p => p.value === productType)
+  if (!t) return productType
+  return t.zh ? `${t.en} (${t.zh})` : t.en
+}
 
 const THEME_FALLBACK = { label: '—', color: '#8C90A3' }
 

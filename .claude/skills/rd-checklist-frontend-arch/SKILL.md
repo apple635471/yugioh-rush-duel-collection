@@ -135,7 +135,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `CardCreatePanel`: 建立新卡片表單 (card_id 自動生成 + 可編輯, rarity dropdown, card_type dropdown, 怪獸欄位條件顯示)
 - `SetMetadataEditor`: 卡組 metadata inline 編輯，嵌入 SetView header
   - View mode: 顯示中文/日文名 + meta tags (set_id, release_date, card count)
-  - Edit mode: 表單可修改 set_name_zh, set_name_jp, product_type, release_date, total_cards, rarity_distribution
+  - Edit mode: 表單可修改 set_name_zh, set_name_jp, release_date, yugipedia_url
+  - `product_type` 與 total_cards / rarity_distribution 同列在唯讀那組（`Other (由 set_id 決定)`）——分類只看 set_id 規則，要改是改後端 `product_types.py`
   - 儲存時自動建立 override (防止匯入覆蓋)，已有 override 的欄位顯示黃色圖示
   - 可展開查看/刪除 override (恢復 scraper 值)
   - `@updated` → SetView 重新 `loadAll()` 刷新資料

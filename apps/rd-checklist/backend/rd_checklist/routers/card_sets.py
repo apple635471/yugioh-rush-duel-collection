@@ -12,7 +12,7 @@ from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..product_types import label_for
+from ..product_types import canonical_product_type, label_for
 from ..models import (
     CardModel,
     CardSetImageModel,
@@ -109,7 +109,7 @@ def create_card_set(body: CardSetCreate, db: Session = Depends(get_db)):
         set_id=body.set_id,
         set_name_jp=body.set_name_jp,
         set_name_zh=body.set_name_zh,
-        product_type=body.product_type,
+        product_type=canonical_product_type(body.set_id),
         release_date=body.release_date,
         post_url="",
         total_cards=0,
@@ -167,10 +167,11 @@ def get_card_set(set_id: str, db: Session = Depends(get_db)):
 
 
 # ── Overridable fields ──
+# product_type is deliberately absent: it is decided by the set_id rules in
+# product_types.py, not editable per set.
 _OVERRIDABLE_FIELDS = {
     "set_name_jp",
     "set_name_zh",
-    "product_type",
     "release_date",
 }
 

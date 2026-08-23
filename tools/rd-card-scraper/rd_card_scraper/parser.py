@@ -150,6 +150,8 @@ PRODUCT_TYPE_MAP = {
     "WJMP": "promo",
     "PROMO": "promo",
     "P0": "promo",
+    # Game tie-in bonus cards, e.g. G001 (Switch「最強バトルロイヤル!!」特典)
+    "G0": "promo",
 }
 
 # Jump Festa giveaways: 23PR, 24PR, 25PR, 26PR, … (two digits + PR)

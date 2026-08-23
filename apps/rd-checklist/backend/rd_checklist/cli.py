@@ -73,9 +73,8 @@ def main(argv: list[str] | None = None) -> None:
     # reclassify-product-types
     sub.add_parser(
         "reclassify-product-types",
-        help="Re-classify existing sets onto the current product types "
-        "(retired types → other, tournament_pack → triple_build_pack, "
-        "old other → promo; user overrides are kept). Idempotent.",
+        help="Put every set on the product type its set_id implies and drop "
+        "the (no longer editable) product_type overrides. Idempotent.",
     )
 
     # merge-set
@@ -191,8 +190,8 @@ def main(argv: list[str] | None = None) -> None:
         try:
             stats = migrate_product_types(db)
             print("\nProduct type re-classification complete:")
-            print(f"  Sets changed:        {stats['sets_changed']}")
-            print(f"  Overrides rewritten: {stats['overrides_rewritten']}")
+            print(f"  Sets changed:      {stats['sets_changed']}")
+            print(f"  Overrides dropped: {stats['overrides_dropped']}")
             for set_id, before, after in stats["changes"]:
                 print(f"    {set_id}: {before} → {after}")
         finally:

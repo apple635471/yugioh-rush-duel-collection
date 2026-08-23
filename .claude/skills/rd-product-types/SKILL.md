@@ -10,9 +10,18 @@ description: Identifying Rush Duel product types from set ID prefixes. Use when 
 兩邊要一起改；匯入時 backend 會重新推導，所以 backend 那份才是最終決定者。）
 
 **前端還有第三份鏡像**：`frontend/src/constants/productTypes.ts` 的 `PRODUCT_TYPES`
-（下拉選項 + 時間軸配色）。改動類型清單時三份一起改，否則會像 2026-08 那次一樣——
-編輯卡組的下拉還停在舊分類，`other` 顯示成 Promo，跟側邊欄對不起來。
-側邊欄的標籤是 API 給的（`/product-types` 用 `PRODUCT_TYPE_LABELS`），只有下拉是寫死的。
+（顯示用的標籤與時間軸配色）。改動類型清單時三份一起改。
+側邊欄的標籤是 API 給的（`/product-types` 用 `PRODUCT_TYPE_LABELS`）。
+
+## 分類是唯讀的，只看規則
+
+**set_id 決定一切**：沒有手動編輯（UI 只顯示 `Product Type: Other (由 set_id 決定)`）、
+沒有 override（`_OVERRIDABLE_FIELDS` 不含 `product_type`，`CardSetUpdate` / `CardSetCreate`
+也不收）、匯入不看 scraper 的猜測（它用的是同一套規則）。要調整某個卡組的分類，
+就是**改這裡的規則**，然後跑 `reclassify-product-types`。
+
+這是 2026-08 定下的：三份鏡像加上「編輯任何欄位都會寫 override」，讓分類飄成四種說法
+（DB 值、override 值、scraper 值、下拉選項），前端顯示與側邊欄對不起來。現在只有一個來源。
 
 ## set_id → 產品類型
 
@@ -26,7 +35,7 @@ description: Identifying Rush Duel product types from set ID prefixes. Use when 
 | `TB` | `triple_build_pack` | 補充包系列 | Triple Build Pack / 三重構築包 |
 | `SBD` `SD` `ST` `GRD` | `structure_deck` | 預組 | Structure Deck / 預組 |
 | `B0` `B2` `S2` | `battle_pack` | 其他 | Battle Pack / 戰鬥包 |
-| `711` `ECG` `SJMP` `VJMP` `WJMP` `PROMO` `P0` | `promo` | 其他 | Promo |
+| `711` `ECG` `SJMP` `VJMP` `WJMP` `PROMO` `P0` `G0` | `promo` | 其他 | Promo |
 | `\d{2}PR`（23PR、24PR…，regex 非前綴） | `promo` | 其他 | Promo |
 | 以上皆非 | `other` | 其他 | Other |
 
@@ -47,7 +56,7 @@ map 裡**，會落到 `other`。要恢復就是把前綴加回 map + 在 `PRODUC
 
 ## 已退役的類型
 
-`canonical_product_type()` 會把舊值往前對應，重新匯入舊 JSON 不會倒退：
+已經不需要對應表了——分類只看 set_id，舊值不會有機會被讀進來。這張表留著當紀錄：
 
 | 舊值 | 現值 | 說明 |
 |------|------|------|
@@ -60,11 +69,7 @@ map 裡**，會落到 `other`。要恢復就是把前綴加回 map + 在 `PRODUC
 
 ## 判定順序
 
-`canonical_product_type(set_id, scraper_value)`：
-
-1. set_id 有規則 → 用規則（規則是我們確定的事實，勝過 JSON 值與 override）
-2. 沒規則 → 用 scraper 的值，經退役對應表轉換
-3. 轉換後仍不是合法類型 → `other`
+`canonical_product_type(set_id)`：set_id 有規則就用規則，沒有就 `other`。就這樣。
 
 ## 既有資料遷移
 
@@ -73,5 +78,5 @@ cd apps/rd-checklist/backend
 uv run python -m rd_checklist.cli reclassify-product-types   # idempotent
 ```
 
-會一併改寫 `card_set_overrides` 裡的 `product_type`——那些 override 多半不是刻意的
-修正（編輯任何欄位都會寫入 override），留著會讓下次匯入把舊值還原。
+會**刪掉**所有 `product_type` override——現在沒有任何路徑會產生它們，留著只會讓
+下次讀 override 表的人困惑。

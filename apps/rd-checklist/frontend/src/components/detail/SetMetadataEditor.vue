@@ -2,13 +2,12 @@
 import { ref, reactive, computed } from 'vue'
 import type { CardSetWithCards, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
 import { updateCardSet, fetchCardSetOverrides, deleteCardSetOverride } from '@/api/cardSets'
-import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
+import { productTypeLabel } from '@/constants/productTypes'
 import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
 import AppButton from '@/components/ui/AppButton.vue'
 import SetGalleryStrip from '@/components/detail/SetGalleryStrip.vue'
 import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
 
 const props = defineProps<{
   cardSet: CardSetWithCards
@@ -59,7 +58,6 @@ function startEdit() {
   Object.assign(form, {
     set_name_jp: s.set_name_jp,
     set_name_zh: s.set_name_zh,
-    product_type: s.product_type,
     release_date: s.release_date ?? '',
     yugipedia_url: s.yugipedia_url ?? '',
   })
@@ -110,7 +108,6 @@ async function removeOverride(fieldName: string) {
 const fieldLabels: Record<string, string> = {
   set_name_jp: 'Japanese Name',
   set_name_zh: 'Chinese Name',
-  product_type: 'Product Type',
   release_date: 'Release Date',
 }
 </script>
@@ -196,23 +193,6 @@ const fieldLabels: Record<string, string> = {
           </div>
         </div>
 
-        <!-- Product Type -->
-        <div class="flex items-center gap-2">
-          <label class="w-24 text-xs text-gray-400 shrink-0">Product Type</label>
-          <div class="flex-1 relative">
-            <Select
-              v-model="form.product_type"
-              :options="PRODUCT_TYPE_OPTIONS"
-              option-label="label"
-              option-value="value"
-              size="small"
-              fluid
-            />
-            <span v-if="overriddenFields.has('product_type')" class="absolute right-8 top-1/2 -translate-y-1/2 text-yellow-500" title="Overridden">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
-            </span>
-          </div>
-        </div>
 
         <!-- Release Date -->
         <div class="flex items-center gap-2">
@@ -245,6 +225,12 @@ const fieldLabels: Record<string, string> = {
         </div>
 
         <!-- Auto-computed (read-only) -->
+        <div class="flex items-center gap-2">
+          <label class="w-24 text-xs text-gray-400 shrink-0">Product Type</label>
+          <span class="text-xs text-gray-400 italic">
+            {{ productTypeLabel(cardSet.product_type) }} (由 set_id 決定)
+          </span>
+        </div>
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Total Cards</label>
           <span class="text-xs text-gray-400 italic">{{ totalCards }} (auto-computed)</span>

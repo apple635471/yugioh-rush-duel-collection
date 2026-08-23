@@ -1,14 +1,20 @@
 """Product type classification and labels.
 
 Single source of truth for the backend: which product type a set belongs to
-(derived from its set_id), what it is called in the UI, and how retired types
-map onto current ones.
+(derived from its set_id) and what it is called in the UI.
 
-The scraper has a mirror of the derivation rules in
-``tools/rd-card-scraper/rd_card_scraper/parser.py`` (``PRODUCT_TYPE_MAP`` /
-``guess_product_type``). Keep the two in sync — the scraper stamps a
-product_type into its JSON, and the import re-derives it here anyway, so this
-module is what actually decides.
+**Classification is rule-only.** The set_id decides, and nothing else: no
+manual editing (the UI shows the type read-only), no overrides, and the
+scraper's own guess is ignored on import. A set_id no rule covers lands in
+"other" — which is a fine place to sit until someone adds a rule here.
+
+Two mirrors to keep in sync:
+
+* ``tools/rd-card-scraper/rd_card_scraper/parser.py`` — ``PRODUCT_TYPE_MAP`` /
+  ``guess_product_type``. Same rules, so the scraper's JSON agrees with what
+  the import computes.
+* ``frontend/src/constants/productTypes.ts`` — ``PRODUCT_TYPES``, the display
+  side (labels + timeline colours).
 """
 
 from __future__ import annotations
@@ -43,22 +49,12 @@ SET_PREFIX_TO_PRODUCT_TYPE: dict[str, str] = {
     "WJMP": "promo",
     "PROMO": "promo",
     "P0": "promo",
+    # Game tie-in bonus cards, e.g. G001 (Switch「最強バトルロイヤル!!」特典)
+    "G0": "promo",
 }
 
 # Jump Festa giveaways: 23PR, 24PR, 25PR, 26PR, … (two digits + PR)
 _YEAR_PROMO_RE = re.compile(r"^\d{2}PR$", re.IGNORECASE)
-
-# Retired product types → what they are now. Sets that used to get their own
-# sidebar entry for a single release are folded into "other"; the old
-# tournament_pack was simply a wrong name for the Triple Build Pack.
-LEGACY_PRODUCT_TYPE_ALIASES: dict[str, str] = {
-    "unknown": "other",
-    "character_pack": "other",
-    "go_rush_character": "other",
-    "extra_pack": "other",
-    "vs_pack": "other",
-    "tournament_pack": "triple_build_pack",
-}
 
 # ── Labels ────────────────────────────────────────────────────────────────
 # product type → (English name, Chinese name or None when there isn't a
@@ -89,21 +85,9 @@ def derive_product_type(set_id: str) -> str | None:
     return None
 
 
-def canonical_product_type(set_id: str, scraper_value: str | None = None) -> str:
-    """Resolve a set to a current product type.
-
-    A set_id rule wins when there is one — those are the cases we are sure
-    about. Otherwise the scraper's own value is used, with retired types
-    mapped forward; anything unrecognised becomes "other".
-    """
-    derived = derive_product_type(set_id)
-    if derived:
-        return derived
-
-    value = LEGACY_PRODUCT_TYPE_ALIASES.get(scraper_value or "", scraper_value)
-    if value in PRODUCT_TYPE_LABELS:
-        return value
-    return FALLBACK_PRODUCT_TYPE
+def canonical_product_type(set_id: str) -> str:
+    """The product type a set belongs to: its set_id rule, or "other"."""
+    return derive_product_type(set_id) or FALLBACK_PRODUCT_TYPE
 
 
 def label_for(product_type: str) -> tuple[str, str | None]:

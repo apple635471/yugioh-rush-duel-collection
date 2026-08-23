@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### 變更
+
+- **卡組分類改成唯讀，只看 set_id 規則**（原本可以在卡組編輯裡用下拉改）
+  - 判定收斂成一句話：`canonical_product_type(set_id)` —— set_id 有規則就用規則，沒有就 `other`。不再讀 scraper 的 product_type（它用的是同一套規則），也不再有 `product_type` override（`_OVERRIDABLE_FIELDS` 與 `CardSetUpdate` / `CardSetCreate` 都拿掉了）
+  - 原本同一件事有四種說法會互相打架：DB 值、override 值、scraper 值、前端寫死的下拉選項。分類飄掉的 bug（`other` 顯示成 Promo）就是這樣來的
+  - 卡組編輯面板的 Product Type 移到唯讀那組，跟 Total Cards / Rarity Dist. 並列，顯示 `Other (由 set_id 決定)`；「新增卡組」對話框拿掉產品類型欄位，改由 set_id 推導
+  - 新增規則 `G0` → `promo`（Switch 遊戲特典卡，如 G001），scraper 的 `PRODUCT_TYPE_MAP` 同步
+  - `reclassify-product-types` 改成「依規則重算 + 刪掉所有 product_type override」；本機執行結果：0 個卡組要改、清掉 65 筆 override
+  - 要調整某個卡組的分類，就是改 `product_types.py` 的規則再跑一次 `reclassify-product-types`
+
 ### 修復
 
 - **卡組編輯／新增的「產品類型」下拉沒跟上分類調整**：選項還是舊的一套——`other` 被標成 `Promo (Promo)`、`unknown` 被標成 `Other (其他)`，還留著五個已經退役的類型（角色包、GRC 角色包、Extra 包、VS 包、大會包），也沒有 `promo` 與 `triple_build_pack`。所以 CP01 這種 `other` 的卡組，編輯時會顯示成 Promo，跟側邊欄對不起來
