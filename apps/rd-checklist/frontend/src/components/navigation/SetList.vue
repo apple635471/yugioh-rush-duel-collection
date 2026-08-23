@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { CardSet, OwnershipStats } from '@/types/cardSet'
+import { fetchSetImages, getSetImageUrl, type CardSetImage } from '@/api/cardSets'
 
 const props = defineProps<{
   sets: CardSet[]
@@ -14,6 +16,55 @@ function getStats(setId: string) {
 function progressPct(stats: OwnershipStats | null) {
   if (!stats || stats.total_variants === 0) return 0
   return Math.round(stats.owned_variants / stats.total_variants * 100)
+}
+
+/* ── hover 時顯示卡組圖片 ──────────────────────────────────
+   浮動視窗掛在 body（卡片本身 overflow-hidden，放在裡面會被裁掉）。
+   每個卡組只查一次就記在 cache；沒有圖的卡組不彈視窗——就是空白。 */
+const imageCache = new Map<string, CardSetImage[]>()
+const hoverImages = ref<CardSetImage[]>([])
+const hoverStyle = ref<Record<string, string>>({})
+const hoverVisible = ref(false)
+let hoverSetId = ''
+let enterTimer: ReturnType<typeof setTimeout> | null = null
+
+function position(e: MouseEvent) {
+  const pad = 12
+  const w = 260
+  const h = 150
+  hoverStyle.value = {
+    left: `${Math.max(pad, Math.min(e.clientX + pad, window.innerWidth - w - pad))}px`,
+    top: `${Math.max(pad, Math.min(e.clientY + pad, window.innerHeight - h - pad))}px`,
+  }
+}
+
+function onEnter(e: MouseEvent, setId: string) {
+  hoverSetId = setId
+  position(e)
+  // 滑過一整排時不要每張都打一次 API
+  if (enterTimer) clearTimeout(enterTimer)
+  enterTimer = setTimeout(() => show(setId), 120)
+}
+
+async function show(setId: string) {
+  let images = imageCache.get(setId)
+  if (!images) {
+    try {
+      images = await fetchSetImages(setId)
+    } catch {
+      images = []
+    }
+    imageCache.set(setId, images)
+  }
+  if (hoverSetId !== setId) return // 已經移到別的卡組
+  hoverImages.value = images
+  hoverVisible.value = images.length > 0
+}
+
+function onLeave() {
+  hoverSetId = ''
+  hoverVisible.value = false
+  if (enterTimer) clearTimeout(enterTimer)
 }
 </script>
 
@@ -44,6 +95,9 @@ function progressPct(stats: OwnershipStats | null) {
       class="group bg-surface border border-[rgba(201,168,76,0.14)] rounded-lg p-4 overflow-hidden
              hover:border-gold/40 hover:bg-dark-4 hover:-translate-y-0.5 hover:shadow-lg
              transition-all duration-200 flex flex-col"
+      @mouseenter="onEnter($event, s.set_id)"
+      @mousemove="position"
+      @mouseleave="onLeave"
     >
       <!-- Top row: set_id badge + date -->
       <div class="flex items-start justify-between gap-2 mb-2">
@@ -102,4 +156,22 @@ function progressPct(stats: OwnershipStats | null) {
       </template>
     </router-link>
   </div>
+
+  <!-- 卡組圖片的 hover 預覽：固定高度，圖多就橫向捲動 -->
+  <Teleport to="body">
+    <div
+      v-if="hoverVisible"
+      class="fixed z-[70] pointer-events-none flex h-[150px] max-w-[260px] gap-2 overflow-hidden
+             rounded-lg border border-[rgba(201,168,76,0.25)] bg-dark-1/95 p-2 shadow-2xl"
+      :style="hoverStyle"
+    >
+      <img
+        v-for="img in hoverImages"
+        :key="img.id"
+        :src="getSetImageUrl(img.id)"
+        :alt="img.title"
+        class="h-full w-auto rounded object-contain"
+      />
+    </div>
+  </Teleport>
 </template>

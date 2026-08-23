@@ -95,6 +95,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
   - 每個項目英文名一行、`display_name_zh` 另起一行（見 `rd-product-types`）
 - `ProductTypeNav`: pill 列（舊版，仍保留但 HomeView 已改用 Sidebar）
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
+  - hover 時顯示該卡組的圖片（Teleport 到 body 的浮動視窗，卡片本身 `overflow-hidden` 會裁掉）。每個卡組只查一次 API 就快取；進場延遲 120ms，滑過一整排不會每張都打；沒有圖就不彈視窗
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)
 - `CardGrid`: `auto-fill minmax(190px,1fr)` grid，container 為 `max-w-screen-2xl`
