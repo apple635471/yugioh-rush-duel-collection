@@ -7,6 +7,8 @@ export interface CardSet {
   product_type: string
   release_date: string | null
   post_url: string
+  /** 該卡組在 yugipedia 的頁面，供對照卡表與抓取卡組圖片使用 */
+  yugipedia_url?: string | null
   total_cards: number
   rarity_distribution: string | null
   is_manual?: boolean
@@ -44,6 +46,7 @@ export interface CardSetUpdate {
   set_name_zh?: string
   product_type?: string
   release_date?: string
+  yugipedia_url?: string
 }
 
 export interface CardSetOverride {

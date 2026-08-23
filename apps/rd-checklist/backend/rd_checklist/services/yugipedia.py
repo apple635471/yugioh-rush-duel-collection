@@ -334,3 +334,94 @@ def fetch_set_list(url: str, with_japanese_names: bool = True) -> SetListResult:
         f"在 yugipedia 找不到「{title}」的卡表子頁"
         f"（試過 {', '.join(LIST_PAGE_SUFFIXES)}）"
     )
+
+
+# ── Set gallery ───────────────────────────────────────────────────────────
+
+_GALLERY_RE = re.compile(r"<gallery[^>]*>(.*?)</gallery>", re.S)
+_CAPTION_LINK_RE = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")
+
+
+@dataclass
+class GalleryImage:
+    """A picture of the set itself, as listed in the page's gallery."""
+
+    title: str          # the caption, e.g. "Japanese promotional poster"
+    file_page: str      # "File:RDKP02-Poster-JP.png"
+    url: str = ""
+    width: int | None = None
+    height: int | None = None
+
+
+def parse_gallery(wikitext: str, only_japanese: bool = True) -> list[GalleryImage]:
+    """Gallery entries from a set page.
+
+    A gallery line is `filename | caption`, where the caption is either plain
+    text ("Japanese promotional poster") or a link whose label is what shows
+    ("[[Set Card Galleries:… (OCG-JP)|Japanese]]"). Only the Japanese ones are
+    wanted — the Korean printings are a different product to this collection.
+    """
+    images: list[GalleryImage] = []
+
+    for block in _GALLERY_RE.findall(wikitext):
+        for line in block.split("\n"):
+            line = line.strip()
+            if not line or "|" not in line:
+                continue
+            filename, caption = line.split("|", 1)
+            filename = filename.strip()
+            caption = _CAPTION_LINK_RE.sub(r"\1", caption).strip()
+            if not filename:
+                continue
+            if only_japanese and "japanese" not in caption.lower():
+                continue
+            images.append(
+                GalleryImage(title=caption, file_page=f"File:{filename}")
+            )
+
+    return images
+
+
+def resolve_image_urls(
+    client: httpx.Client, images: list[GalleryImage]
+) -> list[GalleryImage]:
+    """Fill in the direct file URL and dimensions for each gallery entry."""
+    by_page = {img.file_page: img for img in images}
+    titles = list(by_page)
+
+    for i in range(0, len(titles), 50):
+        resp = client.get(
+            API_URL,
+            params={
+                "action": "query",
+                "titles": "|".join(titles[i:i + 50]),
+                "prop": "imageinfo",
+                "iiprop": "url|size|mime",
+                "format": "json",
+                "formatversion": "2",
+            },
+        )
+        resp.raise_for_status()
+        for page in resp.json().get("query", {}).get("pages", []):
+            info = (page.get("imageinfo") or [{}])[0]
+            img = by_page.get(page.get("title", ""))
+            if img is None or not info.get("url"):
+                continue
+            img.url = info["url"]
+            img.width = info.get("width")
+            img.height = info.get("height")
+
+    return [img for img in images if img.url]
+
+
+def fetch_set_gallery(url: str, only_japanese: bool = True) -> list[GalleryImage]:
+    """Pictures of the set from its yugipedia page, ready to download."""
+    title = page_title_from_url(url)
+    with _client() as client:
+        wikitext = _fetch_wikitext(client, title)
+        if wikitext is None:
+            raise YugipediaError(f"在 yugipedia 找不到「{title}」這個頁面")
+        images = parse_gallery(wikitext, only_japanese=only_japanese)
+        if not images:
+            return []
+        return resolve_image_urls(client, images)

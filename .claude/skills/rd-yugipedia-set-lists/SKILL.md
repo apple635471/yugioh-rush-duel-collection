@@ -115,3 +115,24 @@ remap `FORR → UR`，另外建立 `FORR(異圖)`。
 | HC01 (High-Grade Collection) | 154 種印刷，與資料庫完全一致；日文名 154/154；異圖 JP049 對上 |
 | KP20 (Galactica of Eternity) | 106 種，完全一致；5 個異圖都對上 |
 | GRP1 (Gold Rush Pack) | 卡表 62 / 資料庫 42，抓出 20 種缺漏（14 個 GRR）|
+
+## 卡組圖片（Galleries 區）
+
+卡組主頁的 `== Galleries ==` 有一個 `<gallery>` 區塊，一行一張：
+
+```
+RDKP02-BoosterJP.png | [[Set Card Galleries:… (OCG-JP)|Japanese]]
+RDKP02-BoosterKR.png | [[Set Card Galleries:… (OCG-KR)|Korean]]
+RDKP02-Poster-JP.png | Japanese promotional poster
+```
+
+格式是 `檔名 | 說明`，說明可能是純文字，也可能是 wikilink（顯示的是 `|` 後面的 label）。
+**只取說明含 japanese 的**（韓版包裝不是這個收藏要追的）。
+
+檔名要再查一次才有實際網址：
+
+```
+action=query&titles=File:RDKP02-Poster-JP.png&prop=imageinfo&iiprop=url|size|mime
+```
+
+`parse_gallery()` + `resolve_image_urls()` + `fetch_set_gallery()` 都在 `yugipedia.py`。

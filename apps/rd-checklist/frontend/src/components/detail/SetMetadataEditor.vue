@@ -6,6 +6,7 @@ import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
 import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
 import AppButton from '@/components/ui/AppButton.vue'
+import SetGalleryStrip from '@/components/detail/SetGalleryStrip.vue'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 
@@ -24,6 +25,8 @@ const overrides = ref<CardSetOverride[]>([])
 const showOverrides = ref(false)
 
 const form = reactive<CardSetUpdate>({})
+
+const galleryStrip = ref<InstanceType<typeof SetGalleryStrip> | null>(null)
 
 const overriddenFields = computed(() => new Set(overrides.value.map(o => o.field_name)))
 
@@ -58,6 +61,7 @@ function startEdit() {
     set_name_zh: s.set_name_zh,
     product_type: s.product_type,
     release_date: s.release_date ?? '',
+    yugipedia_url: s.yugipedia_url ?? '',
   })
   error.value = ''
   editing.value = true
@@ -76,6 +80,8 @@ async function saveEdit() {
     await updateCardSet(props.cardSet.set_id, form)
     editing.value = false
     emit('updated')
+    // 後端在存 yugipedia_url 時會順手抓圖，抓完才看得到
+    galleryStrip.value?.reload()
   } catch (e: any) {
     error.value = e?.response?.data?.detail ?? 'Failed to save'
   } finally {
@@ -121,7 +127,9 @@ const fieldLabels: Record<string, string> = {
           {{ cardSet.set_name_jp }}
         </p>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="relative flex items-center gap-2 shrink-0">
+        <!-- 固定長寬的圖片瀏覽窗：絕對定位，不佔流內空間 -->
+        <SetGalleryStrip ref="galleryStrip" :set-id="cardSet.set_id" />
         <slot name="actions-left" />
         <AppButton
           @click="startEdit"
@@ -211,6 +219,25 @@ const fieldLabels: Record<string, string> = {
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2H6v1a1 1 0 0 1-2 0V6H3a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1Zm0 10a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2H6v1a1 1 0 1 1-2 0v-1H3a1 1 0 1 1 0-2h1v-1a1 1 0 0 1 1-1Zm7-10a1 1 0 0 1 .967.744L14.146 7.2 17.5 9.134a1 1 0 0 1 0 1.732l-3.354 1.935-1.18 4.455a1 1 0 0 1-1.933 0L9.854 12.8 6.5 10.866a1 1 0 0 1 0-1.732l3.354-1.935 1.18-4.455A1 1 0 0 1 12 2Z" clip-rule="evenodd"/></svg>
             </span>
           </div>
+        </div>
+
+        <!-- yugipedia 頁面：對照卡表會用，存檔時順便抓卡組圖片 -->
+        <div class="flex items-center gap-2">
+          <label class="w-24 text-xs text-gray-400 shrink-0">yugipedia</label>
+          <div class="flex-1">
+            <InputText
+              v-model="form.yugipedia_url"
+              placeholder="https://yugipedia.com/wiki/High-Grade_Collection"
+              fluid
+              size="small"
+            />
+          </div>
+        </div>
+        <div class="flex items-start gap-2 -mt-1">
+          <span class="w-24 shrink-0"></span>
+          <p class="text-[11px] text-gray-400">
+            填了之後「對照卡表」就不用每次貼網址，存檔時也會抓這個卡組的圖片。
+          </p>
         </div>
 
         <!-- Auto-computed (read-only) -->

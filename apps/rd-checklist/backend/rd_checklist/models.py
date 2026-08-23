@@ -28,6 +28,10 @@ class CardSetModel(Base):
     product_type = Column(String, nullable=False, index=True)
     release_date = Column(String)
     post_url = Column(String, nullable=False, default="")
+    # The set's page on yugipedia, entered by the user. Remembered so the card
+    # list comparison does not have to be told the URL every time, and used to
+    # pull the set's gallery images.
+    yugipedia_url = Column(String)
     total_cards = Column(Integer, nullable=False, default=0)
     rarity_distribution = Column(Text)  # JSON string
     is_manual = Column(Boolean, nullable=False, default=False)
@@ -35,6 +39,28 @@ class CardSetModel(Base):
     updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
 
     cards = relationship("CardModel", back_populates="card_set", lazy="selectin")
+
+
+class CardSetImageModel(Base):
+    """A picture of the set itself — pack shot, promotional poster.
+
+    Fetched from the set's yugipedia gallery and stored on disk, so the app
+    does not hotlink someone else's server on every page view.
+    """
+
+    __tablename__ = "card_set_images"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    set_id = Column(String, ForeignKey("card_sets.set_id"), nullable=False, index=True)
+    title = Column(String, nullable=False, default="")       # gallery caption
+    source_url = Column(String, nullable=False, default="")   # where it came from
+    file_path = Column(String, nullable=False)                # relative to SET_IMAGES_DIR
+    width = Column(Integer)
+    height = Column(Integer)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(String, nullable=False, server_default=func.datetime("now"))
+
+    __table_args__ = (UniqueConstraint("set_id", "source_url"),)
 
 
 class CardModel(Base):

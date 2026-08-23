@@ -20,8 +20,8 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 
-const props = defineProps<{ setId: string }>()
-const emit = defineEmits<{ applied: [] }>()
+const props = defineProps<{ setId: string; savedUrl?: string | null }>()
+const emit = defineEmits<{ applied: []; urlSaved: [] }>()
 
 const visible = ref(false)
 const url = ref('')
@@ -46,12 +46,14 @@ function open() {
   visible.value = true
   errorMsg.value = ''
   applied.value = ''
+  // 卡組記住網址後就不用每次貼；沒填過的話貼一次，比對成功會存回去
+  if (!url.value && props.savedUrl) url.value = props.savedUrl
 }
 
 defineExpose({ open })
 
 async function runCompare() {
-  if (!url.value.trim()) {
+  if (!url.value.trim() && !props.savedUrl) {
     errorMsg.value = '請先貼上 yugipedia 的卡組頁面網址'
     return
   }
@@ -60,8 +62,11 @@ async function runCompare() {
   applied.value = ''
   result.value = null
   try {
+    const wasSaved = props.savedUrl
     const r = await compareSetList(props.setId, url.value.trim())
     result.value = r
+    // 後端會把這次用的網址記在卡組上（並抓卡組圖片）
+    if (url.value.trim() && url.value.trim() !== wasSaved) emit('urlSaved')
     // 預設全選，通常兩邊都是要處理的
     selectedMissing.value = r.missing.map(keyOf)
     selectedExtra.value = r.extra.map(keyOf)
@@ -176,6 +181,7 @@ const ROW = 'flex items-center gap-2 px-2 py-1 rounded text-xs hover:bg-[rgba(20
       </div>
       <p class="text-[11px] text-gray-400 -mt-2">
         貼上該卡組在 yugipedia 的頁面網址，會讀它的卡表子頁，逐一比對「卡號 + 貴罕度 + 異圖」。
+        比對成功後會記在這個卡組上，下次就不用再貼，並順便抓卡組圖片。
       </p>
 
       <Message v-if="errorMsg" severity="error" :closable="false" class="text-xs whitespace-pre-line">

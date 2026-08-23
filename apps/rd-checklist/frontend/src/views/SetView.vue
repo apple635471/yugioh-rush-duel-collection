@@ -263,7 +263,13 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         </div>
       </div>
 
-      <SetListCompareDialog ref="compareDialog" :set-id="setId" @applied="loadAll" />
+      <SetListCompareDialog
+      ref="compareDialog"
+      :set-id="setId"
+      :saved-url="store.currentSet?.yugipedia_url"
+      @applied="loadAll"
+      @url-saved="loadAll"
+    />
 
     <!-- Card views -->
       <div v-if="filteredCards.length === 0" class="text-center text-gray-400 py-16 text-sm">

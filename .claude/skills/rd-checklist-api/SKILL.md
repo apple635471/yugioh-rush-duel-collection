@@ -18,9 +18,13 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 - `PATCH /{set_id}` body: `CardSetUpdate` → `CardSetOut` — 編輯卡組 metadata，自動建立 override
 - `GET /{set_id}/overrides` → `CardSetOverrideOut[]` — 查看該卡組所有手動覆寫
 - `DELETE /{set_id}/overrides/{field_name}` — 刪除單一覆寫，下次匯入恢復 scraper 值
-- `POST /{set_id}/compare` body: `{url}` → `SetListCompareOut` — 對照 yugipedia 卡表，回傳 missing / extra（唯讀）
+- `GET /{set_id}/images` → `CardSetImageOut[]` — 卡組圖片（gallery 順序）
+- `POST /{set_id}/images/refresh` → `CardSetImageOut[]` — 重讀 yugipedia gallery，只下載新的、刪掉已不在 gallery 的
+- `POST /{set_id}/compare` body: `{url}`（**可省略**，省略時用卡組記住的 `yugipedia_url`）→ `SetListCompareOut` — 對照 yugipedia 卡表，回傳 missing / extra（唯讀）
 - `POST /{set_id}/compare/apply` body: `{remap[], create[], delete[]}` → `SetListApplyOut` — 套用差異。remap 先做（改名，保住 owned_count 與上傳圖），再建立，最後刪除；建立只填卡號/日文名/貴罕度，刪到最後一個 variant 會連卡片一起刪
   - 比對單位是 (card_id, rarity, is_alternate_art)，詳見 `rd-yugipedia-set-lists`
+  - 比對成功後會把這次用的網址存進 `card_sets.yugipedia_url` 並順手抓卡組圖片
+- `PATCH /{set_id}` 的 `yugipedia_url` 不走 override（非爬蟲資料），存檔時會抓卡組圖片
 
 ### 卡片 `/api/cards`
 - `GET /next-id/{set_id}` → `NextCardIdOut` — 自動生成下一個可用 card_id (掃描現有卡，找最大數字後綴 +1)
