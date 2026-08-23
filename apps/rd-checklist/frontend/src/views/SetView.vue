@@ -263,9 +263,7 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         </div>
       </div>
 
-      <SetListCompareDialog ref="compareDialog" :set-id="setId" @applied="loadAll" />
-
-    <!-- Card views -->
+      <!-- Card views -->
       <div v-if="filteredCards.length === 0" class="text-center text-gray-400 py-16 text-sm">
         沒有符合篩選條件的卡片。
       </div>
@@ -282,6 +280,16 @@ watch(() => ui.sidebarOpen, (isOpen, wasOpen) => {
         :preferred-rarity="filterRarity || undefined"
       />
     </template>
+
+    <!-- 對話框放在載入狀態的分支外面：重新載入卡組時 store.loading 會讓上面
+         整個區塊卸載，對話框若在裡面就會連同比對結果一起消失 -->
+    <SetListCompareDialog
+      ref="compareDialog"
+      :set-id="setId"
+      :saved-url="store.currentSet?.yugipedia_url"
+      @applied="loadAll"
+      @url-saved="loadAll"
+    />
   </div>
 </template>
 

@@ -79,7 +79,9 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 | GET | `/api/card-sets?product_type=` | 卡組列表 |
 | GET | `/api/card-sets/{set_id}` | 卡組 + 所有卡片 (eager load variants) |
 | PATCH | `/api/card-sets/{set_id}` | 編輯卡組 metadata (自動建立 override) |
-| POST | `/api/card-sets/{set_id}/compare` | 對照 yugipedia 卡表，回傳缺少/多出的印刷 |
+| POST | `/api/card-sets/{set_id}/compare` | 對照 yugipedia 卡表（網址可省略，用記住的）|
+| GET | `/api/card-sets/{set_id}/images` | 卡組圖片清單 |
+| POST | `/api/card-sets/{set_id}/images/refresh` | 重讀 yugipedia gallery |
 | POST | `/api/card-sets/{set_id}/compare/apply` | 套用勾選的差異（建立/刪除）|
 | GET | `/api/card-sets/{set_id}/overrides` | 查看該卡組所有手動覆寫 |
 | DELETE | `/api/card-sets/{set_id}/overrides/{field}` | 刪除覆寫 (下次匯入恢復 scraper 值) |

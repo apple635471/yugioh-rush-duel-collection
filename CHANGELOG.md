@@ -4,6 +4,14 @@
 
 ### 新增
 
+- **卡組記住自己的 yugipedia 頁面，並顯示卡組圖片**
+  - 卡組編輯新增 `yugipedia` 欄位。填了之後「對照卡表」不用每次貼網址；沒填過的話在對照卡表貼一次，比對成功就會存回卡組（`card_sets.yugipedia_url`，非爬蟲資料所以不寫 override）
+  - **存網址時自動抓卡組圖片**：讀該頁 `== Galleries ==` 的 `<gallery>`，只取說明含 japanese 的（包裝、宣傳海報），下載到 `data/images/sets/{set_id}/` 而不是 hotlink；再抓時以來源網址比對，只下載新的
+  - **卡組名稱旁的固定瀏覽窗**（`SetGalleryStrip`，240×82）：絕對定位掛在按鈕列左側，圖片再多也不會推開標題、中日文名或卡片列表——實測有／無縮圖窗時卡片列表位置完全相同；超出就橫向捲動，點縮圖開大圖
+  - 新增 `card_set_images` 表與 `GET/POST /api/card-sets/{set_id}/images`、`GET /api/images/set-gallery/{id}`
+  - 卡組清單 hover 時顯示該卡組的圖片（浮動視窗，固定高度 150px）；每個卡組只查一次 API 就快取，進場延遲 120ms 避免滑過一整排時連打，沒有圖就不彈視窗
+  - 對照卡表對話框移到卡組載入狀態的分支外面：存網址後會重新載入卡組，對話框若在裡面會連同比對結果一起被卸載
+
 - **新增 GRR 貴罕度**（黃金超速貴罕）：只出現在 GRP1 這一包，順位排在 `RR` 與 `ORR` 之間
   - 前端貴罕度清單（`constants/rarities.ts`）與 tab 配色（金色調）；後端 `rarities.RARITY_ORDER`；yugipedia 對照表已含 `GRR` / `Gold Rush Rare`
   - GRP1 重爬匯入：42 → 55 張卡，7 個 GRR 到位（爬蟲本身沒有為此改動）

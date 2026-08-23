@@ -132,3 +132,30 @@ export async function applySetListDiff(
   const { data } = await api.post<SetListApplyResult>(`/card-sets/${setId}/compare/apply`, payload)
   return data
 }
+
+// ── 卡組圖片（yugipedia gallery）──────────────────────────
+
+export interface CardSetImage {
+  id: number
+  set_id: string
+  title: string
+  source_url: string
+  width: number | null
+  height: number | null
+  sort_order: number
+}
+
+export async function fetchSetImages(setId: string): Promise<CardSetImage[]> {
+  const { data } = await api.get<CardSetImage[]>(`/card-sets/${setId}/images`)
+  return data
+}
+
+export async function refreshSetImages(setId: string): Promise<CardSetImage[]> {
+  const { data } = await api.post<CardSetImage[]>(`/card-sets/${setId}/images/refresh`)
+  return data
+}
+
+/** 卡組圖片的顯示網址 */
+export function getSetImageUrl(imageId: number): string {
+  return `/api/images/set-gallery/${imageId}`
+}

@@ -10,6 +10,8 @@ BACKEND_DIR = Path(__file__).parent.parent
 DATA_DIR = BACKEND_DIR / "data"
 DB_PATH = DATA_DIR / "rd_checklist.db"
 USER_IMAGES_DIR = DATA_DIR / "images" / "user_uploads"
+# Pack shots / posters pulled from a set's yugipedia gallery
+SET_IMAGES_DIR = DATA_DIR / "images" / "sets"
 
 # Scraper data directory (can override via env var)
 SCRAPER_DATA_DIR = Path(
@@ -22,5 +24,6 @@ SCRAPER_DATA_DIR = Path(
 # Ensure directories exist
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 USER_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+SET_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 DATABASE_URL = f"sqlite:///{DB_PATH}"

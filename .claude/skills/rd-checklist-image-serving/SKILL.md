@@ -89,3 +89,14 @@ SCRAPER_DATA_DIR = Path(os.environ.get("SCRAPER_DATA_DIR",
 ```
 
 預設路徑假設 monorepo 結構: `apps/rd-checklist/backend/` → `../../../tools/rd-card-scraper/data/`
+
+## 卡組圖片（yugipedia gallery）
+
+與卡片圖片不同來源，獨立一套：
+
+- 檔案存 `data/images/sets/{set_id}/`（`config.SET_IMAGES_DIR`），**下載而非 hotlink**
+- 端點 `GET /api/images/set-gallery/{image_id}`，依副檔名回 `image/png` 或 `image/jpeg`
+- **路由順序**：這條必須排在 `GET /api/images/{set_id}/{filename}` 之前，否則會被那個
+  catch-all 攔截（`set-gallery` 會被當成 set_id）
+- 抓取邏輯在 `services/set_image_service.refresh_set_images()`：以 `source_url` 比對，
+  只下載新的；gallery 已移除的連檔案一起刪

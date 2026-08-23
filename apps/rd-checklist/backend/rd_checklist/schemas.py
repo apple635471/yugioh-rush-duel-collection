@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional
 
 
@@ -125,6 +125,7 @@ class CardSetOut(BaseModel):
     product_type: str
     release_date: Optional[str] = None
     post_url: str = ""
+    yugipedia_url: Optional[str] = None
     total_cards: int = 0
     rarity_distribution: Optional[str] = None
     is_manual: bool = False
@@ -154,6 +155,9 @@ class CardSetUpdate(BaseModel):
     set_name_zh: Optional[str] = None
     product_type: Optional[str] = None
     release_date: Optional[str] = None
+    # Not scraper data, so it is stored on the row without an override.
+    # Setting it also pulls the set's gallery images.
+    yugipedia_url: Optional[str] = None
 
 
 class CardSetOverrideOut(BaseModel):
@@ -220,8 +224,22 @@ class SearchParams(BaseModel):
 # ── Set list comparison (yugipedia) ──
 
 
+class CardSetImageOut(BaseModel):
+    id: int
+    set_id: str
+    title: str
+    source_url: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    sort_order: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SetListCompareRequest(BaseModel):
-    url: str
+    """`url` may be omitted once the set remembers its yugipedia page."""
+
+    url: Optional[str] = None
 
 
 class MissingPrintingOut(BaseModel):

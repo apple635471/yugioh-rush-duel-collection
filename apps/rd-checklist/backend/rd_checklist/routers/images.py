@@ -7,9 +7,10 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import CardModel, CardVariantModel
+from ..models import CardModel, CardSetImageModel, CardVariantModel
 from ..schemas import CardVariantOut
 from ..utils import parse_rarity_key
+from ..services.set_image_service import image_path as set_image_path
 from ..services.image_service import (
     delete_user_image,
     fetch_konami_image,
@@ -19,6 +20,20 @@ from ..services.image_service import (
 )
 
 router = APIRouter(prefix="/api/images", tags=["images"])
+
+
+@router.get("/set-gallery/{image_id}")
+def serve_set_gallery_image(image_id: int, db: Session = Depends(get_db)):
+    """Serve a set's pack shot / poster downloaded from yugipedia."""
+    image = db.query(CardSetImageModel).filter_by(id=image_id).first()
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+    path = set_image_path(image.file_path)
+    if not path:
+        raise HTTPException(status_code=404, detail="Image file missing")
+    suffix = path.suffix.lower()
+    media = "image/png" if suffix == ".png" else "image/jpeg"
+    return FileResponse(path, media_type=media)
 
 
 @router.get("/{set_id}/{filename}")

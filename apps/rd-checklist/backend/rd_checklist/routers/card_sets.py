@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import logging
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, text
@@ -11,13 +13,20 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..product_types import label_for
-from ..models import CardModel, CardSetModel, CardSetOverrideModel, CardVariantModel
+from ..models import (
+    CardModel,
+    CardSetImageModel,
+    CardSetModel,
+    CardSetOverrideModel,
+    CardVariantModel,
+)
 from ..schemas import (
     CardOut,
     CardSetCreate,
     CardSetOut,
     CardSetOverrideOut,
     CardSetUpdate,
+    CardSetImageOut,
     CardSetWithCardsOut,
     ProductTypeOut,
     SetListApplyOut,
@@ -26,12 +35,15 @@ from ..schemas import (
     SetListCompareRequest,
 )
 from ..services.card_service import delete_card_and_variants
+from ..services.set_image_service import refresh_set_images
 from ..services.set_list_compare import compare_with_yugipedia
 from ..services.variant_service import (
     delete_variant as delete_variant_row,
     remap_variant as remap_variant_row,
 )
 from ..services.yugipedia import YugipediaError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
@@ -130,6 +142,7 @@ def get_card_set(set_id: str, db: Session = Depends(get_db)):
         product_type=card_set.product_type,
         release_date=card_set.release_date,
         post_url=card_set.post_url,
+        yugipedia_url=card_set.yugipedia_url,
         total_cards=card_set.total_cards,
         rarity_distribution=card_set.rarity_distribution,
         is_manual=card_set.is_manual,
@@ -189,6 +202,22 @@ def update_card_set(
         else:
             override.value = str_value
             override.updated_at = now
+
+    # yugipedia_url is the user's own note about where the set lives, not
+    # something an import could overwrite — so it is stored on the row without
+    # an override. Setting it also pulls the set's gallery images, which is the
+    # whole point of remembering it.
+    if "yugipedia_url" in updates:
+        new_url = (updates["yugipedia_url"] or "").strip() or None
+        changed = new_url != card_set.yugipedia_url
+        card_set.yugipedia_url = new_url
+        if changed and new_url:
+            db.commit()
+            try:
+                refresh_set_images(db, set_id, new_url)
+            except (YugipediaError, httpx.HTTPError) as exc:
+                # The URL is saved either way; the pictures can be retried.
+                logger.warning("%s: gallery fetch failed: %s", set_id, exc)
 
     card_set.updated_at = now
     db.commit()
@@ -251,17 +280,37 @@ def compare_set_list(
     Reports printings the list has that we don't, and ones we have that it
     doesn't. Read-only — applying the differences is a separate call.
     """
-    if not db.query(CardSetModel).filter_by(set_id=set_id).first():
+    card_set = db.query(CardSetModel).filter_by(set_id=set_id).first()
+    if not card_set:
         raise HTTPException(status_code=404, detail=f"Set {set_id} not found")
 
+    url = (body.url or "").strip() or card_set.yugipedia_url
+    if not url:
+        raise HTTPException(
+            status_code=400,
+            detail="這個卡組還沒有 yugipedia 頁面網址，請在下方貼上一次，之後就會記住",
+        )
+
     try:
-        return compare_with_yugipedia(db, set_id, body.url)
+        result = compare_with_yugipedia(db, set_id, url)
     except YugipediaError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502, detail=f"讀取 yugipedia 失敗：{exc}"
         ) from exc
+
+    # The URL just proved itself, so remember it — and pick up the set's
+    # gallery pictures while we are here.
+    if url != card_set.yugipedia_url:
+        card_set.yugipedia_url = url
+        db.commit()
+        try:
+            refresh_set_images(db, set_id, url)
+        except (YugipediaError, httpx.HTTPError) as exc:
+            logger.warning("%s: gallery fetch failed: %s", set_id, exc)
+
+    return result
 
 
 @router.post("/{set_id}/compare/apply", response_model=SetListApplyOut)
@@ -395,3 +444,27 @@ def apply_set_list_diff(
         cards_deleted=cards_deleted,
         errors=errors,
     )
+
+
+@router.get("/{set_id}/images", response_model=list[CardSetImageOut])
+def list_set_images(set_id: str, db: Session = Depends(get_db)):
+    """Pictures of the set, in gallery order."""
+    return (
+        db.query(CardSetImageModel)
+        .filter_by(set_id=set_id)
+        .order_by(CardSetImageModel.sort_order)
+        .all()
+    )
+
+
+@router.post("/{set_id}/images/refresh", response_model=list[CardSetImageOut])
+def refresh_images(set_id: str, db: Session = Depends(get_db)):
+    """Re-read the set's yugipedia gallery and download anything new."""
+    try:
+        return refresh_set_images(db, set_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except YugipediaError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"讀取 yugipedia 失敗：{exc}") from exc

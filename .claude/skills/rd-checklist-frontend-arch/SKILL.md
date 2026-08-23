@@ -95,6 +95,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
   - 每個項目英文名一行、`display_name_zh` 另起一行（見 `rd-product-types`）
 - `ProductTypeNav`: pill 列（舊版，仍保留但 HomeView 已改用 Sidebar）
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
+  - hover 時顯示該卡組的圖片（Teleport 到 body 的浮動視窗，卡片本身 `overflow-hidden` 會裁掉）。每個卡組只查一次 API 就快取；進場延遲 120ms，滑過一整排不會每張都打；沒有圖就不彈視窗
 
 ### Cards — 卡片顯示 (Grid/Table 共用子元件)
 - `CardGrid`: `auto-fill minmax(190px,1fr)` grid，container 為 `max-w-screen-2xl`
@@ -109,6 +110,8 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `OwnershipControl`: `[−] 0 [+]` 按鈕（縮小版 w-5 h-5），樂觀更新 + emit event
 
 ### Detail — 側邊欄 & 卡組編輯
+- `SetGalleryStrip`: 卡組圖片的固定長寬瀏覽窗（240×82），**絕對定位掛在按鈕列左側**（`right-full`），所以不論幾張圖都不會推開標題、中日文名或卡片列表；超出就橫向捲動，點擊開大圖
+  - 這個排版限制是刻意的：實測有／無縮圖窗時卡片列表的 top 都是同一個值
 - `SetListCompareDialog`: 對照 yugipedia 卡表（`SetView` header 最左邊的按鈕開啟）。輸入卡組頁網址 → 比對 → 兩份可勾選清單（缺少 / 多出），一鍵建立或刪除；多出的項目會標示持有數與「刪掉整張卡」警告
   - `SetMetadataEditor` 為此新增 `#actions-left` slot（Edit 按鈕左邊）
 - `AppSidebar`: Teleport to body，backdrop + panel，Esc 關閉；根據 `ui.sidebarMode` 切換 detail/create 模式

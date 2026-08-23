@@ -51,6 +51,7 @@ def _migrate_add_columns():
         "ALTER TABLE cards ADD COLUMN description TEXT",
         "ALTER TABLE cards ADD COLUMN maximum_atk TEXT",
         "ALTER TABLE card_sets ADD COLUMN is_manual BOOLEAN NOT NULL DEFAULT 0",
+        "ALTER TABLE card_sets ADD COLUMN yugipedia_url TEXT",
     ]
     with engine.connect() as conn:
         for sql in migrations:

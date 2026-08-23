@@ -9,6 +9,23 @@ description: Database schema for rd-checklist (SQLite + SQLAlchemy). Use when ad
 
 SQLite + SQLAlchemy ORM，WAL mode，foreign keys enabled。
 
+## card_sets 的 yugipedia_url 與 card_set_images
+
+`card_sets.yugipedia_url` —— 使用者填的該卡組 yugipedia 頁面。**不是爬蟲資料，所以不寫
+override**，直接存欄位。填了之後「對照卡表」不用每次貼網址，存檔時也會抓卡組圖片。
+
+`card_set_images` —— 卡組本身的照片（包裝、宣傳海報），來自 yugipedia gallery：
+
+| 欄位 | 說明 |
+|------|------|
+| `set_id` | FK → card_sets |
+| `title` | gallery 的說明文字，如 `Japanese promotional poster` |
+| `source_url` | 來源圖片網址，與 `set_id` 組成唯一鍵（再抓時用它比對，不重複下載）|
+| `file_path` | 相對於 `data/images/sets/` 的路徑 |
+| `width` / `height` / `sort_order` | 原始尺寸與 gallery 順序 |
+
+只收 **title 帶 japanese** 的（韓文版包裝不是這個收藏要追的東西）。
+
 ## 表結構
 
 ### card_sets
