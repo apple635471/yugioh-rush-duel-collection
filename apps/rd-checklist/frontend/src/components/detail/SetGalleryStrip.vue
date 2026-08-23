@@ -9,7 +9,11 @@ import { ref, watch } from 'vue'
 import { fetchSetImages, getSetImageUrl, type CardSetImage } from '@/api/cardSets'
 import Dialog from 'primevue/dialog'
 
-const props = defineProps<{ setId: string }>()
+const props = defineProps<{
+  setId: string
+  /** 卡組的 yugipedia 網址：換了就代表可能有新圖，重新載入 */
+  sourceUrl?: string | null
+}>()
 
 const images = ref<CardSetImage[]>([])
 const preview = ref<CardSetImage | null>(null)
@@ -22,7 +26,7 @@ async function load() {
   }
 }
 
-watch(() => props.setId, load, { immediate: true })
+watch(() => [props.setId, props.sourceUrl], load, { immediate: true })
 defineExpose({ reload: load })
 </script>
 

@@ -129,7 +129,11 @@ const fieldLabels: Record<string, string> = {
       </div>
       <div class="relative flex items-center gap-2 shrink-0">
         <!-- 固定長寬的圖片瀏覽窗：絕對定位，不佔流內空間 -->
-        <SetGalleryStrip ref="galleryStrip" :set-id="cardSet.set_id" />
+        <SetGalleryStrip
+          ref="galleryStrip"
+          :set-id="cardSet.set_id"
+          :source-url="cardSet.yugipedia_url"
+        />
         <slot name="actions-left" />
         <AppButton
           @click="startEdit"
