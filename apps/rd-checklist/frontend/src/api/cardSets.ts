@@ -159,3 +159,43 @@ export async function refreshSetImages(setId: string): Promise<CardSetImage[]> {
 export function getSetImageUrl(imageId: number): string {
   return `/api/images/set-gallery/${imageId}`
 }
+
+// ── 時間軸視圖 ────────────────────────────────────────────
+
+export interface TimelineRarity {
+  rarity: string
+  count: number
+  owned: number
+}
+
+export interface TimelineCard {
+  card_id: string
+  rarity: string
+  is_alternate_art: boolean
+  name_zh: string
+  name_jp: string
+}
+
+export interface TimelineSet {
+  set_id: string
+  set_name_jp: string
+  set_name_zh: string
+  product_type: string
+  release_date: string
+  total_cards: number
+  total_variants: number
+  owned_variants: number
+  /** 最稀有在前 */
+  rarity_distribution: TimelineRarity[]
+  top_cards: TimelineCard[]
+  /** 卡組的第一張 gallery 圖（包裝圖），沒有就是 null */
+  image_id: number | null
+}
+
+/** 時間軸資料：一次拿齊統計、貴罕度分布、高貴罕度卡圖與包裝圖。
+ *  沒有發行日的卡組不會出現——時間軸上沒有它們的位置。 */
+export async function fetchTimeline(productType?: string): Promise<TimelineSet[]> {
+  const params = productType ? { product_type: productType } : {}
+  const { data } = await api.get<TimelineSet[]>('/card-sets/timeline', { params })
+  return data
+}

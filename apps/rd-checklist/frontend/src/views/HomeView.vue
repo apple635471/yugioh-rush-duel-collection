@@ -2,15 +2,19 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCardSetsStore } from '@/stores/cardSets'
-import { fetchGlobalStats, fetchAllSetStats } from '@/api/cardSets'
+import { useUiStore } from '@/stores/ui'
+import { fetchGlobalStats, fetchAllSetStats, fetchTimeline, type TimelineSet } from '@/api/cardSets'
 import type { OwnershipStats } from '@/types/cardSet'
 import ProductTypeSidebar from '@/components/navigation/ProductTypeSidebar.vue'
 import SetList from '@/components/navigation/SetList.vue'
+import SetTimeline from '@/components/navigation/SetTimeline.vue'
+import SetViewToggle from '@/components/navigation/SetViewToggle.vue'
 import CreateCardSetDialog from '@/components/navigation/CreateCardSetDialog.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const route = useRoute()
 const store = useCardSetsStore()
+const ui = useUiStore()
 const createDialog = ref<InstanceType<typeof CreateCardSetDialog> | null>(null)
 
 const currentProductType = computed(() =>
@@ -39,13 +43,38 @@ async function loadStats() {
   allSetStats.value = bulk
 }
 
+/* 時間軸資料另外拿——切到時間軸才載入，切回卡片牆不用重載。
+   產品線換了就把快取作廢，等下次顯示時間軸時重抓。 */
+const timeline = ref<TimelineSet[]>([])
+const timelineLoading = ref(false)
+let timelineLoadedFor: string | null = null
+
+async function loadTimeline() {
+  const pt = currentProductType.value ?? ''
+  if (timelineLoadedFor === pt) return
+  timelineLoading.value = true
+  try {
+    timeline.value = await fetchTimeline(currentProductType.value)
+    timelineLoadedFor = pt
+  } finally {
+    timelineLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await store.loadProductTypes()
   await Promise.all([store.loadSets(currentProductType.value), loadStats()])
+  if (ui.setViewMode === 'timeline') await loadTimeline()
 })
 
 watch(currentProductType, async (pt) => {
+  timelineLoadedFor = null
   await store.loadSets(pt)
+  if (ui.setViewMode === 'timeline') await loadTimeline()
+})
+
+watch(() => ui.setViewMode, async (mode) => {
+  if (mode === 'timeline') await loadTimeline()
 })
 </script>
 
@@ -72,6 +101,9 @@ watch(currentProductType, async (pt) => {
         </div>
 
         <div class="flex items-end gap-3 shrink-0">
+          <!-- Card wall / timeline -->
+          <SetViewToggle />
+
           <!-- New card set button -->
           <AppButton label="新增卡組" @click="createDialog?.open()">
             <template #icon>
@@ -110,9 +142,17 @@ watch(currentProductType, async (pt) => {
 
       <!-- Set grid -->
       <SetList
+        v-if="ui.setViewMode === 'card'"
         :sets="store.sets"
         :loading="store.loading"
         :set-stats="allSetStats"
+      />
+
+      <!-- 依發行日排的時間軸（沒有發行日的卡組不出現） -->
+      <SetTimeline
+        v-else
+        :sets="timeline"
+        :loading="timelineLoading"
       />
     </div>
   </div>

@@ -14,6 +14,11 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 ### 卡組 `/api/card-sets`
 - `GET /product-types` → `ProductTypeOut[]` — 產品類型 + `display_name`（英文）+ `display_name_zh`（中文，`promo` / `other` 為 null）+ `set_count`；標籤來自 `product_types.PRODUCT_TYPE_LABELS`，前端把中文名另起一行顯示
 - `GET /?product_type=booster` → `CardSetOut[]` — 卡組列表 (order by release_date DESC)
+- `GET /timeline?product_type=&top_cards=4` → `TimelineSetOut[]` — 時間軸視圖用，發行日新到舊
+  - 一次回傳每個卡組的統計、貴罕度分布（最稀有在前）、最稀有的 N 張卡（含 `is_alternate_art`，前端組 rarity key 取圖）與第一張 gallery 圖的 `image_id`
+  - **沒有 `release_date` 的卡組不回傳**——時間軸上沒有它們的位置
+  - 同一張卡只取它最稀有的印刷；只挑有圖的 variant；同貴罕度時正圖優先於異圖
+  - **路由順序**：須定義在 `GET /{set_id}` **之前**，否則 catch-all 會把 `timeline` 當成 set_id
 - `GET /{set_id}` → `CardSetWithCardsOut` — 含所有 cards + variants (eager loaded)
 - `PATCH /{set_id}` body: `CardSetUpdate` → `CardSetOut` — 編輯卡組 metadata，自動建立 override
 - `GET /{set_id}/overrides` → `CardSetOverrideOut[]` — 查看該卡組所有手動覆寫
