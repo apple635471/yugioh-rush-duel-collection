@@ -60,11 +60,10 @@ overrides = {o.field_name: o.value for o in db.query(CardSetOverrideModel).filte
 # 無 override 的欄位 → 使用 scraper 值
 ```
 
-可被 override 的欄位: `set_name_jp`, `set_name_zh`, `product_type`, `release_date`, `total_cards`, `rarity_distribution`
+可被 override 的欄位: `set_name_jp`, `set_name_zh`, `release_date`, `total_cards`, `rarity_distribution`
 
-**例外：`product_type` 不直接用 scraper 值**——匯入時一律過 `canonical_product_type(set_id, scraper值)`
-（`rd_checklist/product_types.py`）：set_id 有推導規則就用規則，否則把退役類型往前對應，
-再不行落 `other`。所以重新匯入舊 JSON 會**修正**分類而不是把它還原。詳見 `rd-product-types`。
+**`product_type` 不在裡面**：`card_sets` 根本沒有這個欄位。分類是 `product_types`
+表裡的規則算出來的（見 `rd-product-types`），匯入不寫、也不看 scraper JSON 裡的值。
 不可被 override 的欄位: `post_url` (永遠用 scraper 值)
 
 Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override 後下次匯入恢復 scraper 值。
@@ -73,7 +72,7 @@ Override 透過 `PATCH /api/card-sets/{set_id}` 自動建立；刪除 override �
 
 | 欄位 | 處理 |
 |------|------|
-| `product_type` | `canonical_product_type()` 重新推導（見 `rd-product-types`）|
+| `product_type` | 不寫入——分類由 DB 裡的規則即時算出（見 `rd-product-types`）|
 | `rarity` | `normalize_rarity()` 收斂同義拼法 |
 | `monster_type` | `normalize_monster_type()` 收斂種族寫法（見 `rd-html-parsing`）|
 

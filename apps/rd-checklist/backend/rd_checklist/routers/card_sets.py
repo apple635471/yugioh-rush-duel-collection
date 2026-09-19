@@ -12,7 +12,6 @@ from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..product_types import label_for
 from ..models import (
     CardModel,
     CardSetImageModel,
@@ -28,7 +27,6 @@ from ..schemas import (
     CardSetUpdate,
     CardSetImageOut,
     CardSetWithCardsOut,
-    ProductTypeOut,
     SetListApplyOut,
     SetListApplyRequest,
     SetListCompareOut,
@@ -37,6 +35,7 @@ from ..schemas import (
 )
 from ..services.card_service import delete_card_and_variants
 from ..services.set_image_service import refresh_set_images
+from ..services.product_type_service import classify_set
 from ..services.set_list_compare import compare_with_yugipedia
 from ..services.timeline_service import build_timeline
 from ..services.variant_service import (
@@ -50,37 +49,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/card-sets", tags=["card-sets"])
 
 
-@router.get("/product-types", response_model=list[ProductTypeOut])
-def list_product_types(db: Session = Depends(get_db)):
-    """List all product types with set counts."""
-    rows = (
-        db.query(CardSetModel.product_type, func.count(CardSetModel.set_id))
-        .group_by(CardSetModel.product_type)
-        .all()
-    )
-    result = []
-    for pt, count in rows:
-        name_en, name_zh = label_for(pt)
-        result.append(
-            ProductTypeOut(
-                product_type=pt,
-                display_name=name_en,
-                display_name_zh=name_zh,
-                set_count=count,
-            )
-        )
-    return result
-
-
 @router.get("", response_model=list[CardSetOut])
 def list_card_sets(
     product_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-    """List card sets, optionally filtered by product type."""
+    """List card sets, optionally filtered by product type.
+
+    The product type is not a column — it comes from the rules in the DB — so
+    the filter runs in Python. That is fine at this size (~100 sets) and means
+    editing a rule re-files the list immediately.
+    """
     q = db.query(CardSetModel)
-    if product_type:
-        q = q.filter(CardSetModel.product_type == product_type)
     # release_date is stored as "YYYY/M/D" (months/days may be single-digit).
     # Build a zero-padded "YYYYMM" key so numeric order is correct (e.g. "202511" > "202508").
     # Sets without a date sort last, then by set_id.
@@ -94,7 +74,10 @@ def list_card_sets(
         ),
         CardSetModel.set_id,
     )
-    return q.all()
+    sets = q.all()
+    if product_type:
+        sets = [s for s in sets if classify_set(s.set_id) == product_type]
+    return sets
 
 
 @router.post("", response_model=CardSetOut, status_code=201)
@@ -109,7 +92,6 @@ def create_card_set(body: CardSetCreate, db: Session = Depends(get_db)):
         set_id=body.set_id,
         set_name_jp=body.set_name_jp,
         set_name_zh=body.set_name_zh,
-        product_type=body.product_type,
         release_date=body.release_date,
         post_url="",
         total_cards=0,
@@ -167,10 +149,11 @@ def get_card_set(set_id: str, db: Session = Depends(get_db)):
 
 
 # ── Overridable fields ──
+# product_type is deliberately absent: it is not stored on the set at all —
+# the rules in the product_types table decide (see product_type_service).
 _OVERRIDABLE_FIELDS = {
     "set_name_jp",
     "set_name_zh",
-    "product_type",
     "release_date",
 }
 

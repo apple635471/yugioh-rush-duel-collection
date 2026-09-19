@@ -26,7 +26,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const items: BreadcrumbItem[] = [{ label: 'Home', to: '/' }]
   if (store.currentSet) {
     const pt = store.currentSet.product_type
-    items.push({ label: pt, to: `/sets/${pt}` })
+    items.push({ label: store.typeByCode(pt)?.name_zh || store.typeByCode(pt)?.name_en || pt, to: `/sets/${pt}` })
     items.push({ label: store.currentSet.set_name_zh || store.currentSet.set_id })
   }
   return items
@@ -103,6 +103,8 @@ const progress = computed(() =>
 const compareDialog = ref<InstanceType<typeof SetListCompareDialog> | null>(null)
 
 async function loadAll() {
+  // 分類名稱（麵包屑用）來自產品類型清單，直接進卡組頁時還沒載過
+  if (store.productTypes.length === 0) store.loadProductTypes()
   await store.loadSet(setId.value)
 }
 

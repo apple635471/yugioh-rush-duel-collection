@@ -4,11 +4,15 @@ import Dialog from 'primevue/dialog'
 import { fetchSetImages, getSetImageUrl, type CardSetImage, type TimelineSet } from '@/api/cardSets'
 import { getCardImageUrl } from '@/api/cards'
 import { productTypeTheme } from '@/constants/productTypes'
+import { useCardSetsStore } from '@/stores/cardSets'
 
 const props = defineProps<{
   sets: TimelineSet[]
   loading: boolean
 }>()
+
+// 分類的顏色與名稱來自 DB 裡的規則（store 已經載好）
+const store = useCardSetsStore()
 
 /** 貴罕度標籤最多列幾種，其餘收成 +N（完整清單在卡組頁看得到） */
 const RARITY_CHIP_LIMIT = 5
@@ -45,7 +49,7 @@ const rows = computed<Row[]>(() => {
       out.push({ kind: 'year', key: `y-${year}-${i}`, year })
       lastYear = year
     }
-    const theme = productTypeTheme(set.product_type)
+    const theme = productTypeTheme(store.typeByCode(set.product_type))
     out.push({
       kind: 'set',
       key: set.set_id,

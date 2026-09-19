@@ -11,7 +11,6 @@ from .config import SCRAPER_DATA_DIR
 from .database import SessionLocal, init_db
 from .services.import_service import import_scraper_data
 from .services.monster_type_migration import migrate_monster_types
-from .services.product_type_migration import migrate_product_types
 from .services.set_service import (
     delete_card_set,
     find_split_candidates,
@@ -70,12 +69,17 @@ def main(argv: list[str] | None = None) -> None:
         "in existing DB rows (idempotent)",
     )
 
-    # reclassify-product-types
-    sub.add_parser(
-        "reclassify-product-types",
-        help="Re-classify existing sets onto the current product types "
-        "(retired types → other, tournament_pack → triple_build_pack, "
-        "old other → promo; user overrides are kept). Idempotent.",
+    # migrate-product-types
+    mpt = sub.add_parser(
+        "migrate-product-types",
+        help="Move classification into the DB: seed the product type rules, "
+        "drop the legacy card_sets.product_type column and any product_type "
+        "overrides, and report sets whose type changes. Idempotent.",
+    )
+    mpt.add_argument(
+        "--reseed",
+        action="store_true",
+        help="Re-insert the built-in default types (only adds missing ones)",
     )
 
     # merge-set
@@ -185,14 +189,17 @@ def main(argv: list[str] | None = None) -> None:
         finally:
             db.close()
 
-    elif args.command == "reclassify-product-types":
-        init_db()
+    elif args.command == "migrate-product-types":
+        from .services.product_type_service import migrate_to_db_rules
+
         db = SessionLocal()
         try:
-            stats = migrate_product_types(db)
-            print("\nProduct type re-classification complete:")
-            print(f"  Sets changed:        {stats['sets_changed']}")
-            print(f"  Overrides rewritten: {stats['overrides_rewritten']}")
+            stats = migrate_to_db_rules(db, reseed=args.reseed)
+            print("\nProduct type rules now live in the database:")
+            print(f"  Types seeded:       {stats['types_seeded']}")
+            print(f"  Legacy column:      {stats['legacy_column']}")
+            print(f"  Overrides dropped:  {stats['overrides_dropped']}")
+            print(f"  Sets re-classified: {len(stats['changes'])}")
             for set_id, before, after in stats["changes"]:
                 print(f"    {set_id}: {before} → {after}")
         finally:

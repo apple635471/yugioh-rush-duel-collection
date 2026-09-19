@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import type { CardSet, CardSetWithCards, ProductType } from '@/types/cardSet'
 import type { Card } from '@/types/card'
 import { variantKey } from '@/types/card'
-import { fetchProductTypes, fetchCardSets, fetchCardSet } from '@/api/cardSets'
+import { fetchCardSets, fetchCardSet } from '@/api/cardSets'
+import { fetchProductTypes } from '@/api/productTypes'
 
 export const useCardSetsStore = defineStore('cardSets', () => {
   const productTypes = ref<ProductType[]>([])
@@ -13,6 +14,16 @@ export const useCardSetsStore = defineStore('cardSets', () => {
 
   async function loadProductTypes() {
     productTypes.value = await fetchProductTypes()
+  }
+
+  /** 規則改過之後，分類與各類數量都會變，整個清單重抓 */
+  function setProductTypes(types: ProductType[]) {
+    productTypes.value = types
+  }
+
+  /** 卡組的分類是後端依規則算出來的，這裡只是把代號換成顯示用的資料 */
+  function typeByCode(code: string): ProductType | undefined {
+    return productTypes.value.find(pt => pt.code === code)
   }
 
   async function loadSets(productType?: string) {
@@ -51,5 +62,9 @@ export const useCardSetsStore = defineStore('cardSets', () => {
     if (target) Object.assign(target, updated)
   }
 
-  return { productTypes, sets, currentSet, loading, loadProductTypes, loadSets, loadSet, patchVariantOwnership, updateCardInSet }
+  return {
+    productTypes, sets, currentSet, loading,
+    loadProductTypes, setProductTypes, typeByCode,
+    loadSets, loadSet, patchVariantOwnership, updateCardInSet,
+  }
 })

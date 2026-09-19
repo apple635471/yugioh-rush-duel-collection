@@ -10,8 +10,8 @@ App.vue
 ├── <RouterView>
 │   ├── HomeView           # / 和 /sets/:productType  (新增卡組 → AppButton)
 │   │   ├── BreadcrumbBar
-│   │   ├── ProductTypeSidebar # 左側導覽欄，SECTIONS 常數以 product_type 明列分組
-│   │   │                      #   (補充包系列 / 預組 / 其他)，中文名另起一行
+│   │   ├── ProductTypeSidebar # 左側導覽欄，分組/順序/名稱/顏色全部來自 DB
+│   │   │   └── ProductTypeRulesDialog  # 分類規則編輯器（代號/名稱/分組/顏色/規則）
 │   │   ├── ProductTypeNav # 產品類型 pill 篩選列 (舊版，仍保留)
 │   │   ├── SetViewToggle  # 卡片牆 ↔ 時間軸 (高度對齊 AppButton md)
 │   │   ├── SetList        # 卡組 grid (set_id, 名稱, 日期, 卡數)

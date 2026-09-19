@@ -44,6 +44,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 
 from .models import Card, CardSet
 from .monster_types import normalize_monster_type
+from .product_types import guess_product_type
 from .rarities import normalize_rarity_string
 
 logger = logging.getLogger(__name__)
@@ -121,42 +122,6 @@ _LABEL_SPLIT_RE = re.compile(
     r"(?=(?:條件|永續效果|選擇效果|(?<!永續)(?<!選擇)效果)[:：])"
 )
 
-# Product type mapping from set ID prefix.
-# Mirrors rd_checklist/product_types.py in the checklist backend — keep both
-# in sync. One-off product lines (CP, GRC, EXT, VSP) are deliberately absent:
-# they fall through to "other" instead of each getting their own nav entry.
-PRODUCT_TYPE_MAP = {
-    "KP": "booster",
-    "AP": "advanced_pack",
-    "MAX": "maximum_pack",
-    "ORP": "over_rush_pack",
-    "LGP": "legend_pack",
-    "TB": "triple_build_pack",
-    # Structure decks: SD, SD0x, ST, SBD, GRD all map to structure_deck
-    "SBD": "structure_deck",
-    "SD": "structure_deck",
-    "ST": "structure_deck",
-    "GRD": "structure_deck",
-    "B0": "battle_pack",
-    "B2": "battle_pack",
-    # Battle packs ship as a B-half and an S-half (B241/S241); some posts are
-    # filed under the S-side set id, e.g. S254 carries the RD/B252 cards.
-    "S2": "battle_pack",
-    # Promos: convenience-store tie-ins, magazine inserts, gum, starter boosts
-    "711": "promo",
-    "ECG": "promo",
-    "SJMP": "promo",
-    "VJMP": "promo",
-    "WJMP": "promo",
-    "PROMO": "promo",
-    "P0": "promo",
-}
-
-# Jump Festa giveaways: 23PR, 24PR, 25PR, 26PR, … (two digits + PR)
-YEAR_PROMO_RE = re.compile(r"^\d{2}PR$", re.IGNORECASE)
-
-
-
 def compute_content_hash(html: str) -> str:
     """Compute a hash of the post body HTML for change detection."""
     return hashlib.sha256(html.encode("utf-8")).hexdigest()[:16]
@@ -173,16 +138,6 @@ def extract_post_title(html: str) -> str:
     soup = BeautifulSoup(html, "lxml")
     title_el = soup.select_one("h3.post-title") or soup.select_one("title")
     return title_el.get_text(strip=True) if title_el else ""
-
-
-def guess_product_type(set_id: str) -> str:
-    """Product type from the set ID; "other" when no rule matches."""
-    if YEAR_PROMO_RE.match(set_id):
-        return "promo"
-    for prefix in sorted(PRODUCT_TYPE_MAP, key=len, reverse=True):
-        if set_id.startswith(prefix):
-            return PRODUCT_TYPE_MAP[prefix]
-    return "other"
 
 
 def parse_post_multi(html: str, url: str = "") -> list[CardSet]:

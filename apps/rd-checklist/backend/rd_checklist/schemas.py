@@ -140,7 +140,7 @@ class CardSetCreate(BaseModel):
     set_id: str
     set_name_jp: str = ""
     set_name_zh: str = ""
-    product_type: str = "other"
+    # product_type is not accepted: it is derived from the set_id.
     release_date: Optional[str] = None
 
 
@@ -148,12 +148,12 @@ class CardSetUpdate(BaseModel):
     """Partial update for card set metadata.
 
     Only provided fields will be updated and stored as overrides.
-    total_cards and rarity_distribution are auto-computed from card data, not editable.
+    total_cards and rarity_distribution are auto-computed from card data, and
+    product_type comes from the set_id rules — none of the three are editable.
     """
 
     set_name_jp: Optional[str] = None
     set_name_zh: Optional[str] = None
-    product_type: Optional[str] = None
     release_date: Optional[str] = None
     # Not scraper data, so it is stored on the row without an override.
     # Setting it also pulls the set's gallery images.
@@ -175,12 +175,61 @@ class CardSetWithCardsOut(CardSetOut):
 
 
 class ProductTypeOut(BaseModel):
-    product_type: str
-    display_name: str
+    """A product line and the set_id patterns that put a set in it."""
+
+    code: str
+    name_en: str
     # Chinese name, shown on its own line in the UI. None for types whose
     # English name is already the whole name (Promo, Other).
-    display_name_zh: Optional[str] = None
-    set_count: int
+    name_zh: Optional[str] = None
+    group_label: str = ""
+    color: str = "#8C90A3"
+    sort_order: int = 0
+    # The fallback type carries no rules and takes every set nothing claims.
+    is_fallback: bool = False
+    # Regular expressions, in the order they are tried.
+    rules: list[str] = []
+    set_count: int = 0
+
+
+class ProductTypeCreate(BaseModel):
+    code: str
+    name_en: str = ""
+    name_zh: Optional[str] = None
+    group_label: str = ""
+    color: str = "#8C90A3"
+    sort_order: Optional[int] = None
+    rules: list[str] = []
+
+
+class ProductTypeUpdate(BaseModel):
+    """Partial update. `rules`, when given, replaces the whole list."""
+
+    code: Optional[str] = None
+    name_en: Optional[str] = None
+    name_zh: Optional[str] = None
+    group_label: Optional[str] = None
+    color: Optional[str] = None
+    sort_order: Optional[int] = None
+    rules: Optional[list[str]] = None
+
+
+class ProductTypeOrderUpdate(BaseModel):
+    """Full list of codes, in the order they should appear."""
+
+    codes: list[str]
+
+
+class RulePreviewRequest(BaseModel):
+    patterns: list[str]
+
+
+class RulePreviewOut(BaseModel):
+    """Which sets these patterns catch, ignoring every other type."""
+
+    set_ids: list[str]
+    # Sets caught here that another type claims first (rules are ordered).
+    claimed_elsewhere: dict[str, str] = {}
 
 
 # ── Ownership ──

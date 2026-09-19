@@ -3,11 +3,9 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { createCardSet } from '@/api/cardSets'
 import { useCardSetsStore } from '@/stores/cardSets'
-import { PRODUCT_TYPE_OPTIONS } from '@/constants/productTypes'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
 
 const emit = defineEmits<{
   created: []
@@ -26,7 +24,6 @@ const form = reactive({
   set_id: '',
   set_name_zh: '',
   set_name_jp: '',
-  product_type: 'other',
   release_date: '',
 })
 
@@ -34,7 +31,6 @@ function open() {
   form.set_id = ''
   form.set_name_zh = ''
   form.set_name_jp = ''
-  form.product_type = 'other'
   form.release_date = ''
   errorMsg.value = ''
   visible.value = true
@@ -52,7 +48,6 @@ async function submit() {
       set_id: form.set_id.trim(),
       set_name_zh: form.set_name_zh.trim(),
       set_name_jp: form.set_name_jp.trim(),
-      product_type: form.product_type,
       release_date: form.release_date.trim() || null,
     })
     visible.value = false
@@ -124,17 +119,6 @@ defineExpose({ open })
         />
       </div>
 
-      <!-- 類型 -->
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400 font-medium">產品類型</label>
-        <Select
-          v-model="form.product_type"
-          :options="PRODUCT_TYPE_OPTIONS"
-          option-label="label"
-          option-value="value"
-          class="w-full text-sm"
-        />
-      </div>
 
       <!-- 發售日 -->
       <div class="flex flex-col gap-1">

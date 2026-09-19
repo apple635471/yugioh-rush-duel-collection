@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { ProductType } from '@/types/cardSet'
 import Button from 'primevue/button'
+import ProductTypeRulesDialog from '@/components/navigation/ProductTypeRulesDialog.vue'
 
 const route = useRoute()
 const collapsed = ref(false)
@@ -11,41 +12,32 @@ const props = defineProps<{
   productTypes: ProductType[]
 }>()
 
+const emit = defineEmits<{
+  /** 分類規則改了：卡組的分類跟著變，外面要重抓 */
+  rulesChanged: []
+}>()
+
+const rulesDialog = ref<InstanceType<typeof ProductTypeRulesDialog> | null>(null)
+
 /**
- * Sidebar sections, by product type. Listed explicitly (rather than matched
- * on the display name) so renaming a label never reshuffles the nav, and the
- * order within a section is the order here.
+ * 分組也來自資料（`group_label`），跟代號、名稱、顏色、規則一樣存在 DB。
+ * 組的順序 = 該組第一個類型的順序；組內順序 = 類型自己的順序。
  */
-const SECTIONS: { label: string; types: string[] }[] = [
-  {
-    label: '補充包系列',
-    types: ['booster', 'advanced_pack', 'maximum_pack', 'over_rush_pack', 'legend_pack', 'triple_build_pack'],
-  },
-  { label: '預組', types: ['structure_deck'] },
-  { label: '其他', types: ['battle_pack', 'promo', 'other'] },
-]
-
-const PLACED = new Set(SECTIONS.flatMap(s => s.types))
-
-/** Types in this section, in SECTIONS order; unlisted types land in the last section. */
-function typesIn(section: { label: string; types: string[] }): ProductType[] {
-  const byType = new Map(props.productTypes.map(pt => [pt.product_type, pt]))
-  const listed = section.types.map(t => byType.get(t)).filter((pt): pt is ProductType => !!pt)
-
-  const isLast = section === SECTIONS[SECTIONS.length - 1]
-  if (!isLast) return listed
-  const unlisted = props.productTypes.filter(pt => !PLACED.has(pt.product_type))
-  return [...listed, ...unlisted]
-}
-
-const sections = computed(() =>
-  SECTIONS.map(s => ({ label: s.label, types: typesIn(s) })).filter(s => s.types.length > 0)
-)
+const sections = computed(() => {
+  const groups: { label: string; types: ProductType[] }[] = []
+  for (const pt of props.productTypes) {
+    const label = pt.group_label || '其他'
+    const existing = groups.find(g => g.label === label)
+    if (existing) existing.types.push(pt)
+    else groups.push({ label, types: [pt] })
+  }
+  return groups
+})
 
 const totalSets = computed(() => props.productTypes.reduce((sum, pt) => sum + pt.set_count, 0))
 
 function isActive(pt: ProductType): boolean {
-  return route.params.productType === pt.product_type
+  return route.params.productType === pt.code
 }
 
 const ITEM_CLASS = 'flex items-center justify-between gap-1 px-4 py-1.5 text-xs border-l-2 transition-all'
@@ -124,14 +116,14 @@ const BADGE_CLASS = 'font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0'
         </div>
         <router-link
           v-for="pt in section.types"
-          :key="pt.product_type"
-          :to="`/sets/${pt.product_type}`"
+          :key="pt.code"
+          :to="`/sets/${pt.code}`"
           :class="[ITEM_CLASS, isActive(pt) ? ACTIVE_CLASS : INACTIVE_CLASS]"
         >
           <!-- English name, with the Chinese name on its own line -->
           <span class="leading-snug min-w-0">
-            {{ pt.display_name }}
-            <span v-if="pt.display_name_zh" class="block">{{ pt.display_name_zh }}</span>
+            {{ pt.name_en }}
+            <span v-if="pt.name_zh" class="block">{{ pt.name_zh }}</span>
           </span>
           <span
             :class="[BADGE_CLASS, isActive(pt) ? 'text-gold bg-[rgba(201,168,76,0.15)]' : 'text-gray-400 bg-dark-3']"
@@ -141,5 +133,25 @@ const BADGE_CLASS = 'font-orbitron text-[10px] px-1 py-0.5 rounded shrink-0'
         </router-link>
       </div>
     </template>
+
+    <!-- 分類規則：卡組屬於哪一類由這些規則決定 -->
+    <div class="h-px bg-[rgba(201,168,76,0.08)] mx-4 my-1" />
+    <div class="px-2 py-2">
+      <button
+        type="button"
+        class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px] text-gray-400
+               hover:text-gold-light hover:bg-[rgba(201,168,76,0.06)] transition-colors"
+        @click="rulesDialog?.open()"
+      >
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        編輯分類規則
+      </button>
+    </div>
   </aside>
+
+  <ProductTypeRulesDialog ref="rulesDialog" @changed="emit('rulesChanged')" />
 </template>
