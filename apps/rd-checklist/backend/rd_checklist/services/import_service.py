@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from ..models import CardModel, CardOverrideModel, CardSetModel, CardSetOverrideModel, CardVariantModel, CardVariantOverrideModel
 from ..monster_types import normalize_monster_type
-from ..product_types import canonical_product_type
 from ..rarities import normalize_rarity, normalize_rarity_string
 
 logger = logging.getLogger(__name__)
@@ -97,10 +96,9 @@ def _import_one_set(db: Session, data: dict, force: bool) -> None:
 
     card_set.set_name_jp = _val("set_name_jp", data.get("set_name_jp", ""))
     card_set.set_name_zh = _val("set_name_zh", data.get("set_name_zh", ""))
-    # Classification is rule-only: the set_id decides. The scraper's own guess
-    # is ignored (it uses the same rules anyway) and there is no override to
-    # consult, so re-importing old JSON corrects the row instead of undoing it.
-    card_set.product_type = canonical_product_type(set_id)
+    # No product_type is written: it is not stored on the set. The rules in
+    # the product_types table decide, so editing a rule re-files every set at
+    # once and the scraper's own guess in the JSON is simply ignored.
     card_set.release_date = _val("release_date", data.get("release_date"))
     card_set.post_url = data.get("post_url", "")  # post_url 不需要 override
     if "total_cards" in overrides:

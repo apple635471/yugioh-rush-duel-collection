@@ -38,7 +38,7 @@ class CardSet:
     set_id: str  # e.g. "KP01", "ST01", "LGP1"
     set_name_jp: str
     set_name_zh: str
-    product_type: str  # booster, starter, character_pack, battle_pack, etc.
+    product_type: str  # 由 checklist 的規則決定，見 product_types.py
     release_date: Optional[str] = None
     post_url: str = ""
     total_cards: int = 0

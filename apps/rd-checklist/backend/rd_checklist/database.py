@@ -31,7 +31,7 @@ def get_db():
 
 
 def init_db():
-    """Create all tables and add any missing columns."""
+    """Create all tables, seed the product type rules, run column migrations."""
     from .models import Base
     Base.metadata.create_all(bind=engine)
 
@@ -39,6 +39,41 @@ def init_db():
     # ALTER TABLE ADD COLUMN is a no-op if the column already exists
     # (SQLite raises "duplicate column name" which we catch and ignore).
     _migrate_add_columns()
+
+    # Classification lives in the DB, so an empty table means no categories
+    # at all — fill it with the defaults the app ships with.
+    _seed_product_types()
+
+    # Sets no longer store their product type; the rules decide.
+    _migrate_drop_product_type_column()
+
+
+def _seed_product_types() -> None:
+    from .services.product_type_service import seed_defaults
+
+    db = SessionLocal()
+    try:
+        seed_defaults(db)
+    finally:
+        db.close()
+
+
+def _migrate_drop_product_type_column() -> None:
+    """Drop the legacy card_sets.product_type column, once the rules exist."""
+    with engine.connect() as conn:
+        row = conn.execute(
+            text("SELECT sql FROM sqlite_master WHERE type='table' AND name='card_sets'")
+        ).fetchone()
+        if row is None or "product_type" not in row[0]:
+            return
+        try:
+            # SQLite refuses to drop a column an index still mentions.
+            conn.execute(text("DROP INDEX IF EXISTS ix_card_sets_product_type"))
+            conn.execute(text("ALTER TABLE card_sets DROP COLUMN product_type"))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
 
 
 def _migrate_add_columns():

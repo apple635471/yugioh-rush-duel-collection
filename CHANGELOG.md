@@ -4,6 +4,16 @@
 
 ### 變更
 
+- **產品分類規則改成存在資料庫，可以在 UI 編輯；`card_sets.product_type` 欄位移除**
+  - 新增 `product_types`（代號／英文名／中文名／側邊欄分組／時間軸顏色／順序／是否 fallback）與 `product_type_rules`（一列一條正規表示式）兩張表
+  - **卡組不再存自己的分類**：`classify_set(set_id)` 依規則即時算出來，所以改一條規則就等於把所有卡組重新分類一次，不用遷移、不用重新匯入。`CardSetModel.product_type` 改成 Python property，回應格式不變
+  - 規則語意：`re.search` + 不分大小寫，沒加 `^` `$` 就是「包含」（`JMP` → SJMP/VJMP/WJMP）；順序由分類的排序決定，第一個命中的勝出；fallback（`other`）沒有規則、不能刪，收所有沒被認領的卡組
+  - **首頁左側分類清單最下面新增「編輯分類規則」**：可改代號、中英文名、分組、顏色、規則，可新增／刪除分類、上下調整順序；存檔前可「試算」看某組規則會抓到哪些卡組、其中哪些已被排在前面的分類認領走
+  - **爬蟲也讀同一份規則**：開跑時打 `GET /api/product-types` 並快取到 `data/product_types.json`（後端沒開就用快取）。在 UI 改完規則，下次爬取直接套用；更新既有卡組時也一律重算，不再沿用舊 JSON 的值
+  - 側邊欄的分組、順序、名稱與時間軸的配色全部改讀 API，前端不再有任何寫死的分類清單
+  - 新 API：`GET/POST /api/product-types`、`PATCH/DELETE /api/product-types/{code}`、`PUT /api/product-types/order`、`POST /api/product-types/preview`；舊的 `GET /api/card-sets/product-types` 移除
+  - 遷移指令 `migrate-product-types`（取代 `reclassify-product-types`）：種預設規則 → 報告分類有變的卡組 → 丟掉 `card_sets.product_type` 欄位與殘留的 override。本機執行結果：**117 個卡組分類完全不變**
+
 - **卡組分類改成唯讀，只看 set_id 規則**（原本可以在卡組編輯裡用下拉改）
   - 判定收斂成一句話：`canonical_product_type(set_id)` —— set_id 有規則就用規則，沒有就 `other`。不再讀 scraper 的 product_type（它用的是同一套規則），也不再有 `product_type` override（`_OVERRIDABLE_FIELDS` 與 `CardSetUpdate` / `CardSetCreate` 都拿掉了）
   - 原本同一件事有四種說法會互相打架：DB 值、override 值、scraper 值、前端寫死的下拉選項。分類飄掉的 bug（`other` 顯示成 Promo）就是這樣來的

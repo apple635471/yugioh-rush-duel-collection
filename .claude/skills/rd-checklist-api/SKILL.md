@@ -12,7 +12,7 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
 ## 端點一覽
 
 ### 卡組 `/api/card-sets`
-- `GET /product-types` → `ProductTypeOut[]` — 產品類型 + `display_name`（英文）+ `display_name_zh`（中文，`promo` / `other` 為 null）+ `set_count`；標籤來自 `product_types.PRODUCT_TYPE_LABELS`，前端把中文名另起一行顯示
+- 產品類型已經搬到自己的 router：`/api/product-types`（見下方「產品分類規則」）
 - `GET /?product_type=booster` → `CardSetOut[]` — 卡組列表 (order by release_date DESC)
 - `GET /timeline?product_type=&top_cards=4` → `TimelineSetOut[]` — 時間軸視圖用，發行日新到舊
   - 一次回傳每個卡組的統計、貴罕度分布（最稀有在前）、最稀有的 N 張卡（含 `is_alternate_art`，前端組 rarity key 取圖）與第一張 gallery 圖的 `image_id`
@@ -32,6 +32,14 @@ Backend: FastAPI on port 8000, CORS 允許 localhost:5173。
   - 比對單位是 (card_id, rarity, is_alternate_art)，詳見 `rd-yugipedia-set-lists`
   - 比對成功後會把這次用的網址存進 `card_sets.yugipedia_url` 並順手抓卡組圖片
 - `PATCH /{set_id}` 的 `yugipedia_url` 不走 override（非爬蟲資料），存檔時會抓卡組圖片
+
+### 產品分類規則 `/api/product-types`
+- `GET /` → `ProductTypeOut[]` — 代號、中英文名、分組、顏色、順序、`rules`（正規表示式清單）、`set_count`
+- `POST /` body: `ProductTypeCreate` (201)；`PATCH /{code}`；`DELETE /{code}`（fallback 不能刪）
+- `PUT /order` body: `{codes: [...]}` — 顯示順序，也是規則比對順序
+- `POST /preview` body: `{patterns: [...]}` → `{set_ids, claimed_elsewhere}` — 試算某組規則會抓到哪些卡組
+- 四個寫入端點都回傳**整份最新清單**：改一條規則會改到所有分類的卡組數
+- 卡組的分類是算出來的（`classify_set`），所以改規則不用遷移資料，`GET /api/card-sets?product_type=` 的過濾也是在 Python 做（見 `rd-product-types`）
 
 ### 卡片 `/api/cards`
 - `GET /next-id/{set_id}` → `NextCardIdOut` — 自動生成下一個可用 card_id (掃描現有卡，找最大數字後綴 +1)

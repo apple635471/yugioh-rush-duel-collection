@@ -91,15 +91,17 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 
 ### Navigation — 首頁
 - `ProductTypeSidebar`: 可收合左側導覽欄（200px 展開 / 36px 收合），使用 PrimeVue Button 切換
-  - 分組寫在元件內的 `SECTIONS` 常數，**用 `product_type` 明列**（不是比對 display_name）：`補充包系列` = booster / advanced_pack / maximum_pack / over_rush_pack / legend_pack / triple_build_pack；`預組` = structure_deck；`其他` = battle_pack / promo / other
-  - 組內順序就是 `SECTIONS` 裡的順序；沒列到的新類型自動落在最後一組，不會憑空消失
-  - 每個項目英文名一行、`display_name_zh` 另起一行（見 `rd-product-types`）
+  - 分組、順序、名稱、顏色**全部來自 DB**（`GET /api/product-types` → `cardSets` store）：組別是 `group_label`，組的順序 = 該組第一個類型的 `sort_order`
+  - 每個項目英文名一行、`name_zh` 另起一行（見 `rd-product-types`）
+  - 清單最下面是「編輯分類規則」，打開 `ProductTypeRulesDialog`；改完 emit `rulesChanged`，`HomeView` 重抓卡組、統計與時間軸（分類是算出來的，規則一改全部都會變）
+- `ProductTypeRulesDialog`: 分類規則編輯器——代號／中英文名／分組／顏色／規則（多條正規表示式），可新增、刪除、上下移（順序就是規則比對順序），「試算」會呼叫 `POST /api/product-types/preview` 顯示某組規則抓到哪些卡組、其中哪些已被排在前面的類型認領
+  - 寫入端點都回傳整份最新清單 → `store.setProductTypes()`，不用再多打一次 API
 - `ProductTypeNav`: pill 列（舊版，仍保留但 HomeView 已改用 Sidebar）
 - `SetList`: 卡組 grid cards，router-link 到 `/set/{id}`
   - hover 時顯示該卡組的圖片（Teleport 到 body 的浮動視窗，卡片本身 `overflow-hidden` 會裁掉）。每個卡組只查一次 API 就快取；進場延遲 120ms，滑過一整排不會每張都打；沒有圖就不彈視窗
 - `SetViewToggle`: 讀寫 `ui.setViewMode`，卡片牆 ↔ 時間軸；與 `ViewToggle` 一樣帶 `app-toolbar-toggle` class
 - `SetTimeline`: 時間軸視圖，資料來自 `GET /api/card-sets/timeline`（`HomeView` 切到時間軸才載入，同一個產品線不重載）
-  - 顏色帶產品類型（`constants/productTypes.ts` 的 `PRODUCT_TYPES` → `productTypeTheme()` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色。同一份清單也長出建立/編輯卡組的下拉選項，要與後端 `PRODUCT_TYPE_LABELS` 同步
+  - 顏色帶產品類型（`store.typeByCode()` → `productTypeTheme()` → CSS 變數 `--c`）：節點、邊條、箭頭、貴罕度標籤、進度條同色。顏色存在 DB 的 `product_types.color`，在分類規則編輯器裡改
   - 盒高固定 228px、`.tl-row + .tl-row { margin-top: -98px }` → 列距 130px，異側咬合、同側留 32px；`.tl-box` 的 `overflow` 必須是 `visible`，否則指向軸線的箭頭（`::after` 三角形）會被裁掉，圓角改由各子元素自己處理
   - 盒高固定，所以 `.tl-main > *` 一律 `flex-shrink: 0`，剩餘高度全給卡圖列（否則標題會被壓成半截）
   - 點卡圖／卡組圖片開燈箱（PrimeVue `Dialog`，與 `SetGalleryStrip` 同一套做法），左右鍵或箭頭鈕在同一個卡組的圖片間移動；卡組圖片開燈箱時才用 `fetchSetImages` 補齊整個 gallery 並快取
@@ -136,7 +138,7 @@ api/cards.ts       → fetchCard, updateCard, updateOwnership, searchCards, getC
 - `SetMetadataEditor`: 卡組 metadata inline 編輯，嵌入 SetView header
   - View mode: 顯示中文/日文名 + meta tags (set_id, release_date, card count)
   - Edit mode: 表單可修改 set_name_zh, set_name_jp, release_date, yugipedia_url
-  - `product_type` 與 total_cards / rarity_distribution 同列在唯讀那組（`Other (由 set_id 決定)`）——分類只看 set_id 規則，要改是改後端 `product_types.py`
+  - `product_type` 與 total_cards / rarity_distribution 同列在唯讀那組（`Other (由分類規則決定)`）——分類是 DB 裡的規則算出來的，要改是去側邊欄的「編輯分類規則」
   - 儲存時自動建立 override (防止匯入覆蓋)，已有 override 的欄位顯示黃色圖示
   - 可展開查看/刪除 override (恢復 scraper 值)
   - `@updated` → SetView 重新 `loadAll()` 刷新資料

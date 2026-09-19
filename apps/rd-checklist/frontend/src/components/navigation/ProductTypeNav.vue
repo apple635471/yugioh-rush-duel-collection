@@ -9,7 +9,7 @@ defineProps<{
 }>()
 
 function isActive(pt: ProductType): boolean {
-  return route.params.productType === pt.product_type
+  return route.params.productType === pt.code
 }
 </script>
 
@@ -26,14 +26,14 @@ function isActive(pt: ProductType): boolean {
     </router-link>
     <router-link
       v-for="pt in productTypes"
-      :key="pt.product_type"
-      :to="`/sets/${pt.product_type}`"
+      :key="pt.code"
+      :to="`/sets/${pt.code}`"
       class="px-3 py-1.5 text-sm rounded-full border transition-colors"
       :class="isActive(pt)
         ? 'border-gold/50 bg-gold/10 text-gold'
         : 'border-[rgba(201,168,76,0.18)] text-gray-400 hover:border-gold/35 hover:text-gray-200'"
     >
-      {{ pt.display_name }}<span v-if="pt.display_name_zh"> ({{ pt.display_name_zh }})</span>
+      {{ pt.name_en }}<span v-if="pt.name_zh"> ({{ pt.name_zh }})</span>
       <span class="ml-1 text-xs opacity-60">({{ pt.set_count }})</span>
     </router-link>
   </div>

@@ -3,6 +3,7 @@ import { ref, reactive, computed } from 'vue'
 import type { CardSetWithCards, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
 import { updateCardSet, fetchCardSetOverrides, deleteCardSetOverride } from '@/api/cardSets'
 import { productTypeLabel } from '@/constants/productTypes'
+import { useCardSetsStore } from '@/stores/cardSets'
 import { RARITY_VALUES } from '@/constants/rarities'
 import Button from 'primevue/button'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -12,6 +13,13 @@ import InputText from 'primevue/inputtext'
 const props = defineProps<{
   cardSet: CardSetWithCards
 }>()
+
+const store = useCardSetsStore()
+
+/** 分類是後端依 set_id 規則算出來的，這裡只把代號換成顯示名稱 */
+const productTypeText = computed(() =>
+  productTypeLabel(store.typeByCode(props.cardSet.product_type), props.cardSet.product_type),
+)
 
 const emit = defineEmits<{
   updated: []
@@ -228,7 +236,7 @@ const fieldLabels: Record<string, string> = {
         <div class="flex items-center gap-2">
           <label class="w-24 text-xs text-gray-400 shrink-0">Product Type</label>
           <span class="text-xs text-gray-400 italic">
-            {{ productTypeLabel(cardSet.product_type) }} (由 set_id 決定)
+            {{ productTypeText }} (由分類規則決定)
           </span>
         </div>
         <div class="flex items-center gap-2">

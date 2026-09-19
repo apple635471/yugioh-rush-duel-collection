@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useCardSetsStore } from '@/stores/cardSets'
 import { useUiStore } from '@/stores/ui'
 import { fetchGlobalStats, fetchAllSetStats, fetchTimeline, type TimelineSet } from '@/api/cardSets'
+import { productTypeLabel } from '@/constants/productTypes'
 import type { OwnershipStats } from '@/types/cardSet'
 import ProductTypeSidebar from '@/components/navigation/ProductTypeSidebar.vue'
 import SetList from '@/components/navigation/SetList.vue'
@@ -24,9 +25,8 @@ const currentProductType = computed(() =>
 /** 標題用：英文名 + 中文名（Promo / Other 沒有中文名就只顯示英文） */
 const currentProductTypeLabel = computed(() => {
   if (!currentProductType.value) return '全部套牌包'
-  const pt = store.productTypes.find(p => p.product_type === currentProductType.value)
-  if (!pt) return currentProductType.value
-  return pt.display_name_zh ? `${pt.display_name} (${pt.display_name_zh})` : pt.display_name
+  const pt = store.typeByCode(currentProductType.value)
+  return productTypeLabel(pt, currentProductType.value)
 })
 
 const globalStats = ref<OwnershipStats | null>(null)
@@ -76,6 +76,14 @@ watch(currentProductType, async (pt) => {
 watch(() => ui.setViewMode, async (mode) => {
   if (mode === 'timeline') await loadTimeline()
 })
+
+/* 分類規則改了 → 卡組的分類重算過，目前這一頁、時間軸與統計全部重抓。
+   （規則是分類的唯一來源，卡組本身不存 product_type） */
+async function onRulesChanged() {
+  timelineLoadedFor = null
+  await Promise.all([store.loadSets(currentProductType.value), loadStats()])
+  if (ui.setViewMode === 'timeline') await loadTimeline()
+}
 </script>
 
 <template>
@@ -84,6 +92,7 @@ watch(() => ui.setViewMode, async (mode) => {
     <ProductTypeSidebar
       :product-types="store.productTypes"
       class="mr-6"
+      @rules-changed="onRulesChanged"
     />
 
     <!-- Main content -->

@@ -18,6 +18,7 @@ from ..models import (
     CardSetModel,
     CardVariantModel,
 )
+from .product_type_service import classify_set
 from ..rarities import RARITY_ORDER, rarity_rank
 
 def _rank(rarity: str) -> int:
@@ -49,9 +50,10 @@ def build_timeline(
         CardSetModel.release_date.isnot(None),
         CardSetModel.release_date != "",
     )
-    if product_type:
-        q = q.filter(CardSetModel.product_type == product_type)
     sets = q.all()
+    if product_type:
+        # Not a column: the rules in the DB decide (see product_type_service).
+        sets = [s for s in sets if classify_set(s.set_id) == product_type]
     if not sets:
         return []
 

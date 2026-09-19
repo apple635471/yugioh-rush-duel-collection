@@ -14,6 +14,7 @@ from .discovery import discover_rd_posts
 from .downloader import download_images, sanitize_filename
 from .models import Card, CardSet, PostState, ScrapeState
 from .parser import compute_content_hash, extract_post_body, parse_post, parse_post_multi
+from .product_types import load_rules
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,9 @@ class RushDuelScraper:
         self.download_images_flag = download_images_flag
         self.force = force
         self.state = ScrapeState.load(data_dir / STATE_FILE)
+        # 分類規則放在 checklist 的 DB，開跑時抓一次並快取到 data/，
+        # 後端沒開就用上次快取的版本
+        load_rules(self.data_dir)
         self.session = requests.Session()
         self.session.headers["User-Agent"] = (
             "Mozilla/5.0 (compatible; RD-Card-Scraper/0.1)"
@@ -182,7 +186,8 @@ class RushDuelScraper:
             set_id=card_set.set_id,
             set_name_jp=existing.get("set_name_jp", ""),
             set_name_zh=existing.get("set_name_zh", ""),
-            product_type=existing.get("product_type", card_set.product_type),
+            # 分類一律重算：規則在 checklist 的 DB 裡，改了就該套用到既有卡組
+            product_type=card_set.product_type,
             release_date=existing.get("release_date"),
             post_url=existing.get("post_url", ""),
             rarity_distribution=existing.get("rarity_distribution") or {},

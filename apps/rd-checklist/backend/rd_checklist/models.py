@@ -19,13 +19,68 @@ class Base(DeclarativeBase):
     pass
 
 
+class ProductTypeModel(Base):
+    """A product line, and the set_id patterns that put a set in it.
+
+    This table *is* the classification: a set has no stored product type, it
+    is whatever these rules say it is (see ``services.product_type_service``).
+    Editing a rule therefore re-files every set at once — nothing to migrate.
+
+    Exactly one row is the fallback (``other``): it carries no rules and
+    catches every set no other row claims.
+    """
+
+    __tablename__ = "product_types"
+
+    code = Column(String, primary_key=True)  # "booster" — used in URLs
+    name_en = Column(String, nullable=False, default="")
+    name_zh = Column(String)  # None when there isn't a meaningful one
+    group_label = Column(String, nullable=False, default="")  # sidebar grouping
+    color = Column(String, nullable=False, default="#8C90A3")  # timeline colour
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_fallback = Column(Boolean, nullable=False, default=False)
+    created_at = Column(String, nullable=False, server_default=func.datetime("now"))
+    updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
+
+    rules = relationship(
+        "ProductTypeRuleModel",
+        back_populates="product_type",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="ProductTypeRuleModel.sort_order",
+    )
+
+
+class ProductTypeRuleModel(Base):
+    """One regular expression matched against a set_id.
+
+    Matched with ``re.search`` and case-insensitively, so an unanchored
+    pattern means "contains" (JMP → SJMP / VJMP / WJMP) while an anchored one
+    pins the shape (^\d{2}PR$ → 23PR, 24PR, …).
+    """
+
+    __tablename__ = "product_type_rules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_type_code = Column(
+        String,
+        ForeignKey("product_types.code", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    pattern = Column(String, nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(String, nullable=False, server_default=func.datetime("now"))
+
+    product_type = relationship("ProductTypeModel", back_populates="rules")
+
+
 class CardSetModel(Base):
     __tablename__ = "card_sets"
 
     set_id = Column(String, primary_key=True)
     set_name_jp = Column(String, nullable=False, default="")
     set_name_zh = Column(String, nullable=False, default="")
-    product_type = Column(String, nullable=False, index=True)
     release_date = Column(String)
     post_url = Column(String, nullable=False, default="")
     # The set's page on yugipedia, entered by the user. Remembered so the card
@@ -39,6 +94,17 @@ class CardSetModel(Base):
     updated_at = Column(String, nullable=False, server_default=func.datetime("now"))
 
     cards = relationship("CardModel", back_populates="card_set", lazy="selectin")
+
+    @property
+    def product_type(self) -> str:
+        """Which product line this set belongs to, per the rules in the DB.
+
+        A read-only derived value, not a column — so every response schema
+        that reads ``product_type`` keeps working unchanged.
+        """
+        from .services.product_type_service import classify_set
+
+        return classify_set(self.set_id)
 
 
 class CardSetImageModel(Base):

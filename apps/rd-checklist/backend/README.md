@@ -33,10 +33,11 @@ card_sets  ◄──1:N──  cards  ◄──1:N──  card_variants
   set_id (PK)         card_id (PK)        id (PK)
   set_name_jp         set_id (FK)         card_id (FK)
   set_name_zh         name_jp/name_zh     rarity
-  product_type        card_type           owned_count ★使用者資料
-  release_date        attribute/level     image_source (scraper/user)
+  release_date        card_type           owned_count ★使用者資料
+  post_url            attribute/level     image_source (scraper/user)
   total_cards         atk/defense         image_path, scraper_image_path
   rarity_distribution effect/condition    UNIQUE(card_id, rarity)
+  （沒有 product_type：分類由 product_types 的規則算出）
                       is_legend
                       is_manual (手動建立)
 
@@ -75,7 +76,10 @@ uv run uvicorn rd_checklist.main:app --reload --port 8000
 
 | Method | Path | 用途 |
 |--------|------|------|
-| GET | `/api/card-sets/product-types` | 產品類型 + 中英標籤 + 數量 |
+| GET | `/api/product-types` | 分類規則：代號/名稱/分組/顏色/規則/卡組數 |
+| POST/PATCH/DELETE | `/api/product-types[/{code}]` | 新增/編輯/刪除分類（fallback 不能刪）|
+| PUT | `/api/product-types/order` | 重新排序（也是規則比對順序）|
+| POST | `/api/product-types/preview` | 試算某組規則會抓到哪些卡組 |
 | GET | `/api/card-sets?product_type=` | 卡組列表 |
 | GET | `/api/card-sets/timeline` | 時間軸視圖資料（統計 + 貴罕度分布 + 高貴罕度卡圖 + 包裝圖；無發行日的卡組不回傳）|
 | GET | `/api/card-sets/{set_id}` | 卡組 + 所有卡片 (eager load variants) |

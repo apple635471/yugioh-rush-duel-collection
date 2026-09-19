@@ -7,7 +7,6 @@ import re
 
 from sqlalchemy.orm import Session
 
-from ..product_types import canonical_product_type
 from ..models import (
     CardEditModel,
     CardModel,
@@ -129,8 +128,8 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
     Cards are moved rather than deleted and re-imported, so everything keyed
     by card_id — overrides, edits, uploaded images, owned_count — comes along
     untouched. Missing target sets are created, copying the source's name,
-    release date and post URL (the products do share a post, after all);
-    product_type is derived from the new set id.
+    release date and post URL (the products do share a post, after all). The
+    product type follows automatically — it is read from the set_id rules.
 
     A source set that ends up empty is deleted, unless it was created by hand.
     """
@@ -167,7 +166,6 @@ def resplit_set(db: Session, set_id: str, delete_when_empty: bool = True) -> dic
                     set_id=target,
                     set_name_jp=card_set.set_name_jp,
                     set_name_zh=card_set.set_name_zh,
-                    product_type=canonical_product_type(target),
                     release_date=card_set.release_date,
                     post_url=card_set.post_url,
                     total_cards=0,

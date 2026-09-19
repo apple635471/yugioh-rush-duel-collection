@@ -41,6 +41,7 @@ ntucgm.blogspot.com ──HTTP──▶ rd-card-scraper ──JSON+Images──�
                                        │
                                        ▼
                               SQLite (card_sets → cards → card_variants)
+                              　　　 product_types → product_type_rules（分類規則）
                                        │
                               FastAPI ──┘──▶ Vue Frontend ──▶ 使用者
                                                     │

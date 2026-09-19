@@ -28,10 +28,24 @@ override**，直接存欄位。填了之後「對照卡表」不用每次貼網�
 
 ## 表結構
 
+### product_types ★分類規則
+- `code` (PK, str): 如 "booster"，也是 `/sets/<code>` 網址用的 key
+- `name_en`, `name_zh`: 顯示名稱（`name_zh` 可為 null，如 Promo / Other）
+- `group_label`: 側邊欄分組，如「補充包系列」
+- `color`: 時間軸配色
+- `sort_order`: 顯示順序，**也是規則的比對順序**
+- `is_fallback`: 只有一列是 true（預設 `other`）——沒有規則、不能刪、收所有沒被認領的卡組
+
+### product_type_rules ★分類規則
+- `id` (PK), `product_type_code` (FK → product_types, indexed)
+- `pattern`: 正規表示式，對 set_id 做 `re.search`（不分大小寫）
+- `sort_order`: 同一個產品線內的比對順序
+
 ### card_sets
 - `set_id` (PK, str): 如 "KP01", "ST01"
 - `set_name_jp`, `set_name_zh`: 日文/中文名
-- `product_type` (indexed): booster / advanced_pack / … / promo / other，由 set_id 規則算出（見 `rd-product-types`）
+- **沒有 `product_type` 欄位**：分類是 `product_types` 的規則算出來的（見 `rd-product-types`），
+  ORM 上是 `CardSetModel.product_type` 這個 property
 - `release_date`: "2020/4/11" 格式
 - `post_url`: 來源文章 URL
 - `total_cards`: 卡片總數

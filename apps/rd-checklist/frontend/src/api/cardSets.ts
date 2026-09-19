@@ -1,10 +1,5 @@
 import api from './client'
-import type { CardSet, CardSetCreate, CardSetWithCards, ProductType, OwnershipStats, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
-
-export async function fetchProductTypes(): Promise<ProductType[]> {
-  const { data } = await api.get<ProductType[]>('/card-sets/product-types')
-  return data
-}
+import type { CardSet, CardSetCreate, CardSetWithCards, OwnershipStats, CardSetUpdate, CardSetOverride } from '@/types/cardSet'
 
 export async function fetchCardSets(productType?: string): Promise<CardSet[]> {
   const params = productType ? { product_type: productType } : {}

@@ -47,7 +47,8 @@ data/
   ├── KP09/
   │   ├── cards.json
   │   └── images/
-  └── scrape_state.json   # 增量更新狀態
+  ├── scrape_state.json   # 增量更新狀態
+  └── product_types.json  # 從 checklist 後端抓來的分類規則（快取）
 ```
 
 每張卡片的 JSON 包含：`card_id`, `rarity`, `name_jp`, `name_zh`, `card_type`, `attribute`, `monster_type`, `level`, `atk`, `defense`, `summon_condition`, `description`, `condition`, `effect`, `continuous_effect`, `image_url`, `image_file`, `is_legend`。
@@ -81,3 +82,8 @@ uv run python -m rd_card_scraper.cli update --force           # 強制全部重�
 - 增量更新自動傳入 known_urls，listing page 翻到全部已知就停止
 - 圖片只在本地不存在時才下載
 - `--no-images` 模式下會自動偵測磁碟上已存在的圖片檔，保留 `image_file` 路徑
+- **產品分類（`product_type`）不是在這裡定義的**：規則存在 checklist 的資料庫，
+  開跑時從 `GET {RD_CHECKLIST_API}/api/product-types`（預設 `http://localhost:8000`）
+  抓一次並快取到 `data/product_types.json`。後端沒開就用上次的快取；連快取都沒有
+  就一律 `other`。在 checklist UI 調整規則後，下次爬取就會套用（見
+  `.claude/skills/rd-product-types`）
